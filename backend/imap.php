@@ -130,7 +130,7 @@ class BackendIMAP extends BackendDiff {
 	// reply				
 	if (isset($reply) && isset($parent) &&  $reply && $parent) {
 		$this->imap_reopenFolder($parent);
-		$origmail = imap_body($this->_mbox, $reply, FT_PEEK);
+      $origmail = imap_body($this->_mbox, $reply, FT_PEEK | FT_UID);
 		$mobj2 = new Mail_mimeDecode($origmail);
 		// receive only body
 		$body .= $this->getBody($mobj2->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $origmail, 'crlf' => "\n", 'charset' => 'utf-8')));
@@ -140,7 +140,7 @@ class BackendIMAP extends BackendDiff {
 	if (isset($forward) && isset($parent) && $forward && $parent) {
 		$this->imap_reopenFolder($parent);
 		// receive entire mail (header + body)
-		$origmail = imap_fetchheader($this->_mbox, $forward, FT_PREFETCHTEXT) . imap_body($this->_mbox, $forward, FT_PEEK);
+      $origmail = imap_fetchheader($this->_mbox, $forward, FT_PREFETCHTEXT | FT_UID) . imap_body($this->_mbox, $forward, FT_PEEK | FT_UID);
 				  
 		// build a new mime message, forward entire old mail as file
 		list($aheader, $body) = $this->mail_attach("forwarded_message.eml",strlen($origmail),$origmail, $body, $forward_h_ct, $forward_h_cte);
@@ -212,32 +212,28 @@ class BackendIMAP extends BackendDiff {
         
         $messages = array();
 	$this->imap_reopenFolder($folderid, true);
-	$headers = imap_headers ( $this->_mbox );
+   $overviews = imap_fetch_overview($this->_mbox, "1:*");
     
-	if (!$headers) {
-		debugLog("IMAP-GetMessageList: Failed to retrieve headers");
+   if (!$overviews) {
+      debugLog("IMAP-GetMessageList: Failed to retrieve overview");
 	} 
 	else {
-		foreach($headers as $header) {
-			$matches = array();
-			preg_match("/([A-Z ]+)([0-9]+)\)(\s*.*?) /", $header, $matches);
-			$date = strtotime($matches[3]);
-					
+      foreach($overviews as $overview) {
 			// message is out of range for cutoffdate, ignore it
-			if($date < $cutoffdate) continue;
+         if(strtotime($overview->date) < $cutoffdate) continue;
 			
 			// cut of deleted messages
-			if (strpos($matches[1], "D") !== false) continue;
+         if ($overview->deleted) continue;
 
 
 			$message = array();
-			$message["mod"] = $date;
-			$message["id"] = $matches[2];
+         $message["mod"] = $overview->date;
+         $message["id"] = $overview->uid;
 			// 'seen' aka 'read' is the only flag we want to know about
-			$message["flags"] = 1;
+			$message["flags"] = 0;
 				
-			if (strpos($matches[1], "U") !== false) 
-				$message["flags"] = 0; 
+         if($overview->seen)
+				$message["flags"] = 1; 
 			array_push($messages, $message);
 		}
 	}
@@ -390,7 +386,7 @@ class BackendIMAP extends BackendDiff {
         list($folderid, $id, $part) = explode(":", $attname);
         
 	$this->imap_reopenFolder($folderid);
-    	$mail = imap_fetchheader($this->_mbox, $id, FT_PREFETCHTEXT) . imap_body($this->_mbox, $id, FT_PEEK);
+       $mail = imap_fetchheader($this->_mbox, $id, FT_PREFETCHTEXT | FT_UID) . imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
 
 	$mobj = new Mail_mimeDecode($mail);
 	$message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $mail, 'crlf' => "\n", 'charset' => 'utf-8'));
@@ -413,21 +409,21 @@ class BackendIMAP extends BackendDiff {
 
 				
 	$this->imap_reopenFolder($folderid);
-	$header = imap_headerinfo  ( $this->_mbox , $id );
+   $overview = imap_fetch_overview( $this->_mbox , $id , FT_UID);
 		
-	if (!$header) {
-			debugLog("IMAP-StatMessage: Failed to retrieve header");
+   if (!$overview) {
+         debugLog("IMAP-StatMessage: Failed to retrieve overview");
 			return false;
 	} 
 	else {
 		$entry = array();
-		$entry["mod"] = strtotime(substr($header->date, 0, 12));
-		$entry["id"] = $id;
+      $entry["mod"] = $overview[0]->date;
+      $entry["id"] = $overview[0]->uid;
 		// 'seen' aka 'read' is the only flag we want to know about
-		$entry["flags"] = 1; 
+      $entry["flags"] = 0;
 			
-		if ($header->Unseen == "U") 
-			$entry["flags"] = 0; 
+      if ($overview[0]->seen)
+         $entry["flags"] = 1;
 
 		//advanced debugging
 		//debugLog("IMAP-StatMessage-parsed: ". print_r($entry,1));
@@ -450,7 +446,7 @@ class BackendIMAP extends BackendDiff {
 
 	if ($stat) {        
 		$this->imap_reopenFolder($folderid);
-		$mail = imap_fetchheader($this->_mbox, $id, FT_PREFETCHTEXT) . imap_body($this->_mbox, $id, FT_PEEK);
+      $mail = imap_fetchheader($this->_mbox, $id, FT_PREFETCHTEXT | FT_UID) . imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
 		   
 		$mobj = new Mail_mimeDecode($mail);
 		$message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $mail, 'crlf' => "\n", 'charset' => 'utf-8'));
@@ -513,8 +509,8 @@ class BackendIMAP extends BackendDiff {
     	debugLog("IMAP-DeleteMessage: (fid: '$folderid'  id: '$id' )");
     		
 	$this->imap_reopenFolder($folderid);
-    	$s1 = imap_delete ($this->_mbox, $id);
-    	$s11 = imap_setflag_full($this->_mbox, $id, "\\Deleted");
+       $s1 = imap_delete ($this->_mbox, $id, FT_UID);
+       $s11 = imap_setflag_full($this->_mbox, $id, "\\Deleted", FT_UID);
     	$s2 = imap_expunge($this->_mbox);
     	  
      	debugLog("IMAP-DeleteMessage: s-delete: $s1   s-expunge: $s2    setflag: $s11");
@@ -536,12 +532,12 @@ class BackendIMAP extends BackendDiff {
 
 	if ($flags == 0) 
 		// set as "Unseen" (unread)
-		$status = imap_clearflag_full ( $this->_mbox, $id, "\\Seen");
+      $status = imap_clearflag_full ( $this->_mbox, $id, "\\Seen", FT_UID);
 	else     	  
 		// set as "Seen" (read)
-		$status = imap_setflag_full($this->_mbox, $id, "\\Seen");
+      $status = imap_setflag_full($this->_mbox, $id, "\\Seen", FT_UID);
         
-        debugLog("IMAP-SetReadFlag -> set as " . (($flags)?"read":"unread") . "-->". $status);
+        debugLog("IMAP-SetReadFlag -> set as " . (($flags) ? "read" : "unread") . "-->". $status);
         
         return $status;
     }
@@ -569,15 +565,15 @@ class BackendIMAP extends BackendDiff {
 	$this->imap_reopenFolder($folderid);
 			
 	// read message flags
-	$header = imap_headerinfo  ( $this->_mbox , $id );
+   $overview = imap_fetch_overview ( $this->_mbox , $id, FT_UID);
 		
-	if (!$header) {
-		debugLog("IMAP-MoveMessage: Failed to retrieve header");
+   if (!$overview) {
+      debugLog("IMAP-MoveMessage: Failed to retrieve overview");
 		return false;
 	} 
 	else {
 		// move message					
-		$s1 = imap_mail_move($this->_mbox, $id, str_replace(".", $this->_serverdelimiter, $newfolderid)); 
+      $s1 = imap_mail_move($this->_mbox, $id, str_replace(".", $this->_serverdelimiter, $newfolderid), FT_UID);
 						
 		// delete message in from-folder
 		$s2 = imap_expunge($this->_mbox);
@@ -586,12 +582,12 @@ class BackendIMAP extends BackendDiff {
 		$this->imap_reopenFolder($newfolderid);
 
 		// remove all flags
-		$s3 = imap_clearflag_full ($this->_mbox, $id, "\\Seen \\Answered \\Flagged \\Deleted \\Draft");
+      $s3 = imap_clearflag_full ($this->_mbox, $id, "\\Seen \\Answered \\Flagged \\Deleted \\Draft", FT_UID);
 		$newflags = "";
-		if ($header->Unseen == "") $newflags .= "\\Seen";	
-		if ($header->Flagged  == "F") $newflags .= " \\Flagged";
-		if ($header->Answered  == "A") $newflags .= " \\Answered";
-		$s4 = imap_setflag_full ($this->_mbox, $id, $newflags);
+      if ($overview[0]->seen) $newflags .= "\\Seen";   
+      if ($overview[0]->flagged) $newflags .= " \\Flagged";
+      if ($overview[0]->answered) $newflags .= " \\Answered";
+      $s4 = imap_setflag_full ($this->_mbox, $id, $newflags, FT_UID);
 			
 		debugLog("MoveMessage: (" . $folderid . "->" . $newfolderid . ") s-move: $s1   s-expunge: $s2    unset-Flags: $s3    set-Flags: $s4");
 				
