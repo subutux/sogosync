@@ -21,6 +21,10 @@ include_once("request.php");
 include_once("debug.php");
 include_once("compat.php");
 
+// Attempt to set maximum execution time
+ini_set('max_execution_time', SCRIPT_TIMEOUT);
+set_time_limit(SCRIPT_TIMEOUT);
+
 debugLog("Start");
 
 $input = fopen("php://input", "r");
@@ -127,7 +131,7 @@ switch($_SERVER["REQUEST_METHOD"]) {
         header("Content-type: text/html");
         print("<BODY>\n");
         print("<h3>GET not supported</h3><p>\n");
-        print("This is the z-push location and can only be accessed by Microsoft Sync-capable devices.");
+        print("This is the z-push location and can only be accessed by Microsoft ActiveSync-capable devices.");
         print("</BODY>\n");
         break;
 }

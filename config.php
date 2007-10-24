@@ -27,8 +27,11 @@
 
     define('STATE_DIR', 'state');
 
+    // Try to set unlimited timeout
+    define('SCRIPT_TIMEOUT', 0);
+
     // The data providers that we are using (see configuration below)
-    $BACKEND_PROVIDER = "BackendICS";
+    $BACKEND_PROVIDER = "BackendIMAP";
 
     // ************************
     //  BackendICS settings
