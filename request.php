@@ -63,6 +63,9 @@ function HandleMoveItems($backend, $protocolversion) {
                 break;
         }
         array_push($moves, $move);
+
+        if(!$decoder->getElementEndTag())
+            return false;
     }
 
     if(!$decoder->getElementEndTag())
@@ -71,9 +74,9 @@ function HandleMoveItems($backend, $protocolversion) {
     $encoder->StartWBXML();
 
     $encoder->startTag(SYNC_MOVE_MOVES);
-    $encoder->startTag(SYNC_MOVE_RESPONSE);
 
     foreach($moves as $move) {
+        $encoder->startTag(SYNC_MOVE_RESPONSE);
         $encoder->startTag(SYNC_MOVE_SRCMSGID);
         $encoder->content($move["srcmsgid"]);
         $encoder->endTag();
@@ -89,9 +92,9 @@ function HandleMoveItems($backend, $protocolversion) {
         $encoder->startTag(SYNC_MOVE_DSTMSGID);
         $encoder->content($move["srcmsgid"]);
         $encoder->endTag();
+        $encoder->endTag();
     }
 
-    $encoder->endTag();
     $encoder->endTag();
 }
 
