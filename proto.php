@@ -300,7 +300,7 @@ class SyncAppointment extends Streamer {
                       SYNC_POOMCAL_CATEGORIES => array (STREAMER_VAR => "categories", STREAMER_ARRAY => SYNC_POOMCAL_CATEGORY),
                       SYNC_POOMCAL_EXCEPTIONS => array (STREAMER_VAR => "exceptions", STREAMER_TYPE => "SyncAppointment", STREAMER_ARRAY => SYNC_POOMCAL_EXCEPTION),
                       SYNC_POOMCAL_DELETED => array (STREAMER_VAR => "deleted"),
-                      SYNC_POOMCAL_EXCEPTIONSTARTTIME => array (STREAMER_VAR => "exceptionstarttime")
+                      SYNC_POOMCAL_EXCEPTIONSTARTTIME => array (STREAMER_VAR => "exceptionstarttime", STREAMER_TYPE => STREAMER_TYPE_DATE)
                       
         );
         

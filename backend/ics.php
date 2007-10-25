@@ -386,7 +386,7 @@ class MAPIMapping {
     // Returns the local timestamp for the $week'th $wday of $month in $year at $hour:$minute:$second
     function _getTimestampOfWeek($year, $month, $week, $wday, $hour, $minute, $second)
     {
-        $date = gmmktime($hour, $minute, $second, $month, 0, $year);
+        $date = gmmktime($hour, $minute, $second, $month, 1, $year);
         
         // Find first day in month which matches day of the week
         while(1) {
@@ -574,6 +574,27 @@ class ImportContentsChangesICS extends MAPIMapping {
     
     // ----------------------------------------------------------------------------------------------------------
     
+    function GetTZOffset($ts)
+	{
+		$Offset = date("O", $ts);
+		
+		$Parity = $Offset < 0 ? -1 : 1;
+		$Offset = $Parity * $Offset;
+		$Offset = ($Offset - ($Offset % 100)) / 100 * 60 + $Offset % 100;
+		
+		return $Parity * $Offset;
+	} 
+		
+	function gmtime($time)
+	{
+		$TZOffset = $this->GetTZOffset($time);
+		
+		$t_time = $time - $TZOffset * 60; #Counter adjust for localtime()
+		$t_arr = localtime($t_time, 1);
+		
+		return $t_arr;
+	} 
+    
     function _setMessage($mapimessage, $message) {
         switch(strtolower(get_class($message))) {
             case "synccontact":
@@ -678,13 +699,14 @@ class ImportContentsChangesICS extends MAPIMapping {
             $localstart = $this->_getLocaltimeByTZ($appointment->starttime, $tz);
             $localend = $this->_getLocaltimeByTZ($appointment->endtime, $tz);
             
-            $starttime = $recurrence->gmtime($localstart);
-            $endtime = $recurrence->gmtime($localend);
+            $starttime = $this->gmtime($localstart);
+            $endtime = $this->gmtime($localend);
             
-            $recur["startocc"] = $starttime["tm_hour"] * 60;
-            $recur["endocc"] = $endtime["tm_hour"] * 60;
+            $recur["startocc"] = $starttime["tm_hour"] * 60 + $starttime["tm_min"];
+            $recur["endocc"] = $endtime["tm_hour"] * 60 + $endtime["tm_min"];
 
-            $recur["start"] = $localstart - $starttime["tm_hour"] * 60 * 60 - $starttime["tm_min"] * 60 - $starttime["tm_sec"];
+            // "start" and "end" are in GMT when passing to class.recurrence
+            $recur["start"] = $this->_getGMTTimeByTz($this->_getDayStartOfTimestamp($localstart), $tz);
             $recur["end"] = 0x7fffffff;
             
             if(isset($appointment->recurrence->until)) {
@@ -750,7 +772,6 @@ class ImportContentsChangesICS extends MAPIMapping {
             }
      
             $recurrence->setRecurrence($tz, $recur);
-            $recurrence->saveRecurrence();
             
         } else {
 	    $isrecurringtag = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x8223");
