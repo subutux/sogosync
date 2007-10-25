@@ -439,7 +439,7 @@ class BackendIMAP extends BackendDiff {
 
     	if ($stat) {        
 	    	$this->imap_reopenFolder($folderid);
-	    	$mail = imap_fetchheader($this->_mbox, $id, FT_PREFETCHTEXT | FT_UID) . imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
+	    	$mail = imap_fetchheader($this->_mbox, $id, FT_UID) . imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
 		   
 	    	$mobj = new Mail_mimeDecode($mail);
 	    	$message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $mail, 'crlf' => "\n", 'charset' => 'utf-8'));
