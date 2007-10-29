@@ -257,8 +257,8 @@ class BackendIMAP extends BackendDiff {
 			    // explode hierarchies
 			    $fhir = explode(".", $box["id"]);
 			    if (count($fhir) > 1) {
-				    $box["mod"] = $fhir[count($fhir)-1];
-				    $box["parent"] = $fhir[count($fhir)-2];
+				    $box["mod"] = array_pop($fhir); // mod is last part of path
+				    $box["parent"] = implode(".", $fhir); // parent is all previous parts of path
                 }
                 else {
 				    $box["mod"] = $box["id"];
@@ -334,8 +334,8 @@ class BackendIMAP extends BackendDiff {
         // define the rest as other-folders
         else {
 	       	if (count($fhir) > 1) {
-	       		$folder->displayname = $fhir[count($fhir)-1];
-	       		$folder->parentid = $fhir[count($fhir)-2];
+	       		$folder->displayname = array_pop($fhir);
+	       		$folder->parentid = implode(".", $fhir);
 	       	}
 	       	else {
 				$folder->displayname = $id;
