@@ -503,7 +503,7 @@ class ImportContentsChangesICS extends MAPIMapping {
     // Import a deletion. This may conflict if the local object has been modified.
     function ImportMessageDeletion($objid) {
         // do a 'soft' delete so people can un-delete if necessary
-        mapi_importcontentschanges_importmessagedeletion($this->importer, SYNC_SOFT_DELETE, array(hex2bin($objid)));
+        mapi_importcontentschanges_importmessagedeletion($this->importer, 1, array(hex2bin($objid)));
     }
     
     // Import a change in 'read' flags .. This can never conflict
