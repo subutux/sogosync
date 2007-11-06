@@ -31,10 +31,10 @@
     define('SCRIPT_TIMEOUT', 0);
 
     // The data providers that we are using (see configuration below)
-    $BACKEND_PROVIDER = "BackendIMAP";
+    $BACKEND_PROVIDER = "BackendICS";
 
     // ************************
-    //  BackendICS settings
+    //  BackendMAPI settings
     // ************************
     
     // Defines the server to which we want to connect
