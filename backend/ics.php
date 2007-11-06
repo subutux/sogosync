@@ -884,11 +884,12 @@ class PHPContentsImportProxy extends MAPIMapping {
     var $store;
     var $importer;
     
-    function PHPContentsImportProxy($session, $store, $folder, &$importer) {
+    function PHPContentsImportProxy($session, $store, $folder, &$importer, $truncation) {
         $this->_session = $session;
         $this->_store = $store;
         $this->_folderid = $folder;
         $this->importer = &$importer;
+        $this->_truncation = $truncation;
     }
     
     function Config($stream, $flags) {
@@ -909,7 +910,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             
         $mapimessage = mapi_msgstore_openentry($this->_store, $entryid);
         
-        $message = $this->_getMessage($mapimessage);
+        $message = $this->_getMessage($mapimessage, $this->getTruncSize($this->_truncation));
         
         $this->importer->ImportMessageChange(bin2hex($sourcekey), $message);
 
@@ -935,7 +936,7 @@ class PHPContentsImportProxy extends MAPIMapping {
     
     // ------------------------------------------------------------------------------------------------------------
 
-    function _getMessage($mapimessage) {
+    function _getMessage($mapimessage, $truncsize) {
         // Gets the Sync object from a MAPI object according to its message class
         
         $props = mapi_getprops($mapimessage, array(PR_MESSAGE_CLASS));
@@ -945,17 +946,17 @@ class PHPContentsImportProxy extends MAPIMapping {
             $messageclass = "IPM";
             
         if(strpos($messageclass,"IPM.Contact") === 0) 
-            return $this->_getContact($mapimessage);
+            return $this->_getContact($mapimessage, $truncsize);
         else if(strpos($messageclass,"IPM.Appointment") === 0)
-            return $this->_getAppointment($mapimessage);
+            return $this->_getAppointment($mapimessage, $truncsize);
         else if(strpos($messageclass,"IPM.Task") === 0)
-            return $this->_getTask($mapimessage);
+            return $this->_getTask($mapimessage, $truncsize);
         else
-            return $this->_getEmail($mapimessage);
+            return $this->_getEmail($mapimessage, $truncsize);
     }
     
     // Get an SyncContact object
-    function _getContact($mapimessage) {
+    function _getContact($mapimessage, $truncsize) {
         $message = new SyncContact();
 
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_contactmapping);
@@ -964,7 +965,7 @@ class PHPContentsImportProxy extends MAPIMapping {
     } 
     
     // Get an SyncTask object
-    function _getTask($mapimessage) {
+    function _getTask($mapimessage, $truncsize) {
         $message = new SyncTask();
         
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_taskmapping);
@@ -973,7 +974,7 @@ class PHPContentsImportProxy extends MAPIMapping {
     }
     
     // Get an SyncAppointment object
-    function _getAppointment($mapimessage) {
+    function _getAppointment($mapimessage, $truncsize) {
         $message = new SyncAppointment();
 
         // Standard one-to-one mappings first
@@ -1164,13 +1165,19 @@ class PHPContentsImportProxy extends MAPIMapping {
     }
 
     // Get an SyncEmail object
-    function _getEmail($mapimessage) {
+    function _getEmail($mapimessage, $truncsize) {
         $message = new SyncMail();
         
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_emailmapping);
         
         // Override 'From' to show "Full Name <user@domain.com>"
         $messageprops = mapi_getprops($mapimessage, array(PR_SENT_REPRESENTING_NAME, PR_SENT_REPRESENTING_ENTRYID, PR_SOURCE_KEY));
+
+        // Override 'body' for truncation
+        if(strlen($message->body) > $truncsize) {
+            $message->body = substr($message->body, 0, $truncsize);
+            $message->bodytruncated = 1;
+        }
 
         if(isset($messageprops[PR_SOURCE_KEY]))
             $sourcekey = $messageprops[PR_SOURCE_KEY];
@@ -1308,6 +1315,22 @@ class PHPContentsImportProxy extends MAPIMapping {
         return $message;
     }    
 
+    function getTruncSize($truncation) {
+        switch($truncation) {
+        case SYNC_TRUNCATION_HEADERS:
+            return 0;
+        case SYNC_TRUNCATION_512B:
+            return 512;
+        case SYNC_TRUNCATION_1K:
+            return 1024;
+        case SYNC_TRUNCATION_5K:
+            return 5*1024;
+        case SYNC_TRUNCATION_ALL:
+            return 1024*1024; // We'll limit to 1MB anyway
+        default:
+            return 1024; // Default to 1Kb
+        }
+    }
 
 };
 
@@ -1451,7 +1474,7 @@ class ExportChangesICS  {
         }
     }
     
-    function Config(&$importer, $mclass, $restrict, $syncstate, $flags) {
+    function Config(&$importer, $mclass, $restrict, $syncstate, $flags, $truncation) {
         // Because we're using ICS, we need to wrap the given importer to make it suitable to pass
         // to ICS. We do this in two steps: first, wrap the importer with our own PHP importer class
         // which removes all MAPI dependency, and then wrap that class with a C++ wrapper so we can
@@ -1461,7 +1484,7 @@ class ExportChangesICS  {
         
         if($this->_folderid) {
             // PHP wrapper
-            $phpimportproxy = new PHPContentsImportProxy($this->_session, $this->_store, $this->_folderid, $importer);
+            $phpimportproxy = new PHPContentsImportProxy($this->_session, $this->_store, $this->_folderid, $importer, $truncation);
             // ICS c++ wrapper
             $mapiimporter = mapi_wrap_importcontentschanges($phpimportproxy);
             $exporterflags |= SYNC_NORMAL | SYNC_READ_STATE;
@@ -1953,6 +1976,30 @@ class BackendICS {
         mapi_message_submitmessage($mapimessage);
         
         return true;
+    }
+    
+    function Fetch($folderid, $id) {
+        $foldersourcekey = hex2bin($folderid);
+        $messagesourcekey = hex2bin($id);
+        
+        $dummy = false;
+        
+        // Fake a contents importer because it can do the conversion for us
+        $importer = new PHPContentsImportProxy($this->_session, $this->_defaultstore, $foldersourcekey, $dummy);
+        
+        $entryid = mapi_msgstore_entryidfromsourcekey($this->_defaultstore, $foldersourcekey, $messagesourcekey);
+        if(!$entryid) {
+            debugLog("Unknown ID passed to Fetch");
+            return false;
+        }
+        
+        $message = mapi_msgstore_openentry($this->_defaultstore, $entryid);
+        if(!$message) {
+            debugLog("Unable to open message for Fetch command");
+            return false;
+        }
+        
+        return $importer->_getMessage($message, 1024*1024); // Get 1MB of body size
     }
     
     function GetWasteBasket() {

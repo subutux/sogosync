@@ -306,12 +306,13 @@ class ExportChangesDiff extends DiffState {
         $this->_folderid = $folderid;
     }
     
-    function Config(&$importer, $folderid, $restrict, $syncstate, $flags) {
+    function Config(&$importer, $folderid, $restrict, $syncstate, $flags, $truncation) {
         $this->_importer = &$importer;
         $this->_restrict = $restrict;
         $this->_syncstate = unserialize($syncstate);
         $this->_flags = $flags;
-
+        $this->_truncation = $truncation;
+        
         $this->_changes = array();
         $this->_step = 0;
         
@@ -396,12 +397,14 @@ class ExportChangesDiff extends DiffState {
 
                 switch($change["type"]) {
                 case "change":
+                    $truncsize = $this->getTruncSize($this->_truncation);
+
                     // Note: because 'parseMessage' and 'statMessage' are two seperate
                     // calls, we have a chance that the message has changed between both
                     // calls. This may cause our algorithm to 'double see' changes.
 
                     $stat = $this->_backend->StatMessage($this->_folderid, $change["id"]);
-                    $message = $this->_backend->GetMessage($this->_folderid, $change["id"]);
+                    $message = $this->_backend->GetMessage($this->_folderid, $change["id"], $truncsize);
                     
                     if($stat && $message) {
                         if($this->_flags & BACKEND_DISCARD_DATA || $this->_importer->ImportMessageChange($change["id"], $message) == true)
@@ -471,6 +474,23 @@ class ExportChangesDiff extends DiffState {
             return 0; // unlimited
     }    
     
+    function getTruncSize($truncation) {
+        switch($truncation) {
+        case SYNC_TRUNCATION_HEADERS:
+            return 0;
+        case SYNC_TRUNCATION_512B:
+            return 512;
+        case SYNC_TRUNCATION_1K:
+            return 1024;
+        case SYNC_TRUNCATION_5K:
+            return 5*1024;
+        case SYNC_TRUNCATION_ALL:
+            return 1024*1024; // We'll limit to 1MB anyway
+        default:
+            return 1024; // Default to 1Kb
+        }
+    }
+    
 };
 
 class BackendDiff {
@@ -522,7 +542,11 @@ class BackendDiff {
         
         return $folders;
     }
-
+    
+    function Fetch($folderid, $id) {
+        return $this->GetMessage($folderid, $id, 1024*1024); // Forces entire message (up to 1Mb)
+    }
+    
     function GetAttachmentData($attname) {
         return false;
     }
@@ -543,7 +567,7 @@ class BackendDiff {
         return false;
     }
     
-    function GetMessage($folderid, $id) {
+    function GetMessage($folderid, $id, $truncsize) {
         return false;
     }
     
@@ -566,6 +590,24 @@ class BackendDiff {
     function MeetingResponse($requestid, $folderid, $error, &$calendarid) {
         return false;
     }
+
+    function getTruncSize($truncation) {
+    switch($truncation) {
+    case SYNC_TRUNCATION_HEADERS:
+        return 0;
+    case SYNC_TRUNCATION_512B:
+        return 512;
+    case SYNC_TRUNCATION_1K:
+        return 1024;
+    case SYNC_TRUNCATION_5K:
+        return 5*1024;
+    case SYNC_TRUNCATION_ALL:
+        return 1024*1024; // We'll limit to 1MB anyway
+    default:
+        return 1024; // Default to 1Kb
+    }
+}
+
 
 };
 

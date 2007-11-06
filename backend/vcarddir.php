@@ -95,7 +95,7 @@ class BackendVCDir extends BackendDiff {
         return $message;
     }
     
-    function GetMessage($folderid, $id) {
+    function GetMessage($folderid, $id, $truncsize) {
         if($folderid != "root")
             return;
 

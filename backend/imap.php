@@ -18,7 +18,7 @@ include_once('diffbackend.php');
 // The is an improved version of mimeDecode from PEAR that correctly
 // handles charsets and charset conversion
 include_once('mimeDecode.php');
-
+include_once('Mail/RFC822.php');
 
 class BackendIMAP extends BackendDiff {
     /* Called to logon a user. These are the three authentication strings that you must
@@ -431,7 +431,7 @@ class BackendIMAP extends BackendDiff {
      * Tasks folder will not do anything. The SyncXXX objects should be filled with as much information as possible, 
      * but at least the subject, body, to, from, etc.
      */
-    function GetMessage($folderid, $id) {
+    function GetMessage($folderid, $id, $truncsize) {
 	    debugLog("IMAP-GetMessage: (fid: '$folderid'  id: '$id' )");
 
         // Get flags, etc
@@ -446,9 +446,16 @@ class BackendIMAP extends BackendDiff {
 					
     		$output = new SyncMail();
 	
-	    	$output->body = str_replace("\n", "\r\n", $this->getBody($message));
-	    	$output->bodysize = strlen($output->body);
-	    	$output->bodytruncated = 0;
+    		$body = str_replace("\n", "\r\n", $this->getBody($message));
+    		if(strlen($body) > $truncsize) {
+    		    $output->body = substr($body, 0, $truncsize);
+    		    $output->bodytruncated = 1;
+            } else {
+                $output->body = $body;
+                $output->bodytruncated = 0;
+            }
+            
+	    	$output->bodysize = strlen($body);
 	    	$output->datereceived = strtotime($message->headers["date"]);
 	    	$output->displayto = $message->headers["to"];
 	    	$output->importance = isset($message->headers["x-priority"]) ? $message->headers["x-priority"] : null;

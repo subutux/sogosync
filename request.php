@@ -249,7 +249,7 @@ function HandleFolderSync($backend, $protocolversion) {
     // argument, which stores them in $importer. Returns the new sync state for this exporter.
     $exporter = $backend->GetExporter();
     
-    $exporter->Config($importer, false, false, $syncstate, 0);
+    $exporter->Config($importer, false, false, $syncstate, 0, 0);
 
     while(is_array($exporter->Synchronize()));
 
@@ -325,7 +325,9 @@ function HandleSync($backend, $protocolversion) {
     while($decoder->getElementStartTag(SYNC_FOLDER))
     {
         $collection = array();
+        $collection["truncation"] = SYNC_TRUNCATION_ALL;
         $collection["clientids"] = array();
+        $collection["fetchids"] = array();
 
         if(!$decoder->getElementStartTag(SYNC_FOLDERTYPE))
             return false;
@@ -422,7 +424,7 @@ function HandleSync($backend, $protocolversion) {
 
             $nchanges = 0;
             while(1) {
-                $element = $decoder->getElement(); // MODIFY or REMOVE or ADD
+                $element = $decoder->getElement(); // MODIFY or REMOVE or ADD or FETCH
                 
                 if($element[EN_TYPE] != EN_TYPE_STARTTAG) {
                     $decoder->ungetElement($element);
@@ -503,6 +505,9 @@ function HandleSync($backend, $protocolversion) {
                     }
                     
                     $importer->ImportMessageDeletion($serverid);
+                    break;
+                case SYNC_FETCH:
+                    array_push($collection["fetchids"], $serverid);
                     break;
                 }
                 
@@ -591,7 +596,7 @@ function HandleSync($backend, $protocolversion) {
                     $exporter = $backend->GetExporter($collection["collectionid"]);
                     
                     $filtertype = isset($collection["filtertype"]) ? $collection["filtertype"] : false;
-                    $exporter->Config($importer, $collection["class"], $filtertype, $collection["syncstate"], 0);
+                    $exporter->Config($importer, $collection["class"], $filtertype, $collection["syncstate"], 0, $collection["truncation"]);
 
                     $changecount = $exporter->GetChangeCount();
 
@@ -619,8 +624,22 @@ function HandleSync($backend, $protocolversion) {
                             
                     }
 
+                    foreach($collection["fetchids"] as $id) {
+                        $data = $backend->Fetch($collection["collectionid"], $id);
+                        if($data !== false) {
+                            $encoder->startTag(SYNC_ADD);
+                            $encoder->startTag(SYNC_SERVERENTRYID);
+                            $encoder->content($id);
+                            $encoder->endTag();
+                            $encoder->startTag(SYNC_DATA);
+                            $data->encode($encoder);
+                            $encoder->endTag();
+                            $encoder->endTag();
+                        }
+                    }
                     $encoder->endTag();
                 }
+                
 
                 $encoder->endTag();
 
@@ -729,7 +748,7 @@ function HandleGetItemEstimate($backend, $protocolversion) {
                     $syncstate = $statemachine->getSyncState($collection["synckey"]);
                     
                     $exporter = $backend->GetExporter($collection["collectionid"]);
-                    $exporter->Config($importer, $collection["class"], $collection["filtertype"], $syncstate, 0);
+                    $exporter->Config($importer, $collection["class"], $collection["filtertype"], $syncstate, 0, 0);
                     
                     $encoder->content($exporter->GetChangeCount());
                     
@@ -805,7 +824,7 @@ function HandlePing($backend, $devid) {
                 $exporter = $backend->GetExporter($collection["serverid"]);
                 $state = "";
                 $importer = false;
-                $exporter->Config($importer, false, false, $state, BACKEND_DISCARD_DATA);
+                $exporter->Config($importer, false, false, $state, BACKEND_DISCARD_DATA, 0);
                 while(is_array($exporter->Synchronize()));
                 $state = $exporter->GetState();
                 $collection["state"] = $state;
@@ -837,7 +856,7 @@ function HandlePing($backend, $devid) {
             $exporter = $backend->GetExporter($collection["serverid"]);
             $state = $collection["state"];
             $importer = false;
-            $ret = $exporter->Config($importer, false, false, $state, BACKEND_DISCARD_DATA);
+            $ret = $exporter->Config($importer, false, false, $state, BACKEND_DISCARD_DATA, 0);
             
             $changecount = $exporter->GetChangeCount();
 

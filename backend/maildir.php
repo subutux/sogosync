@@ -265,8 +265,14 @@ class BackendMaildir extends BackendDiff {
      * Note that mixing item types is illegal and will be blocked by the engine; ie returning an Email object in a 
      * Tasks folder will not do anything. The SyncXXX objects should be filled with as much information as possible, 
      * but at least the subject, body, to, from, etc.
+     *
+     * Truncsize is the size of the body that must be returned. If the message is under this size, bodytruncated should
+     * be 0 and body should contain the entire body. If the body is over $truncsize in bytes, then bodytruncated should
+     * be 1 and the body should be truncated to $truncsize bytes. 
+     *
+     * Bodysize should always be the original body size.
      */
-    function GetMessage($folderid, $id) {
+    function GetMessage($folderid, $id, $truncsize) {
         if($folderid != 'root')
             return false;
             
@@ -284,7 +290,7 @@ class BackendMaildir extends BackendDiff {
 
         $output->body = str_replace("\n", "\r\n", $this->getBody($message));
         $output->bodysize = strlen($output->body);
-        $output->bodytruncated = 0;
+        $output->bodytruncated = 0; // We don't implement truncation in this backend
         $output->datereceived = $this->parseReceivedDate($message->headers["received"][0]);
         $output->displayto = $message->headers["to"];
         $output->importance = $message->headers["x-priority"];
