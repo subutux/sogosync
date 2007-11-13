@@ -209,7 +209,7 @@ class BackendIMAP extends BackendDiff {
         
         $messages = array();
     	$this->imap_reopenFolder($folderid, true);
-    	$overviews = imap_fetch_overview($this->_mbox, "1:*");
+    	$overviews = @imap_fetch_overview($this->_mbox, "1:*");
     
     	if (!$overviews) {
             debugLog("IMAP-GetMessageList: Failed to retrieve overview");
