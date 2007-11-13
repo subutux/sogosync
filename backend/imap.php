@@ -439,14 +439,15 @@ class BackendIMAP extends BackendDiff {
 
     	if ($stat) {        
 	    	$this->imap_reopenFolder($folderid);
-	    	$mail = imap_fetchheader($this->_mbox, $id, FT_UID) . imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
-		   
+	    	$mail = imap_fetchheader($this->_mbox, $id, FT_PREFETCHTEXT | FT_UID) . imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
+
 	    	$mobj = new Mail_mimeDecode($mail);
 	    	$message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $mail, 'crlf' => "\n", 'charset' => 'utf-8'));
-					
+
     		$output = new SyncMail();
 	
     		$body = str_replace("\n", "\r\n", $this->getBody($message));
+
     		if(strlen($body) > $truncsize) {
     		    $output->body = substr($body, 0, $truncsize);
     		    $output->bodytruncated = 1;
@@ -454,7 +455,7 @@ class BackendIMAP extends BackendDiff {
                 $output->body = $body;
                 $output->bodytruncated = 0;
             }
-            
+
 	    	$output->bodysize = strlen($body);
 	    	$output->datereceived = strtotime($message->headers["date"]);
 	    	$output->displayto = $message->headers["to"];
