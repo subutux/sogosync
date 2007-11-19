@@ -468,7 +468,7 @@ class ImportContentsChangesICS extends MAPIMapping {
     function Config($state, $flags) {
         $stream = mapi_stream_create();
         if(strlen($state) == 0) {
-            $state = bin2hex("0000000000000000");
+            $state = hex2bin("0000000000000000");
         }
 
         mapi_stream_write($stream, $state);
