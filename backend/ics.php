@@ -63,7 +63,6 @@ class MAPIMapping {
                             "assistantname" => PR_ASSISTANT,
                             "assistnamephonenumber" => PR_ASSISTANT_TELEPHONE_NUMBER,
                             "birthday" => PR_BIRTHDAY,
-                            "body" => PR_BODY,
                             "business2phonenumber" => PR_BUSINESS2_TELEPHONE_NUMBER,
                             "businesscity" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8046",
                             "businesscountry" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8049",
@@ -233,36 +232,26 @@ class MAPIMapping {
             // Get the MAPI property we need to be reading
             $mapiprop = $this->_getPropIDFromString($mapipropstring);
             
-            if ($mapiprop == PR_BODY) {
-                // special handling for PR_BODY
-                $message->$asprop = str_replace("\n","\r\n", w2u(str_replace("\r","",mapi_openproperty($mapimessage, PR_BODY))));
-                if(strlen($message->$asprop) > 0) {
-                    $message->bodytruncated = 0;
-                    $message->bodysize = strlen($message->body);
-                }
-            } else {
-                // Normal property
-                $prop = mapi_getprops($mapimessage, array($mapiprop));
+            $prop = mapi_getprops($mapimessage, array($mapiprop));
 
-                if(isset($prop[$mapiprop])) {
-                    if(mapi_prop_type($mapiprop) == PT_BOOLEAN) {
-                        // Force to actual '0' or '1'
-                        if($prop[$mapiprop])
-                            $message->$asprop = 1;
+            if(isset($prop[$mapiprop])) {
+                if(mapi_prop_type($mapiprop) == PT_BOOLEAN) {
+                    // Force to actual '0' or '1'
+                    if($prop[$mapiprop])
+                        $message->$asprop = 1;
+                    else
+                        $message->$asprop = 0;
+                } else {
+                    // Special handling for PR_MESSAGE_FLAGS
+                    if($mapiprop == PR_MESSAGE_FLAGS)
+                        $message->$asprop = $prop[$mapiprop] & 1; // only look at 'read' flag
+                    else if(is_array($prop[$mapiprop]))
+                        $message->$asprop = array_map("w2u", $prop[$mapiprop]);
+                    else {
+                        if(mapi_prop_type($mapiprop) != PT_BINARY && mapi_prop_type($mapiprop) != PT_MV_BINARY)
+                            $message->$asprop = w2u($prop[$mapiprop]);
                         else
-                            $message->$asprop = 0;
-                    } else {
-                        // Special handling for PR_MESSAGE_FLAGS
-                        if($mapiprop == PR_MESSAGE_FLAGS)
-                            $message->$asprop = $prop[$mapiprop] & 1; // only look at 'read' flag
-                        else if(is_array($prop[$mapiprop]))
-                            $message->$asprop = array_map("w2u", $prop[$mapiprop]);
-                        else {
-                            if(mapi_prop_type($mapiprop) != PT_BINARY && mapi_prop_type($mapiprop) != PT_MV_BINARY)
-                                $message->$asprop = w2u($prop[$mapiprop]);
-                            else
-                                $message->$asprop = $prop[$mapiprop];
-                        }
+                            $message->$asprop = $prop[$mapiprop];
                     }
                 }
             }
@@ -1174,11 +1163,16 @@ class PHPContentsImportProxy extends MAPIMapping {
         $messageprops = mapi_getprops($mapimessage, array(PR_SENT_REPRESENTING_NAME, PR_SENT_REPRESENTING_ENTRYID, PR_SOURCE_KEY));
 
         // Override 'body' for truncation
-        if(strlen($message->body) > $truncsize) {
-            $message->body = substr($message->body, 0, $truncsize);
+        $body = mapi_openproperty($mapimessage, PR_BODY);
+        if(strlen($body) > $truncsize) {
+            $body = substr($message->body, 0, $truncsize);
             $message->bodytruncated = 1;
+        } else {
+            $message->bodytruncated = 0;
         }
-
+        
+        $message->body = str_replace("\n","\r\n", w2u(str_replace("\r","",$body)));
+        
         if(isset($messageprops[PR_SOURCE_KEY]))
             $sourcekey = $messageprops[PR_SOURCE_KEY];
         else
