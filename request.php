@@ -573,7 +573,7 @@ function HandleSync($backend, $protocolversion) {
                 $encoder->endTag();
                 
                 // Output server IDs for new items we received from the PDA
-                if(isset($collection["clientids"])) {
+                if(isset($collection["clientids"]) || count($collection["fetchids"]) > 0) {
                     $encoder->startTag(SYNC_REPLIES);
                     foreach($collection["clientids"] as $clientid => $serverid) {
                         $encoder->startTag(SYNC_ADD);
@@ -587,6 +587,24 @@ function HandleSync($backend, $protocolversion) {
                         $encoder->content(1);
                         $encoder->endTag();
                         $encoder->endTag();
+                    }
+                    foreach($collection["fetchids"] as $id) {
+                        $data = $backend->Fetch($collection["collectionid"], $id);
+                        if($data !== false) {
+                            $encoder->startTag(SYNC_FETCH);
+                            $encoder->startTag(SYNC_SERVERENTRYID);
+                            $encoder->content($id);
+                            $encoder->endTag();
+                            $encoder->startTag(SYNC_ERROR);
+                            $encoder->content(1);
+                            $encoder->endTag();
+                            $encoder->startTag(SYNC_DATA);
+                            $data->encode($encoder);
+                            $encoder->endTag();
+                            $encoder->endTag();
+                        } else {
+                            debugLog("unable to fetch $id");
+                        }
                     }
                     $encoder->endTag();
                 }    
@@ -623,23 +641,8 @@ function HandleSync($backend, $protocolversion) {
                             break;
                             
                     }
-
-                    foreach($collection["fetchids"] as $id) {
-                        $data = $backend->Fetch($collection["collectionid"], $id);
-                        if($data !== false) {
-                            $encoder->startTag(SYNC_ADD);
-                            $encoder->startTag(SYNC_SERVERENTRYID);
-                            $encoder->content($id);
-                            $encoder->endTag();
-                            $encoder->startTag(SYNC_DATA);
-                            $data->encode($encoder);
-                            $encoder->endTag();
-                            $encoder->endTag();
-                        }
-                    }
                     $encoder->endTag();
                 }
-                
 
                 $encoder->endTag();
 
