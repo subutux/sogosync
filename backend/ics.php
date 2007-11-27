@@ -134,7 +134,6 @@ class MAPIMapping {
                             // "cc"
                             // "threadtopic" => PR_CONVERSATION_TOPIC,
                             "internetcpid" => PR_INTERNET_CPID,
-                            "body" => PR_BODY,
                             "internetcpid" => PR_INTERNET_CPID,
                             );
                             
@@ -1165,7 +1164,7 @@ class PHPContentsImportProxy extends MAPIMapping {
         // Override 'body' for truncation
         $body = mapi_openproperty($mapimessage, PR_BODY);
         if(strlen($body) > $truncsize) {
-            $body = substr($message->body, 0, $truncsize);
+            $body = substr($body, 0, $truncsize);
             $message->bodytruncated = 1;
         } else {
             $message->bodytruncated = 0;
