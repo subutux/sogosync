@@ -773,7 +773,7 @@ class ImportContentsChangesICS extends MAPIMapping {
             
             foreach($appointment->attendees as $attendee) {
                 $recip = array();
-                $recip[PR_DISPLAY_NAME] = $attendee->name;
+                $recip[PR_DISPLAY_NAME] = u2w($attendee->name);
                 $recip[PR_EMAIL_ADDRESS] = $attendee->email;
                 $recip[PR_ADDRTYPE] = "SMTP";
                 $recip[PR_RECIPIENT_TYPE] = MAPI_TO;
@@ -1123,7 +1123,7 @@ class PHPContentsImportProxy extends MAPIMapping {
         foreach($rows as $row) {
             $attendee = new SyncAttendee();
             
-            $attendee->name = $row[PR_DISPLAY_NAME];
+            $attendee->name = w2u($row[PR_DISPLAY_NAME]);
             if(isset($row[PR_SMTP_ADDRESS]))
                 $attendee->email = $row[PR_SMTP_ADDRESS];
             else
