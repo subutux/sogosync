@@ -949,6 +949,10 @@ class PHPContentsImportProxy extends MAPIMapping {
 
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_contactmapping);
 
+	if(!isset($message->lastname) || strlen($message->lastname) == 0) {
+		$message->lastname = $message->fileas;
+	}
+
         return $message;
     } 
     
