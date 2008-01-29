@@ -2068,15 +2068,18 @@ class BackendICS {
             debugLog("Attempt to response to meeting request that we organized");
             return false;
         }
-            
+
         // Process the meeting response. We don't have to send the actual meeting response
         // e-mail, because the device will send it itself.
         switch($response) {
-            case 1:
+            case 1: 	// accept
             default:
-                $entryid = $meetingrequest->doAccept(false, false, false);
+           		$entryid = $meetingrequest->doAccept(false, false, $meetingrequest->isInCalendar());
                 break;
-            case 2:
+            case 2:		// tentative
+                $meetingrequest->doAccept(true, false, $meetingrequest->isInCalendar());
+                break;
+            case 3:		// decline
                 $meetingrequest->doDecline(false);
                 break;
         }        
@@ -2084,7 +2087,7 @@ class BackendICS {
         // Update F/B
         $root = mapi_msgstore_openentry($this->_defaultstore);
         $rootprops = mapi_getprops($root, array(PR_IPM_APPOINTMENT_ENTRYID));
-        $calendar = mapi_msgstore_openentry($this->defaultstore, $rootprops[PR_IPM_APPOINTMENT_ENTRYID]);
+        $calendar = mapi_msgstore_openentry($this->_defaultstore, $rootprops[PR_IPM_APPOINTMENT_ENTRYID]);
         $storeprops = mapi_getprops($this->_defaultstore, array(PR_USER_ENTRYID));
         
         $pub = new FreeBusyPublish($this->_session, $this->_defaultstore, $calendar, $storeprops[PR_USER_ENTRYID]);
