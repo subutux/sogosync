@@ -1120,10 +1120,10 @@ function HandleMeetingResponse($backend, $protocolversion) {
 
     foreach($requests as $req) {
         $calendarid = "";
-        $ok = $backend->MeetingResponse($req["requestid"], $req["folderid"], $req["response"], $req["calendarid"]);
+        $ok = $backend->MeetingResponse($req["requestid"], $req["folderid"], $req["response"], $calendarid);
         $encoder->startTag(SYNC_MEETINGRESPONSE_RESULT);
             $encoder->startTag(SYNC_MEETINGRESPONSE_REQUESTID);
-                $encoder->content($requestid);
+                $encoder->content($req["requestid"]);
             $encoder->endTag();
             
             $encoder->startTag(SYNC_MEETINGRESPONSE_ERROR);
