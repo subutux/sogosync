@@ -402,7 +402,7 @@ class Mail_mimeDecode {
     function _boundarySplit($input, $boundary)
     {
         $tmp = explode('--'.$boundary, $input);
-
+		$parts = array();
         for ($i=1; $i<count($tmp)-1; $i++) {
             $parts[] = $tmp[$i];
         }
