@@ -37,7 +37,7 @@ class BackendIMAP extends BackendDiff {
     	}
 				
         // open the IMAP-mailbox 
-    	$this->_mbox = imap_open($this->_server , $username, $password, OP_HALFOPEN);
+    	$this->_mbox = @imap_open($this->_server , $username, $password, OP_HALFOPEN);
     	$this->_mboxFolder = "";
     		
         if ($this->_mbox) {
@@ -56,8 +56,8 @@ class BackendIMAP extends BackendDiff {
      */
     function Logoff() {
     	if ($this->_mbox) {
-		    imap_close($this->_mbox);
-            debugLog("IMAP connection closed");
+		    @imap_close($this->_mbox);
+            debugLog("IMAP connection closed ". imap_last_error());
         }
     }
 
@@ -215,21 +215,30 @@ class BackendIMAP extends BackendDiff {
             debugLog("IMAP-GetMessageList: Failed to retrieve overview");
         } else {
             foreach($overviews as $overview) {
-			    // message is out of range for cutoffdate, ignore it
-			    if(strtotime($overview->date) < $cutoffdate) continue;
-			
-			    // cut of deleted messages
-			    if ($overview->deleted) continue;
+				$date = "";            	
+				$vars = get_object_vars($overview);
+				if (array_key_exists( "date", $vars)) {           	
+				    // message is out of range for cutoffdate, ignore it
+				    if(strtotime($overview->date) < $cutoffdate) continue;
+				    $date = $overview->date;
+            	}
 
-    			$message = array();
-                $message["mod"] = $overview->date;
-                $message["id"] = $overview->uid;
-                // 'seen' aka 'read' is the only flag we want to know about
-                $message["flags"] = 0;
-				
-                if($overview->seen)
-				    $message["flags"] = 1; 
-                array_push($messages, $message);
+			    // cut of deleted messages
+				if (array_key_exists( "deleted", $vars) && $overview->deleted)            	
+				    continue;
+
+				if (array_key_exists( "uid", $vars)) {           	
+	    			$message = array();
+	                $message["mod"] = $date;
+	                $message["id"] = $overview->uid;
+	                // 'seen' aka 'read' is the only flag we want to know about
+	                $message["flags"] = 0;
+					
+	                if(array_key_exists( "seen", $vars) && $overview->seen)
+					    $message["flags"] = 1; 
+					    
+	                array_push($messages, $message);
+				}
             }
 		}
         return $messages;
@@ -417,8 +426,9 @@ class BackendIMAP extends BackendDiff {
 
     	$mobj = new Mail_mimeDecode($mail);
     	$message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $mail, 'crlf' => "\n", 'charset' => 'utf-8'));
-
-    	print $message->parts[$part]->body;
+    	
+		if (isset($message->parts[$part]->body))
+    		print $message->parts[$part]->body;
 				
         return true;
     }
@@ -441,14 +451,22 @@ class BackendIMAP extends BackendDiff {
             debugLog("IMAP-StatMessage: Failed to retrieve overview");
 			return false;
     	} 
+
     	else {
+			// check if variables for this overview object are available    		
+			$vars = get_object_vars($overview[0]);
+
+			// without uid it's not a valid message
+			if (! array_key_exists( "uid", $vars)) return false;
+			           	
+	                
 		    $entry = array();
-		    $entry["mod"] = $overview[0]->date;
+		    $entry["mod"] = (array_key_exists( "date", $vars)) ? $overview[0]->date : "";
 		    $entry["id"] = $overview[0]->uid;
 		    // 'seen' aka 'read' is the only flag we want to know about
 		    $entry["flags"] = 0;
 			
-		    if ($overview[0]->seen)
+		    if(array_key_exists( "seen", $vars) && $overview[0]->seen)
                 $entry["flags"] = 1;
 
     		//advanced debugging
@@ -490,15 +508,15 @@ class BackendIMAP extends BackendDiff {
             }
 
 	    	$output->bodysize = strlen($body);
-	    	$output->datereceived = strtotime($message->headers["date"]);
-	    	$output->displayto = $message->headers["to"];
+	    	$output->datereceived = isset($message->headers["date"]) ? strtotime($message->headers["date"]) : null;
+	    	$output->displayto = isset($message->headers["to"]) ? $message->headers["to"] : null;
 	    	$output->importance = isset($message->headers["x-priority"]) ? preg_replace("/\D+/", "", $message->headers["x-priority"]) : null;
 	    	$output->messageclass = "IPM.Note";
-	    	$output->subject = $message->headers["subject"];
+	    	$output->subject = isset($message->headers["subject"]) ? $message->headers["subject"] : "";
 	    	$output->read = $stat["flags"];
-	    	$output->to = $message->headers["to"];
+	    	$output->to = isset($message->headers["to"]) ? $message->headers["to"] : null;
 	    	$output->cc = isset($message->headers["cc"]) ? $message->headers["cc"] : null;
-	    	$output->from = $message->headers["from"];
+	    	$output->from = isset($message->headers["from"]) ? $message->headers["from"] : null;
 	    	$output->reply_to = isset($message->headers["reply-to"]) ? $message->headers["reply-to"] : null;
 	    	
 	    	// Attachments are only searched in the top-level part
@@ -507,7 +525,9 @@ class BackendIMAP extends BackendDiff {
                 foreach($message->parts as $part) {
                     if(isset($part->disposition) && $part->disposition == "attachment") {
                         $attachment = new SyncAttachment();
-                        $attachment->attsize = strlen($part->body);
+                        
+                        if (isset($part->body))
+                        	$attachment->attsize = strlen($part->body);
                         
                         if(isset($part->d_parameters['filename']))
                             $attname = $part->d_parameters['filename'];
@@ -654,10 +674,11 @@ class BackendIMAP extends BackendDiff {
     // Get all parts in the message with specified type and concatenate them together, unless the
     // Content-Disposition is 'attachment', in which case the text is apparently an attachment
     function getBodyRecursive($message, $subtype, &$body) {
+		if(!isset($message->ctype_primary)) return;
         if(strcasecmp($message->ctype_primary,"text")==0 && strcasecmp($message->ctype_secondary,$subtype)==0 && isset($message->body))
             $body .= $message->body;
         
-        if(strcasecmp($message->ctype_primary,"multipart")==0) {
+        if(strcasecmp($message->ctype_primary,"multipart")==0 && isset($message->parts) && is_array($message->parts)) {
             foreach($message->parts as $part) {
                 if(!isset($part->disposition) || strcasecmp($part->disposition,"attachment"))  {
                     $this->getBodyRecursive($part, $subtype, $body);
