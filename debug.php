@@ -31,11 +31,8 @@ function debugLog($message) {
     @fclose($fp);
 }
 
-function zarafa_error_handler($errno, $errstr, $errfile, $errline, $errcontext)
-{	
-	$error = array("msg"=>$errstr, "file"=>$errfile.":".$errline);
-
-	debugLog("$errfile:$errline $errstr");
+function zarafa_error_handler($errno, $errstr, $errfile, $errline, $errcontext) {	
+	debugLog("$errfile:$errline $errstr ($errno)");
 }
 
 error_reporting(E_ALL);
