@@ -34,7 +34,7 @@
     $BACKEND_PROVIDER = "BackendICS";
 
     // ************************
-    //  BackendMAPI settings
+    //  BackendICS settings
     // ************************
     
     // Defines the server to which we want to connect
@@ -42,7 +42,7 @@
     
     
     // ************************
-    //  BackendICS settings
+    //  BackendIMAP settings
     // ************************
     
     // Defines the server to which we want to connect
@@ -52,6 +52,11 @@
     define('IMAP_PORT', 143);
     // best cross-platform compatibility (see http://php.net/imap_open for options)
     define('IMAP_OPTIONS', '/notls/norsh');
+    // overwrite the "from" header if it isn't set when sending emails
+    // options: 'username'	- the username will be set (usefull if your login is equal to your emailaddress)
+    //		'domain'	- the value of the "domain" field is used
+    //		'@mydomain.com' - the username is used and the given string will be appended
+    define('IMAP_DEFAULTFROM', '');
     
     
     // ************************

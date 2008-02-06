@@ -33,6 +33,7 @@ class BackendIMAP extends BackendDiff {
  
         // cut-off domain name
     	if (strpos($username, "\\") !== false) {
+    		$domain = substr($username, 0, strrpos($username, "\\"));
     		$username = substr($username, strrpos($username, "\\")+1);
     	}
 				
@@ -42,6 +43,8 @@ class BackendIMAP extends BackendDiff {
     		
         if ($this->_mbox) {
         	debugLog("IMAP connection opened sucessfully ");
+        	$this->_username = $username;
+        	$this->_domain = $domain;
         	// set serverdelimiter
  	    	$this->_serverdelimiter = $this->getServerDelimiter();
         	return true;
@@ -122,6 +125,13 @@ class BackendIMAP extends BackendDiff {
             }
             if ($forward && $k == "content-transfer-encoding") {
 			    $forward_h_cte = $v;
+            }
+            
+            // check if "from"-header is set
+            if ($k == "from" && ! trim($v) && IMAP_DEFAULTFROM) {
+            	if      (IMAP_DEFAULTFROM == 'username') $v = " ". $this->_username;
+            	else if (IMAP_DEFAULTFROM == 'domain')   $v = " ". $this->_domain;
+            	else $v = " ". $this->_username . IMAP_DEFAULTFROM;
             }
 
             // all other headers stay 							
