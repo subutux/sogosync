@@ -797,6 +797,17 @@ class ImportContentsChangesICS extends MAPIMapping {
         
         // Set display name and subject to same value as fileas
         mapi_setprops($mapimessage, array(PR_DISPLAY_NAME => "" . u2w($contact->fileas), PR_SUBJECT => "" . u2w($contact->fileas)));
+        
+        $nremails = array();
+        if (isset($contact->email1address)) $nremails[] = 0;
+        if (isset($contact->email2address)) $nremails[] = 1;
+        if (isset($contact->email3address)) $nremails[] = 2;
+        
+        //pda multiple e-mail addresses bug fix for the contact        
+        if (!empty($nremails)) 
+        	mapi_setprops($mapimessage, array(
+        		$this->_getPropIDFromString("PT_MV_LONG:{00062004-0000-0000-C000-000000000046}:0x8028") => $nremails,
+        	));
     }
     
     function _setTask($mapimessage, $task) {
