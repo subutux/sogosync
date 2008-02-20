@@ -63,6 +63,7 @@ class MAPIMapping {
                             "assistantname" => PR_ASSISTANT,
                             "assistnamephonenumber" => PR_ASSISTANT_TELEPHONE_NUMBER,
                             "birthday" => PR_BIRTHDAY,
+                            "body" => PR_BODY,
                             "business2phonenumber" => PR_BUSINESS2_TELEPHONE_NUMBER,
                             "businesscity" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8046",
                             "businesscountry" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8049",
@@ -108,7 +109,8 @@ class MAPIMapping {
                             "yomicompanyname" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x802e",
                             "yomifirstname" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x802c",
                             "yomilastname" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x802d",
-                            // rtf, picture
+                            "rtf" => PR_RTF_COMPRESSED,
+                            // picture
                             "customerid" => PR_CUSTOMER_ID,
                             "governmentid" => PR_GOVERNMENT_ID_NUMBER,
                             "imaddress" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8062",
@@ -142,7 +144,7 @@ class MAPIMapping {
                             // timezone
                             "alldayevent" => "PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x825",
                             "busystatus" => "PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8205",
-                            // rtf
+                            "rtf" => PR_RTF_COMPRESSED,
                             "dtstamp" => PR_LAST_MODIFICATION_TIME,
                             "endtime" => "PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x820e",
                             "location" => "PT_STRING8:{00062002-0000-0000-C000-000000000046}:0x8208",
@@ -157,7 +159,7 @@ class MAPIMapping {
                             "body" => PR_BODY,
                             "busystatus" => "PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8205",
                             "categories" => "PT_MV_STRING8:{00020329-0000-0000-C000-000000000046}:Keywords", 
-                            // rtf
+                            "rtf" => PR_RTF_COMPRESSED,
                             "dtstamp" => PR_LAST_MODIFICATION_TIME,
                             "endtime" => "PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x820e",
                             "location" => "PT_STRING8:{00062002-0000-0000-C000-000000000046}:0x8208",
@@ -186,7 +188,7 @@ class MAPIMapping {
                             "sensitivity" => PR_SENSITIVITY,
                             "startdate" => "PT_SYSTIME:{00062003-0000-0000-C000-000000000046}:0x8104",
                             "subject" => PR_SUBJECT,
-                            // rtf
+                            "rtf" => PR_RTF_COMPRESSED,
                             );
 
     // Sets the properties in a MAPI object according to an Sync object and a property mapping    
@@ -219,10 +221,14 @@ class MAPIMapping {
                     settype($value, "integer");
                     break;
                 }
+        
+        		// decode base64 value         
+                if($mapiprop == PR_RTF_COMPRESSED) $value = base64_decode($value);
                 
                 mapi_setprops($mapimessage, array($mapiprop => $value));
             }
         }
+                
     }
     
     // Gets the properties from a MAPI object and sets them in the Sync object according to mapping
@@ -244,6 +250,8 @@ class MAPIMapping {
                     // Special handling for PR_MESSAGE_FLAGS
                     if($mapiprop == PR_MESSAGE_FLAGS)
                         $message->$asprop = $prop[$mapiprop] & 1; // only look at 'read' flag
+                    else if($mapiprop == PR_RTF_COMPRESSED) 
+                    	$message->$asprop = base64_decode($prop[$mapiprop]); // send value base64 encoded
                     else if(is_array($prop[$mapiprop]))
                         $message->$asprop = array_map("w2u", $prop[$mapiprop]);
                     else {
