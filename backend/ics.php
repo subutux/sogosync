@@ -1864,11 +1864,13 @@ class BackendICS {
         
         // Loop through subparts. We currently only support single-level
         // multiparts. The PDA currently only does this because you are adding
-        // an attachment and the type will be multipart/mixed.
-        if($message->ctype_primary == "multipart" && $message->ctype_secondary == "mixed") {
+        // an attachment and the type will be multipart/mixed or multipart/alternative.
+        if($message->ctype_primary == "multipart" && ($message->ctype_secondary == "mixed" || $message->ctype_secondary == "alternative")) {
             foreach($message->parts as $part) {
-                if($part->ctype_primary == "text")
-                    $body = u2w($part->body); // assume only one text body
+                if($part->ctype_primary == "text") {
+                	if($part->ctype_secondary == "plain") // discard any other kind of text, like html
+                    	$body = u2w($part->body); // assume only one text body
+                }
                 else {
                     // attachment
                     $attach = mapi_message_createattach($mapimessage);
