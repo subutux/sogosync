@@ -703,8 +703,8 @@ class ImportContentsChangesICS extends MAPIMapping {
             $recur["endocc"] = $endtime["tm_hour"] * 60 + $endtime["tm_min"];
 
             // "start" and "end" are in GMT when passing to class.recurrence
-            $recur["start"] = $this->_getGMTTimeByTz($this->_getDayStartOfTimestamp($localstart), $tz);
-            $recur["end"] = 0x7fffffff;
+            $recur["start"] = $this->_getDayStartOfTimestamp($this->_getGMTTimeByTz($localstart, $tz));
+            $recur["end"] = $this->_getDayStartOfTimestamp(0x7fffffff); // Maximum GMT value for end by default
             
             if(isset($appointment->recurrence->until)) {
                 $recur["term"] = 0x21;
