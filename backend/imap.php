@@ -111,6 +111,8 @@ class BackendIMAP extends BackendDiff {
         $headers = "";
         $forward_h_ct = "";
         $forward_h_cte = "";
+        
+        $use_orgbody = false;
  				
         // clean up the transmitted headers
         // remove default headers because we are using imap_mail
@@ -127,6 +129,11 @@ class BackendIMAP extends BackendDiff {
 			    $forward_h_cte = $v;
             }
             
+            // if the message is a multipart message, then we should use the sent body 
+            if (!$forward && $k == "content-type" && preg_match("/multipart/i", $v)) {
+			    $use_orgbody = true;
+            }
+            
             // check if "from"-header is set
             if ($k == "from" && ! trim($v) && IMAP_DEFAULTFROM) {
             	if      (IMAP_DEFAULTFROM == 'username') $v = " ". $this->_username;
@@ -138,8 +145,13 @@ class BackendIMAP extends BackendDiff {
             if ($headers) $headers .= "\n";
             $headers .= ucfirst($k) . ":". $v;
         }
-			
-        $body = $this->getBody($message);
+		
+		// if this is a multipart message with a boundary, we must use the original body
+		if ($use_orgbody) {
+			list(,$body) = $mobj->_splitBodyHeader($rfc822);
+		}	
+		else
+        	$body = $this->getBody($message);
 
         // reply				
         if (isset($reply) && isset($parent) &&  $reply && $parent) {
