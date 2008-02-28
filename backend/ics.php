@@ -1541,7 +1541,13 @@ class ExportChangesICS  {
             break;
         }
         
-        $ret = mapi_exportchanges_config($this->exporter, $stream, $exporterflags, $mapiimporter, $restriction, false, false, 1);
+        if($this->_folderid) {
+            $includeprops = false; 
+        } else {
+            $includeprops = array(PR_SOURCE_KEY, PR_DISPLAY_NAME);
+        }
+        
+        $ret = mapi_exportchanges_config($this->exporter, $stream, $exporterflags, $mapiimporter, $restriction, $includeprops, false, 1);
         
         if($ret) 
             debugLog("Exporter configured successfully. " . mapi_exportchanges_getchangecount($this->exporter) . " changes ready to sync.");
