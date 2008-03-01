@@ -68,7 +68,6 @@
     // **********************
     //  BackendVCDir settings
     // **********************
-    define('VCARDDIR_BASE', '/home');
-    define('VCARDDIR_SUBDIR', '.kde/share/apps/kabc/stdvcf');
+    define('VCARDDIR_DIR', '/home/%u/.kde/share/apps/kabc/stdvcf');
     
 ?>
