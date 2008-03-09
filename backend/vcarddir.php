@@ -386,10 +386,27 @@ class BackendVCDir extends BackendDiff {
 // not supported: anniversary, assistantname, assistnamephonenumber, children, department, officelocation, radiophonenumber, spouse, rtf
 
 		if(!$id){
-			$id = $message->fileas.'.vcf';
+			if(!empty($message->fileas)){
+				$name = $message->fileas;
+			}elseif(!empty($message->lastname)){
+				$name = $name = $message->lastname;
+			}elseif(!empty($message->firstname)){
+				$name = $name = $message->firstname;
+			}elseif(!empty($message->companyname)){
+				$name = $name = $message->companyname;
+			}else{
+				$name = 'unknown';
+			}
+			$name = preg_replace('/[^a-z0-9 _-]/i', '', $name);
+			$id = $name.'.vcf';
+			$i = 0;
+			while(file_exists($this->getPath().'/'.$id)){
+				$i++;
+				$id = $name.$i.'.vcf';
+			}
 		}
 		file_put_contents($this->getPath().'/'.$id, $data);
-		return $id;
+		return $this->StatMessage($folderid, $id);
 	}
 	
 	function MoveMessage($folderid, $id, $newfolderid) {

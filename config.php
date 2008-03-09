@@ -21,9 +21,7 @@
     // Define the include paths
     set_include_path(BASE_PATH. "include/" . PATH_SEPARATOR .
                      BASE_PATH. PATH_SEPARATOR .
-                     "/usr/share/php/" . PATH_SEPARATOR .
-                     "/usr/share/php5/" . PATH_SEPARATOR .
-                     "/usr/share/pear/");
+                     get_include_path());
 
     define('STATE_DIR', 'state');
 

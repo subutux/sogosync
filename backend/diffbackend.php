@@ -184,7 +184,7 @@ class ImportContentsChangesDiff extends DiffState {
         $this->_folderid = $folderid;
     }
     
-    function Config($state, $flags) {
+    function Config($state, $flags = 0) {
         $this->_syncstate = unserialize($state);
         $this->_flags = $flags;
     }

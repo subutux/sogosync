@@ -461,7 +461,7 @@ class ImportContentsChangesICS extends MAPIMapping {
         $this->importer = mapi_openproperty($folder, PR_COLLECTOR, IID_IExchangeImportContentsChanges, 0 , 0);
     }
     
-    function Config($state, $flags) {
+    function Config($state, $flags = 0) {
         $stream = mapi_stream_create();
         if(strlen($state) == 0) {
             $state = hex2bin("0000000000000000");
@@ -899,7 +899,7 @@ class PHPContentsImportProxy extends MAPIMapping {
         $this->_truncation = $truncation;
     }
     
-    function Config($stream, $flags) {
+    function Config($stream, $flags = 0) {
     }
     
     function GetLastError($hresult, $ulflags, &$lpmapierror) {}
@@ -1361,7 +1361,7 @@ class PHPHierarchyImportProxy {
         $this->_store = $store;
     }
     
-    function Config($stream, $flags) {
+    function Config($stream, $flags = 0) {
     }
     
     function GetLastError($hresult, $ulflags, &$lpmapierror) {}
