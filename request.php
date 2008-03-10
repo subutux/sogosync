@@ -90,7 +90,7 @@ function HandleMoveItems($backend, $protocolversion) {
         $encoder->endTag();
 
         $encoder->startTag(SYNC_MOVE_DSTMSGID);
-        $encoder->content($move["srcmsgid"]);
+        $encoder->content(is_string($result)?$result:$move["srcmsgid"]);
         $encoder->endTag();
         $encoder->endTag();
     }
@@ -186,6 +186,16 @@ function HandleFolderSync($backend, $protocolversion) {
     if(!$decoder->getElementEndTag())
         return false;
     
+    // First, get the syncstate that is associated with this synckey
+    $statemachine = new StateMachine();
+    
+    // The state machine will discard any sync states before this one, as they are no
+    // longer required
+    $syncstate = $statemachine->getSyncState($synckey);
+    
+    // We will be saving the sync state under 'newsynckey'
+    $newsynckey = $statemachine->getNewSyncKey($synckey);
+    
     if($decoder->getElementStartTag(SYNC_FOLDERHIERARCHY_CHANGES)) {
         // Ignore <Count> if present
         if($decoder->getElementStartTag(SYNC_FOLDERHIERARCHY_COUNT)) {
@@ -204,14 +214,19 @@ function HandleFolderSync($backend, $protocolversion) {
             $folder = new SyncFolder();
             if(!$folder->decode($decoder))
                 break;
-                        
+
+            // Configure importer with last state
+            $importer = $backend->GetHierarchyImporter();
+            $importer->Config($syncstate);
+
+
             switch($element[EN_TAG]) {
                 case SYNC_ADD:
                 case SYNC_MODIFY:
-                    $serverid = $backend->folderimporter->ImportFolderChange($folder);
+                    $serverid = $importer->ImportFolderChange($folder);
                     break;
                 case SYNC_REMOVE:
-                    $serverid = $backend->folderimporter->ImportFolderDeletion($folder);
+                    $serverid = $importer->ImportFolderDeletion($folder);
                     break;
             }
             
@@ -228,16 +243,6 @@ function HandleFolderSync($backend, $protocolversion) {
 
     // We have processed incoming foldersync requests, now send the PIM
     // our changes
-    
-    // First, get the syncstate that is associated with this synckey
-    $statemachine = new StateMachine();
-    
-    // The state machine will discard any sync states before this one, as they are no
-    // longer required
-    $syncstate = $statemachine->getSyncState($synckey);
-    
-    // We will be saving the sync state under 'newsynckey'
-    $newsynckey = $statemachine->getNewSyncKey($synckey);
     
     // The MemImporter caches all imports in-memory, so we can send a change count
     // before sending the actual data. As the amount of data done in this operation

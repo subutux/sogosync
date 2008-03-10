@@ -15,6 +15,7 @@
 
 ob_start(false, 1048576);
 
+include_once('zpushdefs.php');
 include_once("config.php");
 include_once("proto.php");
 include_once("request.php");
@@ -37,6 +38,16 @@ if(!isset($_SERVER['PHP_AUTH_PW'])) {
     print("Access denied. Please send authorisation information");
     return;
 }
+
+$pos = strrpos($_SERVER['PHP_AUTH_USER'], '\\');
+if($pos === false){
+    $auth_user = $_SERVER['PHP_AUTH_USER'];
+    $auth_domain = '';
+}else{
+    $auth_user = substr($_SERVER['PHP_AUTH_USER'],0,$pos);
+    $auth_domain = substr($_SERVER['PHP_AUTH_USER'],$pos+1);
+}
+$auth_pw = $_SERVER['PHP_AUTH_PW'];
 
 // Parse the standard GET parameters        
 if(isset($_GET["Cmd"]))
@@ -84,7 +95,7 @@ while($entry = readdir($backend_dir)) {
 // Initialize our backend
 $backend = new $BACKEND_PROVIDER();
 
-if($backend->Logon($_SERVER['PHP_AUTH_USER'], isset($_SERVER['PHP_AUTH_DOMAIN']) ? $_SERVER['PHP_AUTH_DOMAIN'] : "", $_SERVER['PHP_AUTH_PW']) == false) {
+if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false) {
     header("HTTP/1.0 401 Unauthorized");
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     print("Access denied. Username or password incorrect.");

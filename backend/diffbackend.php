@@ -208,11 +208,13 @@ class ImportContentsChangesDiff extends DiffState {
                 
         $stat = $this->_backend->ChangeMessage($this->_folderid, $id, $message);
         
+        if(!is_array($stat))
+            return $stat;
+
         // Record the state of the message
-        if($stat) 
-            $this->updateState("change", $stat);
+        $this->updateState("change", $stat);
         
-        return $stat;
+        return $stat["id"];
     }
 
     // Import a deletion. This may conflict if the local object has been modified.
