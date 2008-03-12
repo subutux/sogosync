@@ -30,13 +30,7 @@ class BackendIMAP extends BackendDiff {
 	    $this->_wasteID = false;
 	    $this->_sentID = false;
     	$this->_server = "{" . IMAP_SERVER . ":" . IMAP_PORT . "/imap" . IMAP_OPTIONS . "}";
- 
-        // cut-off domain name
-    	if (strpos($username, "\\") !== false) {
-    		$domain = substr($username, 0, strrpos($username, "\\"));
-    		$username = substr($username, strrpos($username, "\\")+1);
-    	}
-				
+ 				
         // open the IMAP-mailbox 
     	$this->_mbox = @imap_open($this->_server , $username, $password, OP_HALFOPEN);
     	$this->_mboxFolder = "";

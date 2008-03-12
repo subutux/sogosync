@@ -39,13 +39,14 @@ if(!isset($_SERVER['PHP_AUTH_PW'])) {
     return;
 }
 
+// split username & domain if received as one
 $pos = strrpos($_SERVER['PHP_AUTH_USER'], '\\');
 if($pos === false){
     $auth_user = $_SERVER['PHP_AUTH_USER'];
     $auth_domain = '';
 }else{
-    $auth_user = substr($_SERVER['PHP_AUTH_USER'],0,$pos);
-    $auth_domain = substr($_SERVER['PHP_AUTH_USER'],$pos+1);
+    $auth_domain = substr($_SERVER['PHP_AUTH_USER'],0,$pos);
+    $auth_user = substr($_SERVER['PHP_AUTH_USER'],$pos+1);
 }
 $auth_pw = $_SERVER['PHP_AUTH_PW'];
 
