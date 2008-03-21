@@ -223,7 +223,15 @@ class MAPIMapping {
                 }
         
         		// decode base64 value         
-                if($mapiprop == PR_RTF_COMPRESSED) $value = base64_decode($value);
+                if($mapiprop == PR_RTF_COMPRESSED) { 
+                    $value = base64_decode($value);
+                    if(strlen($value) == 0)
+                        continue; // PDA will sometimes give us an empty RTF, which we'll ignore.
+                        
+                    // Note that you can still remove notes because when you remove notes it gives
+                    // a valid compressed RTF with nothing in it.
+                    
+                }
                 
                 mapi_setprops($mapimessage, array($mapiprop => $value));
             }
