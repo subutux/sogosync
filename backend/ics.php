@@ -706,9 +706,10 @@ class ImportContentsChangesICS extends MAPIMapping {
             
             $starttime = $this->gmtime($localstart);
             $endtime = $this->gmtime($localend);
-            
+            $duration = ($localend - $localstart)/60;
+
             $recur["startocc"] = $starttime["tm_hour"] * 60 + $starttime["tm_min"];
-            $recur["endocc"] = $endtime["tm_hour"] * 60 + $endtime["tm_min"];
+            $recur["endocc"] = $recur["startocc"] + $duration; // Note that this may be > 24*60 if multi-day
 
             // "start" and "end" are in GMT when passing to class.recurrence
             $recur["start"] = $this->_getDayStartOfTimestamp($this->_getGMTTimeByTz($localstart, $tz));
@@ -1077,6 +1078,10 @@ class PHPContentsImportProxy extends MAPIMapping {
             case 0x23:
                 // never ends
             }
+
+            // Correct 'alldayevent' because outlook fails to set it on recurring items of 24 hours or longer
+            if($recurrence->recur["endocc"] - $recurrence->recur["startocc"] >= 1440)
+            $message->alldayevent = true;
               
             // Interval is different according to the type/subtype
             switch($recurrence->recur["type"]) {
