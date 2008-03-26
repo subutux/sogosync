@@ -110,6 +110,7 @@ class BackendIMAP extends BackendDiff {
  				
         // clean up the transmitted headers
         // remove default headers because we are using imap_mail
+        $changedfrom = false;
         foreach($message->headers as $k => $v) {
 		    if ($k == "subject" || $k == "to" || $k == "cc" || $k == "bcc") 
 			    continue;
@@ -130,16 +131,24 @@ class BackendIMAP extends BackendDiff {
             
             // check if "from"-header is set
             if ($k == "from" && ! trim($v) && IMAP_DEFAULTFROM) {
-            	if      (IMAP_DEFAULTFROM == 'username') $v = " ". $this->_username;
-            	else if (IMAP_DEFAULTFROM == 'domain')   $v = " ". $this->_domain;
-            	else $v = " ". $this->_username . IMAP_DEFAULTFROM;
+                $changedfrom = true;
+            	if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
+            	else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
+            	else $v = $this->_username . IMAP_DEFAULTFROM;
             }
 
             // all other headers stay 							
             if ($headers) $headers .= "\n";
-            $headers .= ucfirst($k) . ":". $v;
+            $headers .= ucfirst($k) . ": ". $v;
         }
-		
+
+		if(IMAP_DEFAULTFROM && !$changedfrom){
+			if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
+			else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
+			else $v = $this->_username . IMAP_DEFAULTFROM;
+			if ($headers) $headers .= "\n";
+			$headers .= 'From: '.$v;
+		}
 		// if this is a multipart message with a boundary, we must use the original body
 		if ($use_orgbody) {
 			list(,$body) = $mobj->_splitBodyHeader($rfc822);

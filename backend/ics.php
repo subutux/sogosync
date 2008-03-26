@@ -329,16 +329,6 @@ class MAPIMapping {
         return $packed;
     }
     
-    function _getZeroSyncBlob() {
-        $tz = array();
-        
-        $tz["bias"] = $tz["dstendmonth"] = $tz["dstendday"] = $tz["dstendweek"] = $tz["dstendhour"] = $tz["dstendminute"] = $tz["dstendsecond"] = $tz["dstendmillis"] = 0;
-        $tz["stdbias"] = $tz["dststartmonth"] = $tz["dststartday"] = $tz["dststartweek"] = $tz["dststarthour"] = $tz["dststartminute"] = $tz["dststartsecond"] = $tz["dststartmillis"] = 0;
-        $tz["dstbias"] = 0;
-        
-        return $this->_getSyncBlobFromTZ($tz);
-    }
-    
     // Checks the date to see if it is in DST, and returns correct GMT date accordingly
     function _getGMTTimeByTZ($localtime, $tz) {
         if(!isset($tz) || !is_array($tz))
@@ -1253,7 +1243,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             if(isset($recurprops[$timezonetag])) {
                 $tz = $this->_getTZFromMAPIBlob($recurprops[$timezonetag]);
             } else {
-                $tz = $this->_getZeroSyncBlob();
+                $tz = $this->_getGMTTZ();
             }
             
             if($tz) {
