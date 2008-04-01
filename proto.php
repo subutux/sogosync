@@ -311,7 +311,7 @@ class SyncAppointment extends Streamer {
 class SyncRecurrence extends Streamer {
     var $type;
     var $until;
-    var $occurences;
+    var $occurrences;
     var $interval;
     var $dayofweek;
     var $dayofmonth;
