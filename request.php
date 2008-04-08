@@ -26,6 +26,7 @@ include_once("memimporter.php");
 include_once("streamimporter.php");
 include_once("zpushdtd.php");
 include_once("zpushdefs.php");
+include_once("compatibility.php");
 
 function GetObjectClassFromFolderClass($folderclass)
 {
@@ -136,28 +137,31 @@ function HandleNotify($backend, $protocolversion) {
 }
 
 // Handle GetHierarchy method - simply returns current hierarchy of all folders
-function HandleGetHierarchy($backend, $protocolversion) {
+function HandleGetHierarchy($backend, $protocolversion, $devid) {
     global $zpushdtd;
     global $output;
     
     // Input is ignored, no data is sent by the PIM
     $encoder = new WBXMLEncoder($output, $zpushdtd);
-    
+
     $folders = $backend->GetHierarchy();
 
     if(!$folders)
         return false;
 
+	// save folder-ids for fourther syncing 
+	Compatibility::saveFolderData($devid, $folders);
+
     $encoder->StartWBXML();
-        
     $encoder->startTag(SYNC_FOLDERHIERARCHY_FOLDERS);
     
     foreach ($folders as $folder) {
+    	$encoder->startTag(SYNC_FOLDERHIERARCHY_FOLDER);
         $folder->encode($encoder);
+        $encoder->endTag();
     }
     
     $encoder->endTag();
-    
     return true;
 }
 
@@ -307,7 +311,7 @@ function HandleFolderSync($backend, $protocolversion) {
     return true;
 }
 
-function HandleSync($backend, $protocolversion) {
+function HandleSync($backend, $protocolversion, $devid) {
     global $zpushdtd;
     global $input, $output;
 
@@ -349,15 +353,14 @@ function HandleSync($backend, $protocolversion) {
         
         if(!$decoder->getElementEndTag())
             return false;
-            
-        if(!$decoder->getElementStartTag(SYNC_FOLDERID))
-            return false;
-            
-        $collection["collectionid"] = $decoder->getElementContent();
-        
-        if(!$decoder->getElementEndTag())
-            return false;
-            
+              
+		if($decoder->getElementStartTag(SYNC_FOLDERID)) {
+	        $collection["collectionid"] = $decoder->getElementContent();
+	        
+	        if(!$decoder->getElementEndTag())
+	            return false;
+		}
+		            
         if($decoder->getElementStartTag(SYNC_SUPPORTED)) {
             while(1) {
                 $el = $decoder->getElement();
@@ -379,42 +382,51 @@ function HandleSync($backend, $protocolversion) {
         }
         
         if($decoder->getElementStartTag(SYNC_OPTIONS)) {
-            if($decoder->getElementStartTag(SYNC_FILTERTYPE)) {
-                $collection["filtertype"] = $decoder->getElementContent();
-                if(!$decoder->getElementEndTag())
-                    return false;
-            }
-            if($decoder->getElementStartTag(SYNC_TRUNCATION)) {
-                $collection["truncation"] = $decoder->getElementContent();
-                if(!$decoder->getElementEndTag())
-                    return false;
-            }
-            if($decoder->getElementStartTag(SYNC_RTFTRUNCATION)) {
-                $collection["rtftruncation"] = $decoder->getElementContent();
-                if(!$decoder->getElementEndTag())
-                    return false;
-            }
-            
-            if($decoder->getElementStartTag(SYNC_MIMESUPPORT)) {
-                $collection["mimesupport"] = $decoder->getElementContent();
-                if(!$decoder->getElementEndTag())
-                    return false;
-            }
-            
-            if($decoder->getElementStartTag(SYNC_MIMETRUNCATION)) {
-                $collection["mimetruncation"] = $decoder->getElementContent();
-                if(!$decoder->getElementEndTag())
-                    return false;
-            }
-            
-            if($decoder->getElementStartTag(SYNC_CONFLICT)) {
-                $collection["conflict"] = $decoder->getElementContent();
-                if(!$decoder->getElementEndTag())
-                    return false;
-            }
-            
-            if(!$decoder->getElementEndTag())
-                return false;
+			while(1) {        	
+	            if($decoder->getElementStartTag(SYNC_FILTERTYPE)) {
+	                $collection["filtertype"] = $decoder->getElementContent();
+	                if(!$decoder->getElementEndTag())
+	                    return false;
+	            }
+	            if($decoder->getElementStartTag(SYNC_TRUNCATION)) {
+	                $collection["truncation"] = $decoder->getElementContent();
+	                if(!$decoder->getElementEndTag())
+	                    return false;
+	            }
+	            if($decoder->getElementStartTag(SYNC_RTFTRUNCATION)) {
+	                $collection["rtftruncation"] = $decoder->getElementContent();
+	                if(!$decoder->getElementEndTag())
+	                    return false;
+	            }
+	            
+	            if($decoder->getElementStartTag(SYNC_MIMESUPPORT)) {
+	                $collection["mimesupport"] = $decoder->getElementContent();
+	                if(!$decoder->getElementEndTag())
+	                    return false;
+	            }
+	            
+	            if($decoder->getElementStartTag(SYNC_MIMETRUNCATION)) {
+	                $collection["mimetruncation"] = $decoder->getElementContent();
+	                if(!$decoder->getElementEndTag())
+	                    return false;
+	            }
+	            
+	            if($decoder->getElementStartTag(SYNC_CONFLICT)) {
+	                $collection["conflict"] = $decoder->getElementContent();
+	                if(!$decoder->getElementEndTag())
+	                    return false;
+	            }
+	            $e = $decoder->peek();
+	            if($e[EN_TYPE] == EN_TYPE_ENDTAG) {
+					$decoder->getElementEndTag();	            	
+                	break;
+	            }
+			}  
+        }
+        
+        // compatibility mode - get folderid from the state directory
+        if (!isset($collection["collectionid"])) {
+        	$collection["collectionid"] = Compatibility::getFolderID($devid, $collection["class"]);
         }
         
         // Get our sync state for this collection
@@ -665,7 +677,7 @@ function HandleSync($backend, $protocolversion) {
     return true;
 }
 
-function HandleGetItemEstimate($backend, $protocolversion) {
+function HandleGetItemEstimate($backend, $protocolversion, $devid) {
     global $zpushdtd;
     global $input, $output;
     
@@ -691,15 +703,13 @@ function HandleGetItemEstimate($backend, $protocolversion) {
         if(!$decoder->getElementEndTag())
             return false;
             
-            
-        if(!$decoder->getElementStartTag(SYNC_GETITEMESTIMATE_FOLDERID))
-            return false;
-            
-        $collectionid = $decoder->getElementContent();
+		if($decoder->getElementStartTag(SYNC_GETITEMESTIMATE_FOLDERID)) {
+	        $collectionid = $decoder->getElementContent();
         
-        if(!$decoder->getElementEndTag())
-            return false;
-            
+	        if(!$decoder->getElementEndTag())
+	            return false;
+		}
+		            
         if(!$decoder->getElementStartTag(SYNC_FILTERTYPE))
             return false;
             
@@ -717,6 +727,11 @@ function HandleGetItemEstimate($backend, $protocolversion) {
             return false;
         if(!$decoder->getElementEndTag())
             return false;
+        
+        // compatibility mode - get folderid from the state directory
+        if (!isset($collectionid)) {
+        	$collectionid = Compatibility::getFolderID($devid, $class);
+        }
             
         $collection = array();
         $collection["synckey"] = $synckey;
@@ -1158,7 +1173,7 @@ function HandleFolderUpdate($backend, $protocolversion) {
 function HandleRequest($backend, $cmd, $devid, $protocolversion) {
     switch($cmd) {
     case 'Sync':
-        $status = HandleSync($backend, $protocolversion);
+        $status = HandleSync($backend, $protocolversion, $devid);
         break;
     case 'SendMail':
         $status = HandleSendMail($backend, $protocolversion);
@@ -1173,7 +1188,7 @@ function HandleRequest($backend, $cmd, $devid, $protocolversion) {
         $status = HandleGetAttachment($backend, $protocolversion);
         break;
     case 'GetHierarchy':
-        $status = HandleGetHierarchy($backend, $protocolversion);
+        $status = HandleGetHierarchy($backend, $protocolversion, $devid);
         break;
     case 'CreateCollection':
         $status = HandleCreateCollection($backend, $protocolversion);
@@ -1200,7 +1215,7 @@ function HandleRequest($backend, $cmd, $devid, $protocolversion) {
         $status = HandleMoveItems($backend, $protocolversion);
         break;
     case 'GetItemEstimate':
-        $status = HandleGetItemEstimate($backend, $protocolversion);
+        $status = HandleGetItemEstimate($backend, $protocolversion, $devid);
         break;
     case 'MeetingResponse':
         $status = HandleMeetingResponse($backend, $protocolversion);

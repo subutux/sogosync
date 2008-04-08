@@ -1789,8 +1789,26 @@ class BackendICS {
     }
 
     function GetHierarchy() {
-        // FIXME
-        return false;
+    	$folders = array();
+    	$himp= new PHPHierarchyImportProxy($this->_defaultstore, &$folders);
+    	
+    	$storeprops = mapi_getprops($this->_defaultstore, array(PR_PARENT_ENTRYID));
+    	$rootfolder = mapi_msgstore_openentry($this->_defaultstore, $storeprops[PR_PARENT_ENTRYID]);    	
+    	$rootfolderprops = mapi_getprops($rootfolder, array(PR_SOURCE_KEY));
+    	$rootfoldersourcekey = bin2hex($rootfolderprops[PR_SOURCE_KEY]);    	
+    	
+    	$hierarchy =  mapi_folder_gethierarchytable($rootfolder, CONVENIENT_DEPTH);
+    	$rows = mapi_table_queryallrows($hierarchy, array(PR_ENTRYID));
+    	
+    	foreach ($rows as $row) {
+    		$mapifolder = mapi_msgstore_openentry($this->_defaultstore, $row[PR_ENTRYID]);
+    		$folder = $himp->_getFolder($mapifolder);
+    		
+    		if ($folder->parentid != $rootfoldersourcekey)
+    			$folders[] = $folder;
+    	}
+    	
+        return $folders;
     }
 
     function SendMail($rfc822, $forward = false, $reply = false, $parent = false) {
