@@ -205,7 +205,6 @@ class SyncContact extends Streamer {
             SYNC_POOMCONTACTS_BUSINESSFAXNUMBER => array ( STREAMER_VAR => "businessfaxnumber" ),
             SYNC_POOMCONTACTS_BUSINESSPHONENUMBER => array ( STREAMER_VAR => "businessphonenumber" ),
             SYNC_POOMCONTACTS_CARPHONENUMBER => array ( STREAMER_VAR => "carphonenumber" ),
-            SYNC_POOMCONTACTS_CATEGORIES => array ( STREAMER_VAR => "categories", STREAMER_ARRAY => SYNC_POOMCONTACTS_CATEGORY ),
             SYNC_POOMCONTACTS_CHILDREN => array ( STREAMER_VAR => "children", STREAMER_ARRAY => SYNC_POOMCONTACTS_CHILD ),
             SYNC_POOMCONTACTS_COMPANYNAME => array ( STREAMER_VAR => "companyname" ),
             SYNC_POOMCONTACTS_DEPARTMENT => array ( STREAMER_VAR => "department" ),
@@ -242,7 +241,8 @@ class SyncContact extends Streamer {
             SYNC_POOMCONTACTS_YOMIFIRSTNAME => array ( STREAMER_VAR => "yomifirstname" ),
             SYNC_POOMCONTACTS_YOMILASTNAME => array ( STREAMER_VAR => "yomilastname" ),
             SYNC_POOMCONTACTS_RTF => array ( STREAMER_VAR => "rtf" ),
-            SYNC_POOMCONTACTS_PICTURE => array ( STREAMER_VAR => "picture" )
+            SYNC_POOMCONTACTS_PICTURE => array ( STREAMER_VAR => "picture" ),
+            SYNC_POOMCONTACTS_CATEGORIES => array ( STREAMER_VAR => "categories", STREAMER_ARRAY => SYNC_POOMCONTACTS_CATEGORY ),
 	);
 
         if(isset($protocolversion) && $protocolversion >= 2.5) {
@@ -297,10 +297,10 @@ class SyncAppointment extends Streamer {
                       SYNC_POOMCAL_ATTENDEES => array (STREAMER_VAR => "attendees", STREAMER_TYPE => "SyncAttendee", STREAMER_ARRAY => SYNC_POOMCAL_ATTENDEE),
                       SYNC_POOMCAL_BODY => array (STREAMER_VAR => "body" ),
                       SYNC_POOMCAL_BODYTRUNCATED => array (STREAMER_VAR => "bodytruncated" ),
-                      SYNC_POOMCAL_CATEGORIES => array (STREAMER_VAR => "categories", STREAMER_ARRAY => SYNC_POOMCAL_CATEGORY),
                       SYNC_POOMCAL_EXCEPTIONS => array (STREAMER_VAR => "exceptions", STREAMER_TYPE => "SyncAppointment", STREAMER_ARRAY => SYNC_POOMCAL_EXCEPTION),
                       SYNC_POOMCAL_DELETED => array (STREAMER_VAR => "deleted"),
-                      SYNC_POOMCAL_EXCEPTIONSTARTTIME => array (STREAMER_VAR => "exceptionstarttime", STREAMER_TYPE => STREAMER_TYPE_DATE)
+                      SYNC_POOMCAL_EXCEPTIONSTARTTIME => array (STREAMER_VAR => "exceptionstarttime", STREAMER_TYPE => STREAMER_TYPE_DATE),
+                      SYNC_POOMCAL_CATEGORIES => array (STREAMER_VAR => "categories", STREAMER_ARRAY => SYNC_POOMCAL_CATEGORY),
                       
         );
         
@@ -374,7 +374,6 @@ class SyncTask extends Streamer {
     function SyncTask() {
         $mapping = array (
                       SYNC_POOMTASKS_BODY => array (STREAMER_VAR => "body"),
-                      SYNC_POOMTASKS_CATEGORIES => array (STREAMER_VAR => "categories", STREAMER_ARRAY => SYNC_POOMTASKS_CATEGORY),
                       SYNC_POOMTASKS_COMPLETE => array (STREAMER_VAR => "complete"),
                       SYNC_POOMTASKS_DATECOMPLETED => array (STREAMER_VAR => "datecompleted", STREAMER_TYPE => STREAMER_TYPE_DATE),
                       SYNC_POOMTASKS_DUEDATE => array (STREAMER_VAR => "duedate", STREAMER_TYPE => STREAMER_TYPE_DATE),
@@ -389,7 +388,8 @@ class SyncTask extends Streamer {
                       SYNC_POOMTASKS_STARTDATE => array (STREAMER_VAR => "startdate", STREAMER_TYPE => STREAMER_TYPE_DATE),
                       SYNC_POOMTASKS_UTCSTARTDATE => array (STREAMER_VAR => "utcstartdate", STREAMER_TYPE => STREAMER_TYPE_DATE),
                       SYNC_POOMTASKS_SUBJECT => array (STREAMER_VAR => "subject"),
-                      SYNC_POOMTASKS_RTF => array (STREAMER_VAR => "rtf")
+                      SYNC_POOMTASKS_RTF => array (STREAMER_VAR => "rtf"),
+                      SYNC_POOMTASKS_CATEGORIES => array (STREAMER_VAR => "categories", STREAMER_ARRAY => SYNC_POOMTASKS_CATEGORY),
         );
 
         parent::Streamer($mapping);
