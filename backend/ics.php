@@ -1792,9 +1792,8 @@ class BackendICS {
     function GetHierarchy() {
     	$folders = array();
     	$himp= new PHPHierarchyImportProxy($this->_defaultstore, &$folders);
-    	
-    	$storeprops = mapi_getprops($this->_defaultstore, array(PR_PARENT_ENTRYID));
-    	$rootfolder = mapi_msgstore_openentry($this->_defaultstore, $storeprops[PR_PARENT_ENTRYID]);    	
+
+    	$rootfolder = mapi_msgstore_openentry($this->_defaultstore);    	
     	$rootfolderprops = mapi_getprops($rootfolder, array(PR_SOURCE_KEY));
     	$rootfoldersourcekey = bin2hex($rootfolderprops[PR_SOURCE_KEY]);    	
     	
