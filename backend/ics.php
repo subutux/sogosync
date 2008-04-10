@@ -1067,6 +1067,7 @@ class PHPContentsImportProxy extends MAPIMapping {
                 $message->recurrence->occurrences = $recurrence->recur["numoccur"]; break;
             case 0x23:
                 // never ends
+                break;
             }
 
             // Correct 'alldayevent' because outlook fails to set it on recurring items of 24 hours or longer
@@ -1902,8 +1903,7 @@ class BackendICS {
         // an attachment and the type will be multipart/mixed or multipart/alternative.
         if($message->ctype_primary == "multipart" && ($message->ctype_secondary == "mixed" || $message->ctype_secondary == "alternative")) {
             foreach($message->parts as $part) {
-                if($part->ctype_primary == "text") {
-                	if($part->ctype_secondary == "plain") // discard any other kind of text, like html
+                if($part->ctype_primary == "text" && $part->ctype_secondary == "plain") {// discard any other kind of text, like html
                     	$body = u2w($part->body); // assume only one text body
                 }
                 else {
@@ -1915,6 +1915,8 @@ class BackendICS {
                         $filename = $part->ctype_parameters["name"];
                     else if(isset($part->d_parameters["name"]))
                         $filename = $part->d_parameters["filename"];
+                    else if (isset($part->d_parameters["filename"])) //sending appointment with nokia only filename is set
+						$filename = $part->d_parameters["filename"];						
                     else
                         $filename = "untitled";
                     
