@@ -1946,9 +1946,17 @@ class BackendICS {
             $fwmessage = mapi_msgstore_openentry($this->_defaultstore, $entryid);
             
             if($fwmessage) {
-                $messageprops = mapi_getprops($fwmessage, array(PR_BODY));
+                $stream = mapi_openproperty($fwmessage, PR_BODY, IID_IStream, 0, 0);
+                $fwbody = "";
                 
-                if(isset($messageprops[PR_BODY])) {
+                while(1) {
+                    $data = mapi_stream_read($stream, 1024);
+                    if(strlen($data) == 0)
+                        break;
+                    $fwbody .= $data;
+                }
+                
+                if(strlen($body) > 0) {
                     if($forward) {
                         // During a forward, we have to add the forward header ourselves. This is because
                         // normally the forwarded message is added as an attachment. However, we don't want this
@@ -1971,7 +1979,7 @@ class BackendICS {
                             $body .= "Subject: " . $fwmessageprops[PR_SUBJECT] . "\r\n";
                         $body .= "\r\n";
                     }    
-                    $body .= $messageprops[PR_BODY];
+                    $body .= $fwbody;
                 }
             } else {
                 debugLog("Unable to open item with id $orig for forward/reply");
