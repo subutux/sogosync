@@ -56,7 +56,20 @@ function GetPropIDFromString($store, $mapiprop) {
     return $mapiprop;
 }
 
-
+function readPropStream($message, $prop)
+{
+    $stream = mapi_openproperty($message, $prop, IID_IStream, 0, 0);
+    $data = "";
+    $string = "";
+    while(1) {
+        $data = mapi_stream_read($stream, 1024);
+        if(strlen($data) == 0)
+            break;
+        $string .= $data;
+    }
+    
+    return $string;
+}
 
 class MAPIMapping {
     var $_contactmapping = array ( 	"anniversary" => PR_WEDDING_ANNIVERSARY,
@@ -246,6 +259,13 @@ class MAPIMapping {
             $mapiprop = $this->_getPropIDFromString($mapipropstring);
             
             $prop = mapi_getprops($mapimessage, array($mapiprop));
+            
+            // Get long strings via openproperty
+            if(isset($prop[mapi_prop_tag(PT_ERROR, mapi_prop_id($mapiprop))])) {
+                if($prop[mapi_prop_tag(PT_ERROR, mapi_prop_id($mapiprop))] == -2147024882) {
+                    $prop = array($mapiprop => readPropStream($mapimessage, $mapiprop));
+                }
+            }
 
             if(isset($prop[$mapiprop])) {
                 if(mapi_prop_type($mapiprop) == PT_BOOLEAN) {
@@ -258,8 +278,8 @@ class MAPIMapping {
                     // Special handling for PR_MESSAGE_FLAGS
                     if($mapiprop == PR_MESSAGE_FLAGS)
                         $message->$asprop = $prop[$mapiprop] & 1; // only look at 'read' flag
-                    else if($mapiprop == PR_RTF_COMPRESSED) 
-                    	$message->$asprop = base64_decode($prop[$mapiprop]); // send value base64 encoded
+                    else if($mapiprop == PR_RTF_COMPRESSED)
+                    	$message->$asprop = base64_encode($prop[$mapiprop]); // send value base64 encoded
                     else if(is_array($prop[$mapiprop]))
                         $message->$asprop = array_map("w2u", $prop[$mapiprop]);
                     else {
