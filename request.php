@@ -26,7 +26,7 @@ include_once("memimporter.php");
 include_once("streamimporter.php");
 include_once("zpushdtd.php");
 include_once("zpushdefs.php");
-include_once("compatibility.php");
+include_once("include/utils.php");
 
 function GetObjectClassFromFolderClass($folderclass)
 {
@@ -150,7 +150,7 @@ function HandleGetHierarchy($backend, $protocolversion, $devid) {
         return false;
 
 	// save folder-ids for fourther syncing 
-	Compatibility::saveFolderData($devid, $folders);
+	_saveFolderData($devid, $folders);
 
     $encoder->StartWBXML();
     $encoder->startTag(SYNC_FOLDERHIERARCHY_FOLDERS);
@@ -426,7 +426,7 @@ function HandleSync($backend, $protocolversion, $devid) {
         
         // compatibility mode - get folderid from the state directory
         if (!isset($collection["collectionid"])) {
-        	$collection["collectionid"] = Compatibility::getFolderID($devid, $collection["class"]);
+        	$collection["collectionid"] = _getFolderID($devid, $collection["class"]);
         }
         
         // Get our sync state for this collection
@@ -730,7 +730,7 @@ function HandleGetItemEstimate($backend, $protocolversion, $devid) {
         
         // compatibility mode - get folderid from the state directory
         if (!isset($collectionid)) {
-        	$collectionid = Compatibility::getFolderID($devid, $class);
+        	$collectionid = _getFolderID($devid, $class);
         }
             
         $collection = array();
