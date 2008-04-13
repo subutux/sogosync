@@ -25,17 +25,11 @@ function _saveFolderData($devid, $folders) {
 		if ($folder->type == SYNC_FOLDER_TYPE_INBOX)
 			continue;
 
-		// no folder from that type			
-		if (!array_key_exists($folder->type, $unique_folders)) {
+		// no folder from that type	or the default folder		
+		if (!array_key_exists($folder->type, $unique_folders) || $folder->parentid == 0) {
 			$unique_folders[$folder->type] = $folder->serverid;
 		}
-		// collision
-		else {
-			debugLog("_saveFolderData CONFLICT! Only one folder per type permitted (type: {$folder->type})");
-		}
 	}
-
-	debugLog("_saveFolderData : ".print_r($unique_folders, 1));
 
 	if (!file_put_contents(BASE_PATH.STATE_DIR."/compat-$devid", serialize($unique_folders))) {
 		debugLog("_saveFolderData: Data could not be saved!");
