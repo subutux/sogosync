@@ -1840,9 +1840,6 @@ class BackendICS {
                             'crlf' => "\r\n", 
                             'charset' => 'utf-8'));
                
-        // get the charset used by the pda - use utf-8 as default
-        $encoding = (isset($message->ctype_parameters['charset']))?$message->ctype_parameters['charset']:"utf-8";
-        
         // Open the outbox and create the message there
         $storeprops = mapi_getprops($this->_defaultstore, array(PR_IPM_OUTBOX_ENTRYID, PR_IPM_SENTMAIL_ENTRYID));
         if(!isset($storeprops[PR_IPM_OUTBOX_ENTRYID])) {
@@ -1859,7 +1856,7 @@ class BackendICS {
         $mapimessage = mapi_folder_createmessage($outbox);
         
         mapi_setprops($mapimessage, array(
-            PR_SUBJECT => con2win($message->headers["subject"], $encoding),
+            PR_SUBJECT => u2w($message->headers["subject"]),
             PR_SENTMAIL_ENTRYID => $storeprops[PR_IPM_SENTMAIL_ENTRYID],
             PR_MESSAGE_CLASS => "IPM.Note",
             PR_MESSAGE_DELIVERY_TIME => time()
@@ -1906,7 +1903,7 @@ class BackendICS {
                     $mapirecip[PR_ADDRTYPE] = "SMTP";
                     $mapirecip[PR_EMAIL_ADDRESS] = $addr->mailbox . "@" . $addr->host;
                     if(isset($addr->personal) && strlen($addr->personal) > 0)
-                        $mapirecip[PR_DISPLAY_NAME] = con2win($addr->personal, $encoding);
+                        $mapirecip[PR_DISPLAY_NAME] = u2w($addr->personal);
                     else
                         $mapirecip[PR_DISPLAY_NAME] = $mapirecip[PR_EMAIL_ADDRESS];
                     $mapirecip[PR_RECIPIENT_TYPE] = $type;
@@ -1926,10 +1923,7 @@ class BackendICS {
         if($message->ctype_primary == "multipart" && ($message->ctype_secondary == "mixed" || $message->ctype_secondary == "alternative")) {
             foreach($message->parts as $part) {
                 if($part->ctype_primary == "text" && $part->ctype_secondary == "plain") {// discard any other kind of text, like html
-				        // get the charset used by the pda for that part - use utf-8 as default
-				        $encoding = (isset($part->ctype_parameters['charset']))?$part->ctype_parameters['charset']:"utf-8";
-                
-                    	$body = con2win($part->body, $encoding); // assume only one text body
+                    	$body = u2w($part->body); // assume only one text body
                 }
                 else {
                     // attachment
@@ -1946,7 +1940,7 @@ class BackendICS {
                         $filename = "untitled";
                     
                     // Set filename and attachment type
-                    mapi_setprops($attach, array(PR_ATTACH_LONG_FILENAME => con2win($filename, $encoding), PR_ATTACH_METHOD => ATTACH_BY_VALUE));
+                    mapi_setprops($attach, array(PR_ATTACH_LONG_FILENAME => u2w($filename), PR_ATTACH_METHOD => ATTACH_BY_VALUE));
                     
                     // Set attachment data
                     mapi_setprops($attach, array(PR_ATTACH_DATA_BIN => $part->body));
@@ -1958,7 +1952,7 @@ class BackendICS {
                 }
             }
         } else {
-            $body = con2win($message->body, $encoding);
+            $body = u2w($message->body);
         }
         
         if($forward)
@@ -2274,24 +2268,8 @@ function windows1252_to_utf8($string)
     }
 }
 
-function iso8859_to_windows1252($string)
-{
-    if (function_exists("iconv")){
-        return iconv("ISO-8859-1", "Windows-1252", $string);
-    }else{
-        return mb_convert_encoding($string, "Windows-1252","ISO-8859-1");
-    }
-}
-
-
 function w2u($string) { return windows1252_to_utf8($string); }
 function u2w($string) { return utf8_to_windows1252($string); }
 
-function con2win($string, $encoding) {
-	if (strtolower($encoding) == "iso-8859-1") 
-		return iso8859_to_windows1252($string);	
-	else 
-		return utf8_to_windows1252($string);
-}
 
 ?>
