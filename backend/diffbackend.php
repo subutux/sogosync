@@ -190,6 +190,10 @@ class ImportContentsChangesDiff extends DiffState {
     }
     
     function ImportMessageChange($id, $message) {
+        //do nothing if it is in a dummy folder
+        if ($this->_folderid != SYNC_FOLDER_TYPE_DUMMY) 
+        	return false;
+        
         if($id) {
             // See if there's a conflict
             $conflict = $this->isConflict("change", $this->_folderid, $id);
@@ -219,6 +223,10 @@ class ImportContentsChangesDiff extends DiffState {
 
     // Import a deletion. This may conflict if the local object has been modified.
     function ImportMessageDeletion($id) {
+        //do nothing if it is in a dummy folder
+        if ($this->_folderid != SYNC_FOLDER_TYPE_DUMMY) 
+        	return true;
+            	
         // See if there's a conflict
         $conflict = $this->isConflict("delete", $this->_folderid, $id);
         
@@ -239,6 +247,10 @@ class ImportContentsChangesDiff extends DiffState {
     
     // Import a change in 'read' flags .. This can never conflict
     function ImportMessageReadFlag($id, $flags) {
+        //do nothing if it is a dummy folder
+        if ($this->_folderid != SYNC_FOLDER_TYPE_DUMMY) 
+        	return true;
+
         // Update client state
         $change = array();
         $change["id"] = $id;
@@ -267,6 +279,10 @@ class ImportHierarchyChangesDiff extends DiffState {
     }
     
     function ImportFolderChange($id, $parent, $displayname, $type) {
+        //do nothing if it is a dummy folder
+        if ($parent != SYNC_FOLDER_TYPE_DUMMY) 
+        	return false;
+    	
         if($id) {
             $change = array();
             $change["id"] = $id;
@@ -285,6 +301,10 @@ class ImportHierarchyChangesDiff extends DiffState {
     }
 
     function ImportFolderDeletion($id, $parent) {
+        //do nothing if it is a dummy folder
+        if ($parent != SYNC_FOLDER_TYPE_DUMMY) 
+        	return false;
+    	
         $change = array();
         $change["id"] = $id;
         
@@ -323,18 +343,22 @@ class ExportChangesDiff extends DiffState {
         if($this->_folderid) {
             // Get the changes since the last sync
             debugLog("Initializing message diff engine");
-            // Get our lists - syncstate (old)  and msglist (new)
-            $msglist = $this->_backend->GetMessageList($this->_folderid, $cutoffdate);
-            if($msglist === false)
-                return false;
-                
-            debugLog(count($this->_syncstate) . " messages in state");
-                
-            if(!isset($this->_syncstate) || !$this->_syncstate)
-                $this->_syncstate = array();
 
-            $this->_changes = GetDiff($this->_syncstate, $msglist);
-
+            //do nothing if it is a dummy folder
+            if ($this->_folderid != SYNC_FOLDER_TYPE_DUMMY) {
+	            // Get our lists - syncstate (old)  and msglist (new)
+	            $msglist = $this->_backend->GetMessageList($this->_folderid, $cutoffdate);
+	            if($msglist === false)
+	                return false;
+	                
+	            debugLog(count($this->_syncstate) . " messages in state");
+	                
+	            if(!isset($this->_syncstate) || !$this->_syncstate)
+	                $this->_syncstate = array();
+	
+	            $this->_changes = GetDiff($this->_syncstate, $msglist);
+            }
+            
             debugLog("Found " . count($this->_changes) . " message changes");
         } else {
             debugLog("Initializing folder diff engine");
@@ -532,16 +556,11 @@ class BackendDiff {
     function GetHierarchy() {
         $folders = array();
         
-        // Simply return one folder, our inbox
-        $inbox = new SyncFolder();
-        
-        $inbox->serverid = "root";
-        $inbox->parentid = "0"; // no parent
-        $inbox->displayname = "Inbox";
-        $inbox->type = SYNC_FOLDER_TYPE_INBOX;
-        
-        array_push($folders, $inbox);
-        
+        $fl = $this->getFolderList();
+        foreach($fl as $f){
+            $folders[] = $this->GetFolder($f['id']);
+        }
+                
         return $folders;
     }
     

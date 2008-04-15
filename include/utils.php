@@ -19,7 +19,7 @@ function _saveFolderData($devid, $folders) {
 
 	$unique_folders = array ();
 
-	foreach ($folders as $folder) {
+	foreach ($folders as $folder) {	
 
 		// don't save folder-ids for emails
 		if ($folder->type == SYNC_FOLDER_TYPE_INBOX)
@@ -30,6 +30,13 @@ function _saveFolderData($devid, $folders) {
 			$unique_folders[$folder->type] = $folder->serverid;
 		}
 	}
+	
+	// Treo does initial sync for calendar and contacts too, so we need to fake 
+	// these folders if they are not supported by the backend
+	if (!array_key_exists(SYNC_FOLDER_TYPE_APPOINTMENT, $unique_folders)) 	
+		$unique_folders[SYNC_FOLDER_TYPE_APPOINTMENT] = SYNC_FOLDER_TYPE_DUMMY;
+	if (!array_key_exists(SYNC_FOLDER_TYPE_CONTACT, $unique_folders)) 		
+		$unique_folders[SYNC_FOLDER_TYPE_CONTACT] = SYNC_FOLDER_TYPE_DUMMY;
 
 	if (!file_put_contents(BASE_PATH.STATE_DIR."/compat-$devid", serialize($unique_folders))) {
 		debugLog("_saveFolderData: Data could not be saved!");
