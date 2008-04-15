@@ -468,6 +468,10 @@ class Mail_mimeDecode {
                 return $this->_fromCharset($charset, $input);
                 break;
 
+            case '8bit':
+                return $this->_fromCharset($charset, $input);
+                break;
+
             case 'quoted-printable':
                 return $this->_fromCharset($charset, $this->_quotedPrintableDecode($input));
                 break;
