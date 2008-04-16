@@ -1163,7 +1163,7 @@ class PHPContentsImportProxy extends MAPIMapping {
         
         // Do attendees
         $reciptable = mapi_message_getrecipienttable($mapimessage);
-        $rows = mapi_table_queryallrows($reciptable, array(PR_DISPLAY_NAME, PR_EMAIL_ADDRESS, PR_SMTP_ADDRESS));
+        $rows = mapi_table_queryallrows($reciptable, array(PR_DISPLAY_NAME, PR_EMAIL_ADDRESS, PR_SMTP_ADDRESS, PR_ADDRTYPE));
         if(count($rows) > 0)
             $message->attendees = array();
             
@@ -1171,18 +1171,26 @@ class PHPContentsImportProxy extends MAPIMapping {
             $attendee = new SyncAttendee();
             
             $attendee->name = w2u($row[PR_DISPLAY_NAME]);
+            //smtp address is always a proper email address
             if(isset($row[PR_SMTP_ADDRESS]))
                 $attendee->email = $row[PR_SMTP_ADDRESS];
-            else
-                $attendee->email = $row[PR_EMAIL_ADDRESS];
-    
+            elseif (isset($row[PR_ADDRTYPE]) && isset($row[PR_EMAIL_ADDRESS])) {
+            	//if address type is SMTP, it's also a proper email address
+            	if (PR_ADDRTYPE == "SMTP")
+            		$attendee->email = $row[PR_EMAIL_ADDRESS];
+            	//if address type is ZARAFA, the PR_EMAIL_ADDRESS contains username
+            	elseif (PR_ADDRTYPE == "ZARAFA") {
+	            	$userinfo = mapi_zarafa_getuser_by_name($this->_store, $row[PR_EMAIL_ADDRESS]);
+	            	if (is_array($userinfo) && isset($userinfo["emailaddress"]))
+	            		$attendee->email = $userinfo["emailaddress"];
+	            }
+            }
             // Some attendees have no email or name (eg resources), and if you
             // don't send one of those fields, the phone will give an error ... so 
             // we don't send it in that case.
             if($attendee->name && $attendee->email)
                 array_push($message->attendees, $attendee);
         }
-        
         // Force the 'alldayevent' in the object at all times. (non-existent == 0)
         if(!isset($message->alldayevent) || $message->alldayevent == "")
             $message->alldayevent = 0;
