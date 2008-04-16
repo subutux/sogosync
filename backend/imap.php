@@ -111,6 +111,7 @@ class BackendIMAP extends BackendDiff {
         // clean up the transmitted headers
         // remove default headers because we are using imap_mail
         $changedfrom = false;
+        $returnPathSet = false;
         foreach($message->headers as $k => $v) {
 		    if ($k == "subject" || $k == "to" || $k == "cc" || $k == "bcc") 
 			    continue;
@@ -137,11 +138,22 @@ class BackendIMAP extends BackendDiff {
             	else $v = $this->_username . IMAP_DEFAULTFROM;
             }
 
+            // check if "Return-Path"-header is set
+            if ($k == "return-path") {
+                $returnPathSet = true;
+                if (! trim($v) && IMAP_DEFAULTFROM) {
+		        	if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
+		        	else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
+		        	else $v = $this->_username . IMAP_DEFAULTFROM;
+                }
+            }
+
             // all other headers stay 							
             if ($headers) $headers .= "\n";
             $headers .= ucfirst($k) . ": ". $v;
         }
 
+		// set "From" header if not set on the device
 		if(IMAP_DEFAULTFROM && !$changedfrom){
 			if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
 			else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
@@ -149,6 +161,16 @@ class BackendIMAP extends BackendDiff {
 			if ($headers) $headers .= "\n";
 			$headers .= 'From: '.$v;
 		}
+
+		// set "Return-Path" header if not set on the device
+		if(IMAP_DEFAULTFROM && !$returnPathSet){
+			if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
+			else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
+			else $v = $this->_username . IMAP_DEFAULTFROM;
+			if ($headers) $headers .= "\n";
+			$headers .= 'Return-Path: '.$v;
+		}
+		
 		// if this is a multipart message with a boundary, we must use the original body
 		if ($use_orgbody) {
 			list(,$body) = $mobj->_splitBodyHeader($rfc822);
