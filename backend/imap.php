@@ -184,6 +184,11 @@ class BackendIMAP extends BackendDiff {
 			
     	$send =  @imap_mail ( $toaddr, $message->headers["subject"], $body, $headers, $ccaddr, $bccaddr);
 	
+		// email sent?
+		if (!$send) {
+			debugLog("The email could not be sent. Last-IMAP-error: ". imap_last_error());
+		}
+		
     	// add message to the sent folder
     	// build complete headers
     	$cheaders  = "To: " . $toaddr. "\n";
@@ -527,17 +532,19 @@ class BackendIMAP extends BackendDiff {
 
     		$output = new SyncMail();
 	
-    		$body = str_replace("\n", "\r\n", $this->getBody($message));
-
+    		// decode body to truncate it
+    		$body = utf8_to_windows1252($this->getBody($message));
     		if(strlen($body) > $truncsize) {
-    		    $output->body = substr($body, 0, $truncsize);
+    		    $body = substr($body, 0, $truncsize);
     		    $output->bodytruncated = 1;
             } else {
-                $output->body = $body;
+                $body = $body;
                 $output->bodytruncated = 0;
             }
+			$body = str_replace("\n","\r\n", windows1252_to_utf8(str_replace("\r","",$body)));
 
 	    	$output->bodysize = strlen($body);
+	    	$output->body = $body;
 	    	$output->datereceived = isset($message->headers["date"]) ? strtotime($message->headers["date"]) : null;
 	    	$output->displayto = isset($message->headers["to"]) ? $message->headers["to"] : null;
 	    	$output->importance = isset($message->headers["x-priority"]) ? preg_replace("/\D+/", "", $message->headers["x-priority"]) : null;
@@ -783,6 +790,25 @@ class BackendIMAP extends BackendDiff {
         return $addr_string;
     }
 
+	// encodes utf-8
+	function windows1252_to_utf8($string)
+	{
+	    if (function_exists("iconv")){
+	    return iconv("Windows-1252", "UTF-8", $string);
+	}else{
+	    return utf8_encode($string); // no euro support here
+	    }
+	}
+	
+	// decode utf-8
+	function utf8_to_windows1252($string)
+{
+    if (function_exists("iconv")){
+        return iconv("UTF-8", "Windows-1252", $string);
+    }else{
+        return utf8_decode($string); // no euro support here
+    }
+}
 };
 
 ?>
