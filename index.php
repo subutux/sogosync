@@ -21,12 +21,14 @@ include_once("proto.php");
 include_once("request.php");
 include_once("debug.php");
 include_once("compat.php");
+include_once("version.php");
 
 // Attempt to set maximum execution time
 ini_set('max_execution_time', SCRIPT_TIMEOUT);
 set_time_limit(SCRIPT_TIMEOUT);
 
 debugLog("Start");
+debugLog("Z-Push version: $zpush_version");
 
 $input = fopen("php://input", "r");
 $output = fopen("php://output", "w+");

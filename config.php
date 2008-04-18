@@ -19,9 +19,13 @@
     define('BASE_PATH', dirname($_SERVER['SCRIPT_FILENAME']) . "/");
 
     // Define the include paths
-    set_include_path(BASE_PATH. "include/" . PATH_SEPARATOR .
-                     BASE_PATH. PATH_SEPARATOR .
-                     get_include_path());
+	ini_set('include_path',
+						BASE_PATH. "include/" . PATH_SEPARATOR .
+						BASE_PATH. PATH_SEPARATOR .
+						ini_get('include_path') . PATH_SEPARATOR .
+						"/usr/share/php/" . PATH_SEPARATOR .
+						"/usr/share/php5/" . PATH_SEPARATOR .
+						"/usr/share/pear/");
 
     define('STATE_DIR', 'state');
 

@@ -1,7 +1,7 @@
 <?
 
 /***********************************************
-* File      :   compatibility.php
+* File      :   utils.php
 * Project   :   Z-Push
 * Descr     :   
 *
@@ -59,4 +59,41 @@ function _getFolderID($devid, $class) {
 
 	return false;
 }
+
+/**
+ * Function which converts a hex entryid to a binary entryid.
+ * @param string @data the hexadecimal string
+ */
+function hex2bin($data)
+{
+    $len = strlen($data);
+    $newdata = "";
+
+    for($i = 0;$i < $len;$i += 2)
+    {
+        $newdata .= pack("C", hexdec(substr($data, $i, 2)));
+    } 
+    return $newdata;
+}
+
+function utf8_to_windows1252($string)
+{
+    if (function_exists("iconv")){
+        return iconv("UTF-8", "Windows-1252", $string);
+    }else{
+        return utf8_decode($string); // no euro support here
+    }
+}
+
+function windows1252_to_utf8($string)
+{
+    if (function_exists("iconv")){
+        return iconv("Windows-1252", "UTF-8", $string);
+    }else{
+        return utf8_encode($string); // no euro support here
+    }
+}
+
+function w2u($string) { return windows1252_to_utf8($string); }
+function u2w($string) { return utf8_to_windows1252($string); }
 ?>

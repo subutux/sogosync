@@ -94,7 +94,7 @@ class BackendIMAP extends BackendDiff {
     	debugLog("IMAP-SendMail: " . $rfc822 . "for: $forward   reply: $reply   parent: $parent" );
 	
     	$mobj = new Mail_mimeDecode($rfc822);
-    	$message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $rfc822, 'crlf' => "\n", 'charset' => 'utf-8'));
+    	$message = $mobj->decode(array('decode_headers' => false, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $rfc822, 'crlf' => "\n", 'charset' => 'utf-8'));
 
     	$toaddr = $ccaddr = $bccaddr = "";
     	if(isset($message->headers["to"]))
@@ -115,17 +115,33 @@ class BackendIMAP extends BackendDiff {
         // remove default headers because we are using imap_mail
         $changedfrom = false;
         $returnPathSet = false;
+        $body_base64 = false;
+        $org_charset = "";
         foreach($message->headers as $k => $v) {
 		    if ($k == "subject" || $k == "to" || $k == "cc" || $k == "bcc") 
 			    continue;
 							
-            // save the original type & encoding headers for the body part 
-            if ($forward && $k == "content-type") {
-			    $forward_h_ct = $v;
-			    continue;
+            if ($k == "content-type") {
+	            // save the original content-type header for the body part when forwarding 
+            	if ($forward) {
+				    $forward_h_ct = $v;
+				    continue;
+            	}
+
+				// set charset always to utf-8
+				$org_charset = $v;
+				$v = preg_replace("/charset=.([A-Za-z0-9-]+)./", "charset=\"utf-8\"", $v);
             }
-            if ($forward && $k == "content-transfer-encoding") {
-			    $forward_h_cte = $v;
+
+            if ($k == "content-transfer-encoding") {
+				// if the content was base64 encoded, encode the body again when sending            	
+            	if (trim($v) == "base64") $body_base64 = true;
+            	
+	            // save the original encoding header for the body part when forwarding 
+            	if ($forward) {
+            		$forward_h_cte = $v;
+            		continue;
+            	}
             }
             
             // if the message is a multipart message, then we should use the sent body 
@@ -184,11 +200,20 @@ class BackendIMAP extends BackendDiff {
         // reply				
         if (isset($reply) && isset($parent) &&  $reply && $parent) {
 		    $this->imap_reopenFolder($parent);
-            $origmail = @imap_body($this->_mbox, $reply, FT_PEEK | FT_UID);
+            // receive entire mail (header + body) to decode body correctly
+            $origmail = @imap_fetchheader($this->_mbox, $reply, FT_PREFETCHTEXT | FT_UID) . @imap_body($this->_mbox, $reply, FT_PEEK | FT_UID);
             $mobj2 = new Mail_mimeDecode($origmail);
             // receive only body
-            $body .= $this->getBody($mobj2->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $origmail, 'crlf' => "\n", 'charset' => 'utf-8')));
+            $body .= $this->getBody($mobj2->decode(array('decode_headers' => false, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $origmail, 'crlf' => "\n", 'charset' => 'utf-8')));
+	        // unset mimedecoder & origmail - free memory            
+            unset($mobj2);
+            unset($origmail);
         }
+
+		// encode the body to base64 if it was sent originally in base64 by the pda 
+		// the encoded body is included in the forward         
+        if ($body_base64) $body = base64_encode($body);
+
 
         // forward				
         if (isset($forward) && isset($parent) && $forward && $parent) {
@@ -199,12 +224,17 @@ class BackendIMAP extends BackendDiff {
             // build a new mime message, forward entire old mail as file
             list($aheader, $body) = $this->mail_attach("forwarded_message.eml",strlen($origmail),$origmail, $body, $forward_h_ct, $forward_h_cte);
 
+	        // unset origmail - free memory            
+            unset($origmail);
+            
             // add boundary headers
             $headers .= "\n" . $aheader;
         }
 
     	//advanced debugging
-    	//debugLog("IMAP-SendMail: headers: $headers");	
+		//debugLog("IMAP-SendMail: parsed message: ". print_r($message,1));
+    	//debugLog("IMAP-SendMail: headers: $headers");
+    	//debugLog("IMAP-SendMail: subject: {$message->headers["subject"]}");	
     	//debugLog("IMAP-SendMail: body: $body");	
 			
     	$send =  @imap_mail ( $toaddr, $message->headers["subject"], $body, $headers, $ccaddr, $bccaddr);
@@ -241,6 +271,9 @@ class BackendIMAP extends BackendDiff {
 			    $asf = true;
             }
         }
+        
+        // unset mimedecoder - free memory
+        unset($mobj);
         return ($send && $asf);
     }
     
@@ -489,7 +522,10 @@ class BackendIMAP extends BackendDiff {
     	
 		if (isset($message->parts[$part]->body))
     		print $message->parts[$part]->body;
-				
+
+		// unset mimedecoder & mail
+		unset($mobj);			
+		unset($mail);	
         return true;
     }
 
@@ -543,7 +579,7 @@ class BackendIMAP extends BackendDiff {
      * but at least the subject, body, to, from, etc.
      */
     function GetMessage($folderid, $id, $truncsize) {
-	    debugLog("IMAP-GetMessage: (fid: '$folderid'  id: '$id' )");
+	    debugLog("IMAP-GetMessage: (fid: '$folderid'  id: '$id'  truncsize: $truncsize)");
 
         // Get flags, etc
         $stat = $this->StatMessage($folderid, $id);
@@ -608,7 +644,9 @@ class BackendIMAP extends BackendDiff {
                     $n++;
                 }
             }
-        
+        	// unset mimedecoder & mail
+			unset($mobj);
+			unset($mail);
             return $output;
         }
     	return false;
@@ -787,10 +825,10 @@ class BackendIMAP extends BackendDiff {
 	  		
     	$mail_body .= "--$boundary\n";
     	$mail_body .= "Content-Type: text/plain; name=\"$filenm\"\n";
-    	$mail_body .= "Content-Transfer-Encoding: 8bit\n";
+    	$mail_body .= "Content-Transfer-Encoding: base64\n";
     	$mail_body .= "Content-Disposition: attachment; filename=\"$filenm\"\n";
     	$mail_body .= "Content-Description: $filenm\n\n";
-    	$mail_body .= "$file_cont\n\n";
+    	$mail_body .= base64_encode($file_cont) . "\n\n";
 			
     	$mail_body .= "--$boundary--\n\n";
 		
@@ -815,25 +853,6 @@ class BackendIMAP extends BackendDiff {
         return $addr_string;
     }
 
-	// encodes utf-8
-	function windows1252_to_utf8($string)
-	{
-	    if (function_exists("iconv")){
-	    return iconv("Windows-1252", "UTF-8", $string);
-	}else{
-	    return utf8_encode($string); // no euro support here
-	    }
-	}
-	
-	// decode utf-8
-	function utf8_to_windows1252($string)
-{
-    if (function_exists("iconv")){
-        return iconv("UTF-8", "Windows-1252", $string);
-    }else{
-        return utf8_decode($string); // no euro support here
-    }
-}
 };
 
 ?>
