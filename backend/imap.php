@@ -354,16 +354,16 @@ class BackendIMAP extends BackendDiff {
 			    $box["id"] = imap_utf7_decode(substr($val->name, strlen($this->_server)));
 					
 			    // always use "." as folder delimiter
-			    $box["id"] = str_replace($val->delimiter, ".", $box["id"]);
+			    $box["id"] = imap_utf7_encode(str_replace($val->delimiter, ".", $box["id"]));
 					
 			    // explode hierarchies
 			    $fhir = explode(".", $box["id"]);
 			    if (count($fhir) > 1) {
-				    $box["mod"] = array_pop($fhir); // mod is last part of path
-				    $box["parent"] = implode(".", $fhir); // parent is all previous parts of path
+				    $box["mod"] = imap_utf7_encode(array_pop($fhir)); // mod is last part of path
+				    $box["parent"] = imap_utf7_encode(implode(".", $fhir)); // parent is all previous parts of path
                 }
                 else {
-				    $box["mod"] = $box["id"];
+				    $box["mod"] = imap_utf7_encode($box["id"]);
 				    $box["parent"] = "0";
                 }
 			
@@ -436,11 +436,11 @@ class BackendIMAP extends BackendDiff {
         // define the rest as other-folders
         else {
 	       	if (count($fhir) > 1) {
-	       		$folder->displayname = array_pop($fhir);
+	       		$folder->displayname = windows1252_to_utf8(imap_utf7_decode(array_pop($fhir)));
 	       		$folder->parentid = implode(".", $fhir);
 	       	}
 	       	else {
-				$folder->displayname = $id;
+				$folder->displayname = windows1252_to_utf8(imap_utf7_decode($id));
 				$folder->parentid = "0";
 	       	}
         	$folder->type = SYNC_FOLDER_TYPE_OTHER;
@@ -486,7 +486,7 @@ class BackendIMAP extends BackendDiff {
 		$this->imap_reopenFolder($folderid);
 		
 		// build name for new mailbox
-		$newname = $this->_server . imap_utf7_encode(str_replace(".", $this->_serverdelimiter, $folderid) . $this->_serverdelimiter . $displayname);
+		$newname = $this->_server . str_replace(".", $this->_serverdelimiter, $folderid) . $this->_serverdelimiter . $displayname;
 		
 		$csts = false;
 		// if $id is set => rename mailbox, otherwise create
@@ -621,7 +621,7 @@ class BackendIMAP extends BackendDiff {
 	    	$n = 0;
 	    	if(isset($message->parts)) {
                 foreach($message->parts as $part) {
-                    if(isset($part->disposition) && $part->disposition == "attachment") {
+                    if(isset($part->disposition) && ($part->disposition == "attachment" || $part->disposition == "inline")) {
                         $attachment = new SyncAttachment();
                         
                         if (isset($part->body))
@@ -803,7 +803,8 @@ class BackendIMAP extends BackendDiff {
     function imap_reopenFolder($folderid, $force = false) {
 	    // to see changes, the folder has to be reopened!
        	if ($this->_mboxFolder != $folderid || $force) {
-	   		$s = @imap_reopen($this->_mbox, $this->_server . imap_utf7_encode(str_replace(".", $this->_serverdelimiter, $folderid)));
+	   		$s = @imap_reopen($this->_mbox, $this->_server . str_replace(".", $this->_serverdelimiter, $folderid));
+	   		if (!$s) debugLog("failed to change folder: ". implode(", ", imap_errors()));
     		$this->_mboxFolder = $folderid;
     	}
     }
