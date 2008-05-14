@@ -1974,7 +1974,12 @@ class BackendICS {
             $fwmessage = mapi_msgstore_openentry($this->_defaultstore, $entryid);
             
             if($fwmessage) {
-                $stream = mapi_openproperty($fwmessage, PR_BODY, IID_IStream, 0, 0);
+            	//update icon when forwarding or replying message
+            	if ($forward) mapi_setprops($fwmessage, array(PR_ICON_INDEX=>262));
+            	elseif ($reply) mapi_setprops($fwmessage, array(PR_ICON_INDEX=>261));
+            	mapi_savechanges($fwmessage);
+                
+            	$stream = mapi_openproperty($fwmessage, PR_BODY, IID_IStream, 0, 0);
                 $fwbody = "";
                 
                 while(1) {
