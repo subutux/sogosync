@@ -29,6 +29,7 @@ set_time_limit(SCRIPT_TIMEOUT);
 
 debugLog("Start");
 debugLog("Z-Push version: $zpush_version");
+debugLog("Client IP: ". $_SERVER['REMOTE_ADDR']);
 
 $input = fopen("php://input", "r");
 $output = fopen("php://output", "w+");
