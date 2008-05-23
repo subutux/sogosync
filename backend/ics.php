@@ -1125,7 +1125,7 @@ class PHPContentsImportProxy extends MAPIMapping {
                 if(isset($change["end"]))
                     $exception->endtime = $this->_getGMTTimeByTZ($change["end"], $tz);
                 if(isset($change["basedate"]))
-                    $exception->exceptionstarttime = $this->_getGMTTimeByTZ($change["basedate"] + $recurrence->recur["startocc"] * 60, $tz);
+                    $exception->exceptionstarttime = $this->_getGMTTimeByTZ($this->_getDayStartOfTimestamp($change["basedate"]) + $recurrence->recur["startocc"] * 60, $tz);
                 if(isset($change["subject"]))
                     $exception->subject = $change["subject"];
                 if(isset($change["reminder_before"]) && $change["reminder_before"])
@@ -1147,7 +1147,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             foreach($recurrence->recur["deleted_occurences"] as $deleted) {
                 $exception = new SyncAppointment();
                 
-                $exception->exceptionstarttime = $this->_getGMTTimeByTZ($deleted + $recurrence->recur["startocc"] * 60, $tz); 
+                $exception->exceptionstarttime = $this->_getGMTTimeByTZ($this->_getDayStartOfTimestamp($deleted) + $recurrence->recur["startocc"] * 60, $tz); 
                 $exception->deleted = "1"; 
 
                 if(!isset($message->exceptions))
