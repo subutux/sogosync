@@ -1125,7 +1125,7 @@ class PHPContentsImportProxy extends MAPIMapping {
                 if(isset($change["end"]))
                     $exception->endtime = $this->_getGMTTimeByTZ($change["end"], $tz);
                 if(isset($change["basedate"]))
-                    $exception->exceptionstarttime = $change["basedate"];
+                    $exception->exceptionstarttime = $this->_getGMTTimeByTZ($change["basedate"] + $recurrence->recur["startocc"] * 60, $tz);
                 if(isset($change["subject"]))
                     $exception->subject = $change["subject"];
                 if(isset($change["reminder_before"]) && $change["reminder_before"])
@@ -1147,7 +1147,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             foreach($recurrence->recur["deleted_occurences"] as $deleted) {
                 $exception = new SyncAppointment();
                 
-                $exception->exceptionstarttime = $deleted;
+                $exception->exceptionstarttime = $this->_getGMTTimeByTZ($deleted + $recurrence->recur["startocc"] * 60, $tz); 
                 $exception->deleted = "1"; 
 
                 if(!isset($message->exceptions))
@@ -2072,7 +2072,7 @@ class BackendICS {
         $dummy = false;
         
         // Fake a contents importer because it can do the conversion for us
-        $importer = new PHPContentsImportProxy($this->_session, $this->_defaultstore, $foldersourcekey, $dummy);
+        $importer = new PHPContentsImportProxy($this->_session, $this->_defaultstore, $foldersourcekey, $dummy, SYNC_TRUNCATION_ALL);
         
         $entryid = mapi_msgstore_entryidfromsourcekey($this->_defaultstore, $foldersourcekey, $messagesourcekey);
         if(!$entryid) {
