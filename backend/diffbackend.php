@@ -191,7 +191,7 @@ class ImportContentsChangesDiff extends DiffState {
     
     function ImportMessageChange($id, $message) {
         //do nothing if it is in a dummy folder
-        if ($this->_folderid != SYNC_FOLDER_TYPE_DUMMY) 
+        if ($this->_folderid == SYNC_FOLDER_TYPE_DUMMY) 
         	return false;
         
         if($id) {
@@ -224,7 +224,7 @@ class ImportContentsChangesDiff extends DiffState {
     // Import a deletion. This may conflict if the local object has been modified.
     function ImportMessageDeletion($id) {
         //do nothing if it is in a dummy folder
-        if ($this->_folderid != SYNC_FOLDER_TYPE_DUMMY) 
+        if ($this->_folderid == SYNC_FOLDER_TYPE_DUMMY) 
         	return true;
             	
         // See if there's a conflict
@@ -248,7 +248,7 @@ class ImportContentsChangesDiff extends DiffState {
     // Import a change in 'read' flags .. This can never conflict
     function ImportMessageReadFlag($id, $flags) {
         //do nothing if it is a dummy folder
-        if ($this->_folderid != SYNC_FOLDER_TYPE_DUMMY) 
+        if ($this->_folderid == SYNC_FOLDER_TYPE_DUMMY) 
         	return true;
 
         // Update client state
@@ -280,7 +280,7 @@ class ImportHierarchyChangesDiff extends DiffState {
     
     function ImportFolderChange($id, $parent, $displayname, $type) {
         //do nothing if it is a dummy folder
-        if ($parent != SYNC_FOLDER_TYPE_DUMMY) 
+        if ($parent == SYNC_FOLDER_TYPE_DUMMY) 
         	return false;
     	
         if($id) {
@@ -302,7 +302,7 @@ class ImportHierarchyChangesDiff extends DiffState {
 
     function ImportFolderDeletion($id, $parent) {
         //do nothing if it is a dummy folder
-        if ($parent != SYNC_FOLDER_TYPE_DUMMY) 
+        if ($parent == SYNC_FOLDER_TYPE_DUMMY) 
         	return false;
     	
         $change = array();
