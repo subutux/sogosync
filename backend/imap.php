@@ -255,6 +255,10 @@ class BackendIMAP extends BackendDiff {
     	if ($this->_sentID) {
 	        $asf = $this->addSentMessage($this->_sentID, $cheaders, $body);
         }
+        else if (IMAP_SENTFOLDER) {
+	        $asf = $this->addSentMessage(IMAP_SENTFOLDER, $cheaders, $body);
+		    debugLog("IMAP-SendMail: Outgoing mail saved in configured 'Sent' folder '".IMAP_SENTFOLDER."': ". (($asf)?"success":"failed"));
+        }
         // No Sent folder set, try defaults
         else {
 		    debugLog("IMAP-SendMail: No Sent mailbox set");

@@ -59,6 +59,8 @@
     //		'domain'	- the value of the "domain" field is used
     //		'@mydomain.com' - the username is used and the given string will be appended
     define('IMAP_DEFAULTFROM', '');
+    // copy outgoing mail to this folder. If not set z-push will try the default folders  
+    define('IMAP_SENTFOLDER', '');
     
     
     // ************************
