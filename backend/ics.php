@@ -1160,6 +1160,15 @@ class PHPContentsImportProxy extends MAPIMapping {
         if($tz) {
             $message->timezone = base64_encode($this->_getSyncBlobFromTZ($tz));
         }
+
+        // Get organizer information if it is a meetingrequest
+        $meetingstatustag = $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8217");
+        $messageprops = mapi_getprops($mapimessage, array($meetingstatustag, PR_SENT_REPRESENTING_ENTRYID, PR_SENT_REPRESENTING_NAME));
+        
+        if(isset($messageprops[$meetingstatustag]) && $messageprops[$meetingstatustag] > 0) {
+            $message->organizeremail = $this->_getSMTPAddressFromEntryID($messageprops[PR_SENT_REPRESENTING_ENTRYID]);
+            $message->organizername = $messageprops[PR_SENT_REPRESENTING_NAME];
+        }
         
         // Do attendees
         $reciptable = mapi_message_getrecipienttable($mapimessage);
@@ -1188,21 +1197,13 @@ class PHPContentsImportProxy extends MAPIMapping {
             // Some attendees have no email or name (eg resources), and if you
             // don't send one of those fields, the phone will give an error ... so 
             // we don't send it in that case.
-            if($attendee->name && $attendee->email)
+            // also ignore the "attendee" if the email is equal to the organizers' email
+            if($attendee->name && $attendee->email && $attendee->email != $message->organizeremail)
                 array_push($message->attendees, $attendee);
         }
         // Force the 'alldayevent' in the object at all times. (non-existent == 0)
         if(!isset($message->alldayevent) || $message->alldayevent == "")
             $message->alldayevent = 0;
-        
-        // Get organizer information if it is a meetingrequest
-        $meetingstatustag = $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8217");
-        $messageprops = mapi_getprops($mapimessage, array($meetingstatustag, PR_SENT_REPRESENTING_ENTRYID, PR_SENT_REPRESENTING_NAME));
-        
-        if(isset($messageprops[$meetingstatustag]) && $messageprops[$meetingstatustag] > 0) {
-            $message->organizeremail = $this->_getSMTPAddressFromEntryID($messageprops[PR_SENT_REPRESENTING_ENTRYID]);
-            $message->organizername = $messageprops[PR_SENT_REPRESENTING_NAME];
-        }
         
         return $message;
     }
@@ -1840,14 +1841,15 @@ class BackendICS {
     }
 
     function SendMail($rfc822, $forward = false, $reply = false, $parent = false) {
-        $message = Mail_mimeDecode::decode(
-                      array('decode_headers' => true, 
+        $mimeParams = array('decode_headers' => false, 
                             'decode_bodies' => true, 
                             'include_bodies' => true, 
                             'input' => $rfc822, 
                             'crlf' => "\r\n", 
-                            'charset' => 'utf-8'));
-               
+                            'charset' => 'utf-8');
+        $mimeObject = new Mail_mimeDecode($mimeParams['input'], $mimeParams['crlf']);
+		$message = $mimeObject->decode($mimeParams);                       
+
         // Open the outbox and create the message there
         $storeprops = mapi_getprops($this->_defaultstore, array(PR_IPM_OUTBOX_ENTRYID, PR_IPM_SENTMAIL_ENTRYID));
         if(!isset($storeprops[PR_IPM_OUTBOX_ENTRYID])) {
@@ -1864,7 +1866,7 @@ class BackendICS {
         $mapimessage = mapi_folder_createmessage($outbox);
         
         mapi_setprops($mapimessage, array(
-            PR_SUBJECT => u2w($message->headers["subject"]),
+            PR_SUBJECT => u2w($mimeObject->_decodeHeader($message->headers["subject"])),
             PR_SENTMAIL_ENTRYID => $storeprops[PR_IPM_SENTMAIL_ENTRYID],
             PR_MESSAGE_CLASS => "IPM.Note",
             PR_MESSAGE_DELIVERY_TIME => time()
@@ -1911,7 +1913,7 @@ class BackendICS {
                     $mapirecip[PR_ADDRTYPE] = "SMTP";
                     $mapirecip[PR_EMAIL_ADDRESS] = $addr->mailbox . "@" . $addr->host;
                     if(isset($addr->personal) && strlen($addr->personal) > 0)
-                        $mapirecip[PR_DISPLAY_NAME] = u2w($addr->personal);
+                        $mapirecip[PR_DISPLAY_NAME] = u2w($mimeObject->_decodeHeader($addr->personal));
                     else
                         $mapirecip[PR_DISPLAY_NAME] = $mapirecip[PR_EMAIL_ADDRESS];
                     $mapirecip[PR_RECIPIENT_TYPE] = $type;
