@@ -32,6 +32,7 @@ require_once('Mail/RFC822.php');
 
 include_once('proto.php');
 include_once('backend.php');
+include_once('z_tnef.php');
 
 
 function GetPropIDFromString($store, $mapiprop) {
@@ -1935,6 +1936,13 @@ class BackendICS {
                 if($part->ctype_primary == "text" && $part->ctype_secondary == "plain") {// discard any other kind of text, like html
                     	$body = u2w($part->body); // assume only one text body
                 }
+				elseif($part->ctype_primary == "ms-tnef" || $part->ctype_secondary == "ms-tnef") {
+					$zptnef = new ZPush_tnef($this->_defaultstore);
+					$mapiprops = array();
+					$zptnef->extractProps($part->body, $mapiprops);
+					if (is_array($mapiprops) && !empty($mapiprops)) mapi_setprops($mapimessage, $mapiprops);
+					else debugLog("TNEF: Mapi props array was empty");
+				}
                 else {
                     // attachment
                     $attach = mapi_message_createattach($mapimessage);
