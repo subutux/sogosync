@@ -429,6 +429,11 @@ function HandleSync($backend, $protocolversion, $devid) {
         	$collection["collectionid"] = _getFolderID($devid, $collection["class"]);
         }
         
+        // compatibility mode - set default conflict behavior if no conflict resolution algorithm is set (OVERWRITE_PIM)
+        if (!isset($collection["conflict"])) {
+        	$collection["conflict"] = 1;
+        }
+                
         // Get our sync state for this collection
         $collection["syncstate"] = $statemachine->getSyncState($collection["synckey"]);
         if($decoder->getElementStartTag(SYNC_PERFORM)) {

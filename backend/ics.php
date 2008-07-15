@@ -766,9 +766,9 @@ class ImportContentsChangesICS extends MAPIMapping {
                         if(isset($exception->endtime)) 
                             $mapiexception["end"] = $this->_getLocaltimeByTZ($exception->endtime, $tz);
                         if(isset($exception->subject)) 
-                            $mapiexception["subject"] = $exception->subject;
+                            $mapiexception["subject"] = u2w($exception->subject);
                         if(isset($exception->location)) 
-                            $mapiexception["location"] = $exception->location;
+                            $mapiexception["location"] = u2w($exception->location);
                         if(isset($exception->busystatus)) 
                             $mapiexception["busystatus"] = $exception->busystatus;
                         if(isset($exception->reminder)) {
