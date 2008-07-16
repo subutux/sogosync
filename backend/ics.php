@@ -1166,7 +1166,7 @@ class PHPContentsImportProxy extends MAPIMapping {
         $meetingstatustag = $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8217");
         $messageprops = mapi_getprops($mapimessage, array($meetingstatustag, PR_SENT_REPRESENTING_ENTRYID, PR_SENT_REPRESENTING_NAME));
         
-        if(isset($messageprops[$meetingstatustag]) && $messageprops[$meetingstatustag] > 0) {
+        if(isset($messageprops[$meetingstatustag]) && $messageprops[$meetingstatustag] > 0 && isset($messageprops[PR_SENT_REPRESENTING_ENTRYID]) && isset($messageprops[PR_SENT_REPRESENTING_NAME])) {
             $message->organizeremail = $this->_getSMTPAddressFromEntryID($messageprops[PR_SENT_REPRESENTING_ENTRYID]);
             $message->organizername = $messageprops[PR_SENT_REPRESENTING_NAME];
         }
@@ -1199,7 +1199,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             // don't send one of those fields, the phone will give an error ... so 
             // we don't send it in that case.
             // also ignore the "attendee" if the email is equal to the organizers' email
-            if($attendee->name && $attendee->email && $attendee->email != $message->organizeremail)
+            if(isset($attendee->name) && isset($attendee->email) && (!isset($message->organizeremail) || (isset($message->organizeremail) && $attendee->email != $message->organizeremail)))
                 array_push($message->attendees, $attendee);
         }
         // Force the 'alldayevent' in the object at all times. (non-existent == 0)
