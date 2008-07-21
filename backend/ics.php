@@ -1168,7 +1168,7 @@ class PHPContentsImportProxy extends MAPIMapping {
         
         if(isset($messageprops[$meetingstatustag]) && $messageprops[$meetingstatustag] > 0 && isset($messageprops[PR_SENT_REPRESENTING_ENTRYID]) && isset($messageprops[PR_SENT_REPRESENTING_NAME])) {
             $message->organizeremail = $this->_getSMTPAddressFromEntryID($messageprops[PR_SENT_REPRESENTING_ENTRYID]);
-            $message->organizername = $messageprops[PR_SENT_REPRESENTING_NAME];
+            $message->organizername = w2u($messageprops[PR_SENT_REPRESENTING_NAME]);
         }
         
         // Do attendees
