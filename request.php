@@ -97,6 +97,7 @@ function HandleMoveItems($backend, $protocolversion) {
     }
 
     $encoder->endTag();
+    return true;
 }
 
 function HandleNotify($backend, $protocolversion) {

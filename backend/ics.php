@@ -1128,11 +1128,11 @@ class PHPContentsImportProxy extends MAPIMapping {
                 if(isset($change["basedate"]))
                     $exception->exceptionstarttime = $this->_getGMTTimeByTZ($this->_getDayStartOfTimestamp($change["basedate"]) + $recurrence->recur["startocc"] * 60, $tz);
                 if(isset($change["subject"]))
-                    $exception->subject = $change["subject"];
+                    $exception->subject = w2u($change["subject"]);
                 if(isset($change["reminder_before"]) && $change["reminder_before"])
                     $exception->reminder = $change["remind_before"];
                 if(isset($change["location"]))
-                    $exception->location = $change["location"];
+                    $exception->location = w2u($change["location"]);
                 if(isset($change["busystatus"]))
                     $exception->busystatus = $change["busystatus"];
                 if(isset($change["alldayevent"]))
