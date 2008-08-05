@@ -33,9 +33,11 @@ class Streamer {
     
     var $content;
     var $attributes;
+    var $flags;
     
     function Streamer($mapping) {
         $this->_mapping = $mapping;
+        $this->flags = false;
     }
     
     // Decodes the WBXML from $input until we reach the same depth level of WBXML. This
@@ -195,6 +197,28 @@ class Streamer {
             $encoder->content($this->content);
             
     }
+    
+    
+   	public function __toString() {
+
+		foreach ($this->_mapping as $v) {
+			$val = $v[STREAMER_VAR];
+			//array of values?
+			if (isset($v[STREAMER_ARRAY])) {
+				// seek for differences in the arrays				
+				if (is_array($this->$val)) {
+					$str .= "\t". $val ."\n";
+					foreach ($this->$val as $value) $str .= "\t\t'". $value ."'\n";
+				}
+			}
+			else
+				$str .= "\t". $val ." => " . (isset($this->$val)?"'". $this->$val ."'":"null") . "\n";
+		}		
+		$str .= "}\n";
+		
+		return $str;
+	}
+    
 
     // Oh yeah. This is beautiful. Exchange outputs date fields differently in calendar items
     // and emails. We could just always send one or the other, but unfortunately nokia's 'Mail for

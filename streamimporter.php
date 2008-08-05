@@ -23,8 +23,12 @@ class ImportContentsChangesStream {
     function ImportMessageChange($id, $message) {
         if(strtolower(get_class($message)) != $this->_type)
             return true; // ignore other types
-            
-        $this->_encoder->startTag(SYNC_ADD);
+
+		if ($message->flags === false || $message->flags === SYNC_NEWMESSAGE)           
+        	$this->_encoder->startTag(SYNC_ADD);
+        else
+        	$this->_encoder->startTag(SYNC_MODIFY);
+        	
         $this->_encoder->startTag(SYNC_SERVERENTRYID);
         $this->_encoder->content($id);
         $this->_encoder->endTag();

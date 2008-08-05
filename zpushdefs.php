@@ -41,6 +41,7 @@ define("SYNC_SUPPORTED","Supported");
 define("SYNC_SOFTDELETE","SoftDelete");
 define("SYNC_MIMESUPPORT","MIMESupport");
 define("SYNC_MIMETRUNCATION","MIMETruncation");
+define("SYNC_NEWMESSAGE","NewMessage");
 
 // POOMCONTACTS
 define("SYNC_POOMCONTACTS_ANNIVERSARY","POOMCONTACTS:Anniversary");

@@ -110,13 +110,13 @@ class SyncMail extends Streamer {
                                 SYNC_POOMMAIL_DISPLAYTO =>		array ( STREAMER_VAR => "displayto" ),
                                 SYNC_POOMMAIL_IMPORTANCE =>		array ( STREAMER_VAR => "importance" ),
                                 SYNC_POOMMAIL_READ =>			array ( STREAMER_VAR => "read" ),
+                                SYNC_POOMMAIL_ATTACHMENTS =>		array ( STREAMER_VAR => "attachments", STREAMER_TYPE => "SyncAttachment", STREAMER_ARRAY => SYNC_POOMMAIL_ATTACHMENT ),
                                 SYNC_POOMMAIL_BODYTRUNCATED => 	array ( STREAMER_VAR => "bodytruncated" ),
                                 SYNC_POOMMAIL_BODY => 			array ( STREAMER_VAR => "body" ),
                                 SYNC_POOMMAIL_BODYSIZE => 		array ( STREAMER_VAR => "bodysize" ),
                                 SYNC_POOMMAIL_MESSAGECLASS =>	array ( STREAMER_VAR => "messageclass" ),
                                 SYNC_POOMMAIL_MEETINGREQUEST	=>	array ( STREAMER_VAR => "meetingrequest", STREAMER_TYPE => "SyncMeetingRequest" ),
                                 SYNC_POOMMAIL_REPLY_TO =>		array ( STREAMER_VAR => "reply_to" ),
-                                SYNC_POOMMAIL_ATTACHMENTS =>		array ( STREAMER_VAR => "attachments", STREAMER_TYPE => "SyncAttachment", STREAMER_ARRAY => SYNC_POOMMAIL_ATTACHMENT ),
                               );
 
         if(isset($protocolversion) && $protocolversion >= 2.5) {

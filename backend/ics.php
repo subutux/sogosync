@@ -938,6 +938,10 @@ class PHPContentsImportProxy extends MAPIMapping {
         $mapimessage = mapi_msgstore_openentry($this->_store, $entryid);
         
         $message = $this->_getMessage($mapimessage, $this->getTruncSize($this->_truncation));
+
+        // substitute the MAPI SYNC_NEW_MESSAGE flag by a z-push proprietary flag 
+        if ($flags == SYNC_NEW_MESSAGE) $message->flags = SYNC_NEWMESSAGE;
+        else $message->flags = $flags;
         
         $this->importer->ImportMessageChange(bin2hex($sourcekey), $message);
 
@@ -1927,14 +1931,16 @@ class BackendICS {
         }
         
         mapi_message_modifyrecipients($mapimessage, 0, $recips);
-        
-        // Loop through subparts. We currently only support single-level
-        // multiparts. The PDA currently only does this because you are adding
+
+        // Loop through subparts. We currently only support real single-level 
+        // multiparts and partly multipart/related/mixed for attachments.
+        // The PDA currently only does this because you are adding
         // an attachment and the type will be multipart/mixed or multipart/alternative.
+        $body = "";
         if($message->ctype_primary == "multipart" && ($message->ctype_secondary == "mixed" || $message->ctype_secondary == "alternative")) {
             foreach($message->parts as $part) {
-                if($part->ctype_primary == "text" && $part->ctype_secondary == "plain") {// discard any other kind of text, like html
-                    	$body = u2w($part->body); // assume only one text body
+                if($part->ctype_primary == "text" && $part->ctype_secondary == "plain" && isset($part->body)) {// discard any other kind of text, like html
+                    	$body .= u2w($part->body); // assume only one text body
                 }
 				elseif($part->ctype_primary == "ms-tnef" || $part->ctype_secondary == "ms-tnef") {
 					$zptnef = new ZPush_tnef($this->_defaultstore);
@@ -1943,31 +1949,15 @@ class BackendICS {
 					if (is_array($mapiprops) && !empty($mapiprops)) mapi_setprops($mapimessage, $mapiprops);
 					else debugLog("TNEF: Mapi props array was empty");
 				}
-                else {
-                    // attachment
-                    $attach = mapi_message_createattach($mapimessage);
-                    
-                    // Filename is present in both Content-Type: name=.. and in Content-Disposition: filename=
-                    if(isset($part->ctype_parameters["name"]))
-                        $filename = $part->ctype_parameters["name"];
-                    else if(isset($part->d_parameters["name"]))
-                        $filename = $part->d_parameters["filename"];
-                    else if (isset($part->d_parameters["filename"])) //sending appointment with nokia only filename is set
-						$filename = $part->d_parameters["filename"];						
-                    else
-                        $filename = "untitled";
-                    
-                    // Set filename and attachment type
-                    mapi_setprops($attach, array(PR_ATTACH_LONG_FILENAME => u2w($filename), PR_ATTACH_METHOD => ATTACH_BY_VALUE));
-                    
-                    // Set attachment data
-                    mapi_setprops($attach, array(PR_ATTACH_DATA_BIN => $part->body));
-                    
-                    // Set MIME type
-                    mapi_setprops($attach, array(PR_ATTACH_MIME_TAG => $part->ctype_primary . "/" . $part->ctype_secondary));
-                    
-                    mapi_savechanges($attach);
-                }
+				// do deeper multipart parsing for the iPhone when forwarding mail
+				elseif($part->ctype_primary == "multipart" && ($part->ctype_secondary == "mixed" || $part->ctype_secondary == "related")) {
+					if(is_array($part->parts)) 
+						foreach($part->parts as $part2)
+							if (isset($part2->disposition) && ($part2->disposition == "inline" || $part2->disposition == "attachment")) 
+								$this->_storeAttachment($mapimessage, $part2);
+				}
+				else 
+					$this->_storeAttachment($mapimessage, $part);
             }
         } else {
             $body = u2w($message->body);
@@ -2254,6 +2244,33 @@ class BackendICS {
         }
         
         return true;
+    }
+    
+    // gets attachment from a parsed email and stores it to MAPI
+    function _storeAttachment($mapimessage, $part) {
+        // attachment
+        $attach = mapi_message_createattach($mapimessage);
+        
+        // Filename is present in both Content-Type: name=.. and in Content-Disposition: filename=
+        if(isset($part->ctype_parameters["name"]))
+            $filename = $part->ctype_parameters["name"];
+        else if(isset($part->d_parameters["name"]))
+            $filename = $part->d_parameters["filename"];
+        else if (isset($part->d_parameters["filename"])) //sending appointment with nokia only filename is set
+			$filename = $part->d_parameters["filename"];						
+        else
+            $filename = "untitled";
+        
+        // Set filename and attachment type
+        mapi_setprops($attach, array(PR_ATTACH_LONG_FILENAME => u2w($filename), PR_ATTACH_METHOD => ATTACH_BY_VALUE));
+        
+        // Set attachment data
+        mapi_setprops($attach, array(PR_ATTACH_DATA_BIN => $part->body));
+        
+        // Set MIME type
+        mapi_setprops($attach, array(PR_ATTACH_MIME_TAG => $part->ctype_primary . "/" . $part->ctype_secondary));
+        
+        mapi_savechanges($attach);
     }
 }
 

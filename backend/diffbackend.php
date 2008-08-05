@@ -68,6 +68,7 @@ function GetDiff($old, $new) {
             } else {
                 // Message in new seems to be new (add)
                 $change["type"] = "change";
+                $change["flags"] = SYNC_NEWMESSAGE;
                 $change["id"] = $new[$inew]["id"];
                 $changes[] = $change;
                 $inew++;
@@ -86,6 +87,7 @@ function GetDiff($old, $new) {
     while($inew < count($new)) {
         // All data left in new have been added
         $change["type"] = "change";
+        $change["flags"] = SYNC_NEWMESSAGE;
         $change["id"] = $new[$inew]["id"];
         $changes[] = $change;
         $inew++;
@@ -431,6 +433,9 @@ class ExportChangesDiff extends DiffState {
 
                     $stat = $this->_backend->StatMessage($this->_folderid, $change["id"]);
                     $message = $this->_backend->GetMessage($this->_folderid, $change["id"], $truncsize);
+                    
+                    // copy the flag to the message
+                    $message->flags = $change["flags"];
                     
                     if($stat && $message) {
                         if($this->_flags & BACKEND_DISCARD_DATA || $this->_importer->ImportMessageChange($change["id"], $message) == true)

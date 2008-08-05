@@ -1232,6 +1232,10 @@ function HandleRequest($backend, $cmd, $devid, $protocolversion) {
     case 'Ping': // Used for http-based notifications (pushmail)
         $status = HandlePing($backend, $devid, $protocolversion);
         break;
+    default:
+    	debugLog("unknown command - not implemented");
+    	$status = false;
+    	break;
     }
 
     return $status;
