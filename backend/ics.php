@@ -823,8 +823,9 @@ class ImportContentsChangesICS extends MAPIMapping {
         
         $this->_setPropsInMAPI($mapimessage, $contact, $this->_contactmapping);
         
-        // Set display name and subject to same value as fileas
-        mapi_setprops($mapimessage, array(PR_DISPLAY_NAME => "" . u2w($contact->fileas), PR_SUBJECT => "" . u2w($contact->fileas)));
+        // Set display name and subject to a combined value of firstname and lastname
+        $cname = $contact->firstname . " " . $contact->lastname;
+        mapi_setprops($mapimessage, array(PR_DISPLAY_NAME => "" . u2w($cname), PR_SUBJECT => "" . u2w($cname)));
         
         $nremails = array();
         if (isset($contact->email1address)) $nremails[] = 0;
@@ -1365,6 +1366,9 @@ class PHPContentsImportProxy extends MAPIMapping {
         
         $message->to = implode(";", $to);
         $message->cc = implode(";", $cc);
+
+		if (!isset($message->body) || strlen($message->body) == 0) 
+			$message->body = " ";
 
         return $message;
     }    

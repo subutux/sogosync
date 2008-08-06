@@ -438,8 +438,6 @@ function HandleSync($backend, $protocolversion, $devid) {
         // Get our sync state for this collection
         $collection["syncstate"] = $statemachine->getSyncState($collection["synckey"]);
         if($decoder->getElementStartTag(SYNC_PERFORM)) {
-            // We need a new sync key because the state will change while importing
-            $collection["newsynckey"] = $statemachine->getNewSyncKey($collection["synckey"]);
 
             // Configure importer with last state
             $importer = $backend->GetContentsImporter($collection["collectionid"]);
@@ -506,6 +504,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                             $importer->ImportMessageReadFlag($serverid, $appdata->read);
                         else
                             $importer->ImportMessageChange($serverid, $appdata);
+                        $collection["importedchanges"] = true;
                     }
                     break;
                 case SYNC_ADD:
@@ -514,6 +513,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                     
                         if($clientid && $id) {
                             $collection["clientids"][$clientid] = $id;
+                            $collection["importedchanges"] = true;
                         }
                     }
                     break;
@@ -523,6 +523,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                         
                         if($folderid) {
                             $importer->ImportMessageMove($serverid, $folderid);
+                            $collection["importedchanges"] = true;
                             break;
                         }
                     }
@@ -569,7 +570,7 @@ function HandleSync($backend, $protocolversion, $devid) {
         {
             foreach($collections as $collection) {
                 // Get a new sync key to output to the client if any changes have been requested or have been sent
-                if(!isset($collection["newsynckey"]))
+                if (isset($collection["importedchanges"]) || isset($collection["getchanges"]) || $collection["synckey"] == "0")
                     $collection["newsynckey"] = $statemachine->getNewSyncKey($collection["synckey"]);
                 
                 $encoder->startTag(SYNC_FOLDER);
@@ -669,10 +670,17 @@ function HandleSync($backend, $protocolversion, $devid) {
 
                 $encoder->endTag();
 
-                if(isset($collection["newsynckey"]) && isset($exporter) && $exporter) { 	              
-                    // Save the sync state for the next time
-                    $state = $exporter->GetState();
-                    $statemachine->setSyncState($collection["newsynckey"], $state);
+                // Save the sync state for the next time
+                if(isset($collection["newsynckey"])) {
+                	if (isset($exporter) && $exporter)  	              
+                    	$state = $exporter->GetState();
+	
+	                // nothing exported, but possible imported
+                    else if (isset($importer) && $importer)  
+                    	$state = $importer->GetState();
+                    
+                    if (isset($state)) $statemachine->setSyncState($collection["newsynckey"], $state);
+                    else debugLog("error saving " . $collection["newsynckey"] . " - no state information available");
                 }
             }
         }
