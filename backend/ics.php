@@ -496,13 +496,18 @@ class ImportContentsChangesICS extends MAPIMapping {
         $parentsourcekey = $this->_folderid;
         if($id)
             $sourcekey = hex2bin($id);
-            
+
+        $flags = 0;            
         $props = array();
         $props[PR_PARENT_SOURCE_KEY] = $parentsourcekey;
+
+		// set the PR_SOURCE_KEY if available or mark it as new message
         if($id)
             $props[PR_SOURCE_KEY] = $sourcekey;
+        else
+        	$flags = SYNC_NEW_MESSAGE;
         
-        if(mapi_importcontentschanges_importmessagechange($this->importer, $props, 0, $mapimessage)) {
+        if(mapi_importcontentschanges_importmessagechange($this->importer, $props, $flags, $mapimessage)) {
             $this->_setMessage($mapimessage, $message);
             mapi_message_savechanges($mapimessage);
             
