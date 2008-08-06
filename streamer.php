@@ -199,26 +199,6 @@ class Streamer {
     }
     
     
-   	public function __toString() {
-
-		foreach ($this->_mapping as $v) {
-			$val = $v[STREAMER_VAR];
-			//array of values?
-			if (isset($v[STREAMER_ARRAY])) {
-				// seek for differences in the arrays				
-				if (is_array($this->$val)) {
-					$str .= "\t". $val ."\n";
-					foreach ($this->$val as $value) $str .= "\t\t'". $value ."'\n";
-				}
-			}
-			else
-				$str .= "\t". $val ." => " . (isset($this->$val)?"'". $this->$val ."'":"null") . "\n";
-		}		
-		$str .= "}\n";
-		
-		return $str;
-	}
-    
 
     // Oh yeah. This is beautiful. Exchange outputs date fields differently in calendar items
     // and emails. We could just always send one or the other, but unfortunately nokia's 'Mail for
