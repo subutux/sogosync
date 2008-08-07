@@ -205,7 +205,7 @@ class ImportContentsChangesDiff extends DiffState {
             $change["id"] = $id;
             $change["mod"] = 0; // dummy, will be updated later if the change succeeds
             $change["parent"] = $this->_folderid;
-            $change["flags"] = $message->read;
+            $change["flags"] = (isset($message->read)) ? $message->read : 0;
             $this->updateState("change", $change);
             
             if($conflict && $this->_flags == SYNC_CONFLICT_OVERWRITE_PIM)
@@ -435,7 +435,7 @@ class ExportChangesDiff extends DiffState {
                     $message = $this->_backend->GetMessage($this->_folderid, $change["id"], $truncsize);
                     
                     // copy the flag to the message
-                    $message->flags = $change["flags"];
+                    $message->flags = (isset($change["flags"])) ? $change["flags"] : 0;
                     
                     if($stat && $message) {
                         if($this->_flags & BACKEND_DISCARD_DATA || $this->_importer->ImportMessageChange($change["id"], $message) == true)

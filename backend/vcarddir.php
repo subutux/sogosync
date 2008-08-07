@@ -179,6 +179,7 @@ class BackendVCDir extends BackendDiff {
 				case 'categories':
 					//case 'nickname':
 					$val = preg_split('/(?<!\\\\)(\,)/i', $value);
+					$val = array_map("w2u", $val);
 					break;
 				default:
 					$val = preg_split('/(?<!\\\\)(\;)/i', $value);
@@ -265,39 +266,39 @@ class BackendVCDir extends BackendDiff {
 				}
 				if(!empty($adr['val'][2])){
 					$b=$a.'street';
-					$message->$b = $adr['val'][2];
+					$message->$b = w2u($adr['val'][2]);
 				}
 				if(!empty($adr['val'][3])){
 					$b=$a.'city';
-					$message->$b = $adr['val'][3];
+					$message->$b = w2u($adr['val'][3]);
 				}
 				if(!empty($adr['val'][4])){
 					$b=$a.'state';
-					$message->$b = $adr['val'][4];
+					$message->$b = w2u($adr['val'][4]);
 				}
 				if(!empty($adr['val'][5])){
 					$b=$a.'postalcode';
-					$message->$b = $adr['val'][5];
+					$message->$b = w2u($adr['val'][5]);
 				}
 				if(!empty($adr['val'][6])){
 					$b=$a.'country';
-					$message->$b = $adr['val'][6];
+					$message->$b = w2u($adr['val'][6]);
 				}
 			}
 		}
 		
 		if(!empty($vcard['fn'][0]['val'][0]))
-			$message->fileas = $vcard['fn'][0]['val'][0];
+			$message->fileas = w2u($vcard['fn'][0]['val'][0]);
 		if(!empty($vcard['n'][0]['val'][0]))
-			$message->lastname = $vcard['n'][0]['val'][0];
+			$message->lastname = w2u($vcard['n'][0]['val'][0]);
 		if(!empty($vcard['n'][0]['val'][1]))
-			$message->firstname = $vcard['n'][0]['val'][1];
+			$message->firstname = w2u($vcard['n'][0]['val'][1]);
 		if(!empty($vcard['n'][0]['val'][2]))
-			$message->middlename = $vcard['n'][0]['val'][2];
+			$message->middlename = w2u($vcard['n'][0]['val'][2]);
 		if(!empty($vcard['n'][0]['val'][3]))
-			$message->title = $vcard['n'][0]['val'][3];
+			$message->title = w2u($vcard['n'][0]['val'][3]);
 		if(!empty($vcard['n'][0]['val'][4]))
-			$message->suffix = $vcard['n'][0]['val'][4];
+			$message->suffix = w2u($vcard['n'][0]['val'][4]);
 		if(!empty($vcard['bday'][0]['val'][0])){
 			$tz = date_default_timezone_get();
 			date_default_timezone_set('UTC');
@@ -305,16 +306,16 @@ class BackendVCDir extends BackendDiff {
 			date_default_timezone_set($tz);
 		}
 		if(!empty($vcard['org'][0]['val'][0]))
-			$message->companyname = $vcard['org'][0]['val'][0];
+			$message->companyname = w2u($vcard['org'][0]['val'][0]);
 		if(!empty($vcard['note'][0]['val'][0])){
-			$message->body = $vcard['note'][0]['val'][0];
+			$message->body = w2u($vcard['note'][0]['val'][0]);
 			$message->bodysize = strlen($vcard['note'][0]['val'][0]);
 			$message->bodytruncated = 0;
 		}
 		if(!empty($vcard['role'][0]['val'][0]))
-			$message->jobtitle = $vcard['role'][0]['val'][0];//$vcard['title'][0]['val'][0]
+			$message->jobtitle = w2u($vcard['role'][0]['val'][0]);//$vcard['title'][0]['val'][0]
 		if(!empty($vcard['url'][0]['val'][0]))
-			$message->webpage = $vcard['url'][0]['val'][0];
+			$message->webpage = w2u($vcard['url'][0]['val'][0]);
 		if(!empty($vcard['categories'][0]['val']))
 			$message->categories = $vcard['categories'][0]['val'];
 		
@@ -387,13 +388,13 @@ class BackendVCDir extends BackendDiff {
 
 		if(!$id){
 			if(!empty($message->fileas)){
-				$name = $message->fileas;
+				$name = u2w($message->fileas);
 			}elseif(!empty($message->lastname)){
-				$name = $name = $message->lastname;
+				$name = $name = u2w($message->lastname);
 			}elseif(!empty($message->firstname)){
-				$name = $name = $message->firstname;
+				$name = $name = u2w($message->firstname);
 			}elseif(!empty($message->companyname)){
-				$name = $name = $message->companyname;
+				$name = $name = u2w($message->companyname);
 			}else{
 				$name = 'unknown';
 			}
@@ -429,7 +430,7 @@ class BackendVCDir extends BackendDiff {
 		$data = str_replace("\r\n", "\n", $data);
 		$data = str_replace("\r", "\n", $data);
 		$data = str_replace(array('\\', ';', ',', "\n"), array('\\\\', '\\;', '\\,', '\\n'), $data);
-		return $data;
+		return u2w($data);
 	}
 	
 	function unescape($data){
