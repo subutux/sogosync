@@ -1,4 +1,4 @@
-<?
+<?php
 /***********************************************
 * File      :   streamimporter.php
 * Project   :   Z-Push

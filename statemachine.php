@@ -1,4 +1,4 @@
-<?
+<?php
 /***********************************************
 * File      :   statemachine.php
 * Project   :   Z-Push

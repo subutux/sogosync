@@ -1,4 +1,4 @@
-<?
+<?php
 /***********************************************
 * File      :   diffbackend.php
 * Project   :   Z-Push

@@ -1,4 +1,4 @@
-<?
+<?php
 /***********************************************
 * File      :   memimporter.php
 * Project   :   Z-Push
