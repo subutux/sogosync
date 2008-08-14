@@ -824,7 +824,8 @@ class ImportContentsChangesICS extends MAPIMapping {
     }
     
     function _setContact($mapimessage, $contact) {
-        mapi_setprops($mapimessage, array(PR_MESSAGE_CLASS => "IPM.Contact"));
+    	//enable to see a contact when clicking to in webaccess
+        mapi_setprops($mapimessage, array(PR_MESSAGE_CLASS => "IPM.Contact", $this->_getPropIDFromString("PT_LONG:{00062004-0000-0000-C000-000000000046}:0x8029") => 0));
         
         $this->_setPropsInMAPI($mapimessage, $contact, $this->_contactmapping);
         
