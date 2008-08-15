@@ -824,19 +824,31 @@ class ImportContentsChangesICS extends MAPIMapping {
     }
     
     function _setContact($mapimessage, $contact) {
-    	//enable to see a contact when clicking to in webaccess
-        mapi_setprops($mapimessage, array(PR_MESSAGE_CLASS => "IPM.Contact", $this->_getPropIDFromString("PT_LONG:{00062004-0000-0000-C000-000000000046}:0x8029") => 0));
+        mapi_setprops($mapimessage, array(PR_MESSAGE_CLASS => "IPM.Contact"));
         
         $this->_setPropsInMAPI($mapimessage, $contact, $this->_contactmapping);
         
+        //enable to see a contact when clicking to in webaccess
+        $nremails = array();
+        $abprovidertype = 0;
+        if (isset($contact->email1address)) { 
+        	$nremails[] = 0;
+        	$abprovidertype |= 1;
+        }
+        
+        if (isset($contact->email2address)) {
+        	$nremails[] = 1;
+        	$abprovidertype |= 2;
+        }
+        
+        if (isset($contact->email3address)) {
+        	$nremails[] = 2;
+        	$abprovidertype |= 4;
+        }
+        
         // Set display name and subject to a combined value of firstname and lastname
         $cname = $contact->firstname . " " . $contact->lastname;
-        mapi_setprops($mapimessage, array(PR_DISPLAY_NAME => "" . u2w($cname), PR_SUBJECT => "" . u2w($cname)));
-        
-        $nremails = array();
-        if (isset($contact->email1address)) $nremails[] = 0;
-        if (isset($contact->email2address)) $nremails[] = 1;
-        if (isset($contact->email3address)) $nremails[] = 2;
+        mapi_setprops($mapimessage, array(PR_DISPLAY_NAME => "" . u2w($cname), PR_SUBJECT => "" . u2w($cname), $this->_getPropIDFromString("PT_LONG:{00062004-0000-0000-C000-000000000046}:0x8029") => $abprovidertype));
         
         //pda multiple e-mail addresses bug fix for the contact        
         if (!empty($nremails)) 
