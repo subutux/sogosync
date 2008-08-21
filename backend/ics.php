@@ -828,33 +828,50 @@ class ImportContentsChangesICS extends MAPIMapping {
         
         $this->_setPropsInMAPI($mapimessage, $contact, $this->_contactmapping);
         
-        //enable to see a contact when clicking to in webaccess
+        // Set display name and subject to a combined value of firstname and lastname
+        $cname = "".u2w($contact->firstname . " " . $contact->lastname);
+        
+        //set contact specific mapi properties
+        $props = array();
         $nremails = array();
         $abprovidertype = 0;
         if (isset($contact->email1address)) { 
         	$nremails[] = 0;
         	$abprovidertype |= 1;
+        	$props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x8085")] = bin2hex(mapi_createoneoff($cname, "SMTP", $contact->email1address)); //emailentryid
+        	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8080")] = "$cname ({$contact->email1address})"; //displayname
+        	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8082")] = "SMTP"; //emailadresstype        	
+        	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8084")] = $contact->email1address; //original emailaddress
         }
         
         if (isset($contact->email2address)) {
         	$nremails[] = 1;
         	$abprovidertype |= 2;
+        	$props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x8095")] = bin2hex(mapi_createoneoff($cname, "SMTP", $contact->email2address)); //emailentryid
+        	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8090")] = "$cname ({$contact->email2address})"; //displayname
+        	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8092")] = "SMTP"; //emailadresstype        	
+        	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8094")] = $contact->email2address; //original emailaddress       	
         }
         
         if (isset($contact->email3address)) {
         	$nremails[] = 2;
         	$abprovidertype |= 4;
+        	$props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x80A5")] = bin2hex(mapi_createoneoff($cname, "SMTP", $contact->email3address)); //emailentryid
+        	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x80A0")] = "$cname ({$contact->email3address})"; //displayname
+        	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x80A2")] = "SMTP"; //emailadresstype        	
+        	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x80A4")] = $contact->email3address; //original emailaddress
         }
         
-        // Set display name and subject to a combined value of firstname and lastname
-        $cname = $contact->firstname . " " . $contact->lastname;
-        mapi_setprops($mapimessage, array(PR_DISPLAY_NAME => "" . u2w($cname), PR_SUBJECT => "" . u2w($cname), $this->_getPropIDFromString("PT_LONG:{00062004-0000-0000-C000-000000000046}:0x8029") => $abprovidertype));
-        
+ 
+        $props[$this->_getPropIDFromString("PT_LONG:{00062004-0000-0000-C000-000000000046}:0x8029")] = $abprovidertype;
+        $props[PR_DISPLAY_NAME] = $cname;
+        $props[PR_SUBJECT] = $cname;
+       
         //pda multiple e-mail addresses bug fix for the contact        
         if (!empty($nremails)) 
-        	mapi_setprops($mapimessage, array(
-        		$this->_getPropIDFromString("PT_MV_LONG:{00062004-0000-0000-C000-000000000046}:0x8028") => $nremails,
-        	));
+        	$props[$this->_getPropIDFromString("PT_MV_LONG:{00062004-0000-0000-C000-000000000046}:0x8028")] = $nremails;
+        	
+        mapi_setprops($mapimessage, $props);	
     }
     
     function _setTask($mapimessage, $task) {
