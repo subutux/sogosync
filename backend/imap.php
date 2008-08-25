@@ -130,7 +130,7 @@ class BackendIMAP extends BackendDiff {
 
 				// set charset always to utf-8
 				$org_charset = $v;
-				$v = preg_replace("/charset=.([A-Za-z0-9-]+)./", "charset=\"utf-8\"", $v);
+				$v = preg_replace("/charset=([A-Za-z0-9-\"']+)/", "charset=\"utf-8\"", $v);
             }
 
             if ($k == "content-transfer-encoding") {
