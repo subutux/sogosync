@@ -412,7 +412,7 @@ class BackendIMAP extends BackendDiff {
             $folder->type = SYNC_FOLDER_TYPE_WASTEBASKET;
             $this->_wasteID = $id;
         }
-        else if($lid == "sent" || $lid == "sent items") {
+        else if($lid == "sent" || $lid == "sent items" || $lid == IMAP_SENTFOLDER) {
             $folder->parentid = "0";
             $folder->displayname = "Sent";
             $folder->type = SYNC_FOLDER_TYPE_SENTMAIL;
