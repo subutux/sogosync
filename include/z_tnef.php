@@ -72,7 +72,7 @@ class ZPush_tnef{
 		//read signature
 		$hresult = $this->_readFromTnefStream($tnefstream, ZP_DWORD, $signature);
 		if ($hresult !== NOERROR) {
-debugLog("====== TNEF SIGNATURE:".bin2hex($tnefstream));		
+			debugLog("TNEF STREAM:".bin2hex($tnefstream));		
 			debugLog("There was an error reading tnef signature");
 			return $hresult;
 		}
@@ -256,7 +256,6 @@ debugLog("====== TNEF SIGNATURE:".bin2hex($tnefstream));
 			}
 			$nrprops--;
 		}
-debugLog("final size:$size");		
 		return NOERROR;
 	}
 	
@@ -358,7 +357,7 @@ debugLog("final size:$size");
 				$named = mapi_getidsfromnames($this->_store, array($namedProp), array($guid));
 				
 				$propTag = mapi_prop_tag(mapi_prop_type($propTag), mapi_prop_id($named[0]));
-debugLog("ids:".dechex($propTag));
+//debugLog("ids:".dechex($propTag));
 			}
 			else {
 				debugLog("Store not available. It is impossible to get named properties");				
@@ -449,6 +448,7 @@ debugLog("ids:".dechex($propTag));
 						$namedStartTime = GetPropIDFromString($this->_store, "PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x820e");
 						$mapiprops[$namedStartTime] = $filetime;
 					}
+debugLog("filetime: $filetime");					
 					$size -= 8;
 					break;
 
@@ -510,8 +510,9 @@ debugLog("ids:".dechex($propTag));
 					}
 					//location fix. it looks like tnef uses this value for location
 					if (mapi_prop_id($propTag) == 0x8342) {
-						$namedStartTime = GetPropIDFromString($this->_store, "PT_STRING8:{00062002-0000-0000-C000-000000000046}:0x8208");
-						$mapiprops[$namedStartTime] = $filetime;
+						$namedLocation = GetPropIDFromString($this->_store, "PT_STRING8:{00062002-0000-0000-C000-000000000046}:0x8208");
+						$mapiprops[$namedLocation] = $mapiprops[$propTag];
+						unset($mapiprops[$propTag]);
 					}
 					
 					$size -= $len;
@@ -559,19 +560,18 @@ debugLog("ids:".dechex($propTag));
 					
 					//location fix. it looks like tnef uses this value for location
 					if (mapi_prop_id($propTag) == 0x8342) {
-						$namedStartTime = GetPropIDFromString($this->_store, "PT_STRING8:{00062002-0000-0000-C000-000000000046}:0x8208");
-						$mapiprops[$namedStartTime] = $filetime;
+						$namedLocation = GetPropIDFromString($this->_store, "PT_STRING8:{00062002-0000-0000-C000-000000000046}:0x8208");
+						$mapiprops[$namedLocation] = $mapiprops[$propTag];
+						unset($mapiprops[$propTag]);
 					}
 					
 					//convert from unicode to windows encoding
-					$mapiprops[$propTag] = iconv("UCS-2","windows-1252", $mapiprops[$propTag]);
-					
+					$mapiprops[$namedLocation] = iconv("UCS-2","windows-1252", $mapiprops[$namedLocation]);
 					$size -= $len;
 					
 					//Re-align
 					$buffer = substr($buffer, ($len & 3 ? 4 - ($len & 3) : 0));
-					$size -= $len & 3 ? 4 - ($len & 3) : 0;
-					
+					$size -= $len & 3 ? 4 - ($len & 3) : 0;					
 					break;
 				
 				case PT_OBJECT:		// PST sends PT_OBJECT data. Treat as PT_BINARY
@@ -631,29 +631,5 @@ debugLog("ids:".dechex($propTag));
 		}	
 		return NOERROR;
 	}
-	
-}
-
-function bin2float ($bin) {
-    if((ord($bin[0])>>7)==0) $sign=1;
-    else $sign=-1;
-    if((ord($bin[0])>>6)%2==1) $exponent=1;
-    else $exponent=-127;
-    $exponent+=(ord($bin[0])%64)*2;
-    $exponent+=ord($bin[1])>>7;
-   
-    $base=1.0;
-    for($k=1;$k<8;$k++) {
-     $base+=((ord($bin[1])>>(7-$k))%2)*pow(0.5,$k);
-    }
-    for($k=0;$k<8;$k++) {
-     $base+=((ord($bin[2])>>(7-$k))%2)*pow(0.5,$k+8);
-    }
-    for($k=0;$k<8;$k++) {
-     $base+=((ord($bin[3])>>(7-$k))%2)*pow(0.5,$k+16);
-    }
-   
-    $float=(float)$sign*pow(2,$exponent)*$base;
-    return $float;
 }
 ?>
