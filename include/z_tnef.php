@@ -33,8 +33,6 @@ define('ZP_BYTE', 8);
 
 define('ZP_GUID_SIZE', 256);
 
-
-
 class ZPush_tnef{
 	
 	//we need a store in order to get the namedpropers
@@ -302,9 +300,6 @@ class ZPush_tnef{
 			 //it is not used and is here only for eventual debugging 
 			$readableGuid = unpack("VV/v2v/n4n", $guid);
 			$readableGuid = sprintf("{%08x-%04x-%04x-%04x-%04x%04x%04x}",$readableGuid['V'], $readableGuid['v1'], $readableGuid['v2'],$readableGuid['n1'],$readableGuid['n2'],$readableGuid['n3'],$readableGuid['n4']);
-//debugLog("guid:$readableGuid");
-			
-//debugLog("named:".bin2hex(substr($buffer, 0, 8)));
 
 			$hresult = $this->_readFromTnefStream($buffer, ZP_DWORD, $isNamedId);
 			if ($hresult !== NOERROR) {
@@ -312,8 +307,6 @@ class ZPush_tnef{
 				return $hresult;
 			}
 			$size -= 4;
-
-//debugLog("isNamedId:".dechex($isNamedId));
 
 			if($isNamedId != 0) {
 				// A string name follows
@@ -334,7 +327,6 @@ class ZPush_tnef{
 					return $hresult;
 				}
 				
-//debugLog("named prop:".($namedProp));				
 				$size -= $len;
 				
 				//Re-align
@@ -348,7 +340,6 @@ class ZPush_tnef{
 					debugLog("There was an error reading mapi property's length");
 					return $hresult;
 				}
-//debugLog('named prop:'.dechex($namedProp));
 
 				$size -= 4;
 			}
@@ -357,7 +348,6 @@ class ZPush_tnef{
 				$named = mapi_getidsfromnames($this->_store, array($namedProp), array($guid));
 				
 				$propTag = mapi_prop_tag(mapi_prop_type($propTag), mapi_prop_id($named[0]));
-//debugLog("ids:".dechex($propTag));
 			}
 			else {
 				debugLog("Store not available. It is impossible to get named properties");				
@@ -370,7 +360,6 @@ class ZPush_tnef{
 			}
 			//read the number of properties
 			$hresult = $this->_readFromTnefStream($buffer, ZP_DWORD, $count);
-//debugLog("number of properties:".dechex($count));
 			if ($hresult !== NOERROR) {
 				debugLog("There was an error reading number of properties for:".dechex($propTag));
 				return $hresult;
@@ -414,7 +403,7 @@ class ZPush_tnef{
 					$size -= 4;
 					break;
 					
-				case PT_APPTIME:
+
 				case PT_SYSTIME:
 					if($size < 8) {
 						return MAPI_E_CORRUPT_DATA;
@@ -436,25 +425,28 @@ class ZPush_tnef{
 					//we have to convert the filetime to an unixtime timestamp
 					$filetime = unpack("V2v", $mapiprops[$propTag]);
 					$filetime = hexdec(sprintf("%08x%08x",$filetime['v2'], $filetime['v1']));
-
 					$filetime = ($filetime - 116444736000000000) / 10000000;
 					$mapiprops[$propTag] = $filetime;
 					// we have to set the start and end times separately because the standard PR_START_DATE and PR_END_DATE aren't enough
 					if ($propTag == PR_START_DATE) {
 						$namedStartTime = GetPropIDFromString($this->_store, "PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x820d");
 						$mapiprops[$namedStartTime] = $filetime;
+						$namedCommonStart = GetPropIDFromString($this->_store, "PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8516");
+						$mapiprops[$namedCommonStart] = $filetime;
 					}
 					if ($propTag == PR_END_DATE) {
-						$namedStartTime = GetPropIDFromString($this->_store, "PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x820e");
-						$mapiprops[$namedStartTime] = $filetime;
+						$namedEndTime = GetPropIDFromString($this->_store, "PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x820e");
+						$mapiprops[$namedEndTime] = $filetime;
+						$namedCommonEnd = GetPropIDFromString($this->_store, "PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8517");
+						$mapiprops[$namedCommonEnd] = $filetime;
 					}
-debugLog("filetime: $filetime");					
 					$size -= 8;
 					break;
 
 				case PT_DOUBLE:
 				case PT_CURRENCY:
 				case PT_I8:
+				case PT_APPTIME:
 					if($size < 8) {
 						return MAPI_E_CORRUPT_DATA;
 					}
@@ -563,10 +555,11 @@ debugLog("filetime: $filetime");
 						$namedLocation = GetPropIDFromString($this->_store, "PT_STRING8:{00062002-0000-0000-C000-000000000046}:0x8208");
 						$mapiprops[$namedLocation] = $mapiprops[$propTag];
 						unset($mapiprops[$propTag]);
+						$mapiprops[$namedLocation] = iconv("UCS-2","windows-1252", $mapiprops[$namedLocation]);
 					}
 					
 					//convert from unicode to windows encoding
-					$mapiprops[$namedLocation] = iconv("UCS-2","windows-1252", $mapiprops[$namedLocation]);
+					if (isset($mapiprops[$propTag])) $mapiprops[$propTag] = iconv("UCS-2","windows-1252", $mapiprops[$propTag]);
 					$size -= $len;
 					
 					//Re-align
