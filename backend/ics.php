@@ -838,7 +838,7 @@ class ImportContentsChangesICS extends MAPIMapping {
         if (isset($contact->email1address)) { 
         	$nremails[] = 0;
         	$abprovidertype |= 1;
-        	$props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x8085")] = bin2hex(mapi_createoneoff($cname, "SMTP", $contact->email1address)); //emailentryid
+        	$props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x8085")] = mapi_createoneoff($cname, "SMTP", $contact->email1address); //emailentryid
         	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8080")] = "$cname ({$contact->email1address})"; //displayname
         	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8082")] = "SMTP"; //emailadresstype        	
         	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8084")] = $contact->email1address; //original emailaddress
@@ -847,7 +847,7 @@ class ImportContentsChangesICS extends MAPIMapping {
         if (isset($contact->email2address)) {
         	$nremails[] = 1;
         	$abprovidertype |= 2;
-        	$props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x8095")] = bin2hex(mapi_createoneoff($cname, "SMTP", $contact->email2address)); //emailentryid
+        	$props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x8095")] = mapi_createoneoff($cname, "SMTP", $contact->email2address); //emailentryid
         	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8090")] = "$cname ({$contact->email2address})"; //displayname
         	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8092")] = "SMTP"; //emailadresstype        	
         	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8094")] = $contact->email2address; //original emailaddress       	
@@ -856,7 +856,7 @@ class ImportContentsChangesICS extends MAPIMapping {
         if (isset($contact->email3address)) {
         	$nremails[] = 2;
         	$abprovidertype |= 4;
-        	$props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x80A5")] = bin2hex(mapi_createoneoff($cname, "SMTP", $contact->email3address)); //emailentryid
+        	$props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x80A5")] = mapi_createoneoff($cname, "SMTP", $contact->email3address); //emailentryid
         	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x80A0")] = "$cname ({$contact->email3address})"; //displayname
         	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x80A2")] = "SMTP"; //emailadresstype        	
         	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x80A4")] = $contact->email3address; //original emailaddress
