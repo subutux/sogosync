@@ -689,10 +689,10 @@ class BackendIMAP extends BackendDiff {
 
     	if ($flags == 0) {
 		    // set as "Unseen" (unread)
-		    $status = @imap_clearflag_full ( $this->_mbox, $id, "\\Seen", FT_UID);
+		    $status = @imap_clearflag_full ( $this->_mbox, $id, "\\Seen", ST_UID);
         } else {
     		// set as "Seen" (read)
-    		$status = @imap_setflag_full($this->_mbox, $id, "\\Seen", FT_UID);
+    		$status = @imap_setflag_full($this->_mbox, $id, "\\Seen",ST_UID);
         }
         
         debugLog("IMAP-SetReadFlag -> set as " . (($flags) ? "read" : "unread") . "-->". $status);
