@@ -1985,7 +1985,14 @@ class BackendICS {
 					$zptnef = new ZPush_tnef($this->_defaultstore);
 					$mapiprops = array();
 					$zptnef->extractProps($part->body, $mapiprops);
-					if (is_array($mapiprops) && !empty($mapiprops)) mapi_setprops($mapimessage, $mapiprops);
+					if (is_array($mapiprops) && !empty($mapiprops)) {
+						//check if it is a recurring item
+						$tnefrecurr = GetPropIDFromString($this->_defaultstore, "PT_BOOLEAN:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0x5");
+						if (isset($mapiprops[$tnefrecurr])) {
+							$this -> _handleRecurringItem($mapimessage, $mapiprops);							
+						}
+						mapi_setprops($mapimessage, $mapiprops);
+					}
 					else debugLog("TNEF: Mapi props array was empty");
 				}
 				// do deeper multipart parsing for the iPhone when forwarding mail
@@ -2310,6 +2317,43 @@ class BackendICS {
         mapi_setprops($attach, array(PR_ATTACH_MIME_TAG => $part->ctype_primary . "/" . $part->ctype_secondary));
         
         mapi_savechanges($attach);
+    }
+    
+    //handles recurring item for meeting request
+    function _handleRecurringItem(&$mapimessage, &$mapiprops) {
+    	$props = array();
+    	//set isRecurring flag to true
+    	$props[0] = "PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x8223";
+    	// Set named prop 8510, unknown property, but enables deleting a single occurrence of a recurring type in OLK2003. 
+    	$props[1] = "PT_LONG:{00062008-0000-0000-C000-000000000046}:0x8510";
+    	//goid and goid2 from tnef
+    	$props[2] = "PT_BINARY:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0x3";
+    	$props[3] = "PT_BINARY:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0x23";
+    	$props[4] = "PT_STRING8:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0x24"; //type    	
+    	$props[5] = "PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8205"; //busystatus
+    	$props[6] = "PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8217"; //meeting status
+    	$props[7] = "PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8218"; //response status
+    	$props[8] = "PT_BOOLEAN:{00062008-0000-0000-C000-000000000046}:0x8582";
+    	$props[9] = "PT_BOOLEAN:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0xa"; //is exception
+    	
+    	$props[10] = "PT_I2:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0x11"; //day interval
+    	$props[11] = "PT_I2:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0x12"; //week interval
+    	$props[12] = "PT_I2:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0x13"; //month interval
+    	$props[13] = "PT_I2:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0x14"; //year interval
+    	
+    	$props = getPropIdsFromStrings($this->_defaultstore, $props);
+
+    	$mapiprops[$props[0]] = true; 
+    	$mapiprops[$props[1]] = 369;
+    	//both goids have the same value
+    	$mapiprops[$props[3]] = $mapiprops[$props[2]];
+    	$mapiprops[$props[4]] = "IPM.Appointment";
+    	$mapiprops[$props[5]] = 1; //tentative
+    	$mapiprops[PR_RESPONSE_REQUESTED] = true;
+    	$mapiprops[PR_ICON_INDEX] = 1027;
+    	$mapiprops[$props[6]] = olMeetingReceived; // The recipient is receiving the request
+		$mapiprops[$props[7]] = olResponseNotResponded;
+		$mapiprops[$props[8]] = true; 
     }
 }
 
