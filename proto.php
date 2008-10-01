@@ -189,10 +189,10 @@ class SyncContact extends Streamer {
         global $protocolversion;
         
         $mapping = array (
-            SYNC_POOMCONTACTS_ANNIVERSARY => array ( STREAMER_VAR => "anniversary", STREAMER_TYPE => STREAMER_TYPE_DATE  ),
+            SYNC_POOMCONTACTS_ANNIVERSARY => array ( STREAMER_VAR => "anniversary", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES  ),
             SYNC_POOMCONTACTS_ASSISTANTNAME => array ( STREAMER_VAR => "assistantname" ),
             SYNC_POOMCONTACTS_ASSISTNAMEPHONENUMBER => array ( STREAMER_VAR => "assistnamephonenumber" ),
-            SYNC_POOMCONTACTS_BIRTHDAY => array ( STREAMER_VAR => "birthday", STREAMER_TYPE => STREAMER_TYPE_DATE  ),
+            SYNC_POOMCONTACTS_BIRTHDAY => array ( STREAMER_VAR => "birthday", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES  ),
             SYNC_POOMCONTACTS_BODY => array ( STREAMER_VAR => "body" ),
             SYNC_POOMCONTACTS_BODYSIZE => array ( STREAMER_VAR => "bodysize" ),
             SYNC_POOMCONTACTS_BODYTRUNCATED => array ( STREAMER_VAR => "bodytruncated" ),
