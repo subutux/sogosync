@@ -1611,8 +1611,11 @@ class ExportChangesICS  {
         
         $ret = mapi_exportchanges_config($this->exporter, $stream, $exporterflags, $mapiimporter, $restriction, $includeprops, false, 1);
         
-        if($ret) 
-            debugLog("Exporter configured successfully. " . mapi_exportchanges_getchangecount($this->exporter) . " changes ready to sync.");
+        if($ret) {
+        	$changes = mapi_exportchanges_getchangecount($this->exporter);
+        	if($changes || !($flags & BACKEND_DISCARD_DATA))
+                debugLog("Exporter configured successfully. " . $changes . " changes ready to sync.");
+        }
         else	
             debugLog("Exporter could not be configured: result: " . mapi_last_hresult());
         

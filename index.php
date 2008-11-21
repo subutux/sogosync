@@ -151,11 +151,6 @@ switch($_SERVER["REQUEST_METHOD"]) {
         break;
 }
 
-// destruct backend
-$backend->Logoff();
-
-debugLog("end");
-debugLog("--------");
 
 $len = ob_get_length();
 $data = ob_get_contents();
@@ -172,4 +167,9 @@ ob_end_clean();
 header("Content-Length: $len");
 print $data;
 
+// destruct backend after all data is on the stream
+$backend->Logoff();
+
+debugLog("end");
+debugLog("--------");
 ?>
