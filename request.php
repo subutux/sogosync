@@ -529,6 +529,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                     }
                     
                     $importer->ImportMessageDeletion($serverid);
+                    $collection["importedchanges"] = true;                    
                     break;
                 case SYNC_FETCH:
                     array_push($collection["fetchids"], $serverid);
@@ -678,6 +679,10 @@ function HandleSync($backend, $protocolversion, $devid) {
 	                // nothing exported, but possible imported
                     else if (isset($importer) && $importer)  
                     	$state = $importer->GetState();
+                    	
+                    // if a new request without state information (hierarchy) save an empty state
+                    else if ($collection["synckey"] == "0")
+                    	$state = "";
                     
                     if (isset($state)) $statemachine->setSyncState($collection["newsynckey"], $state);
                     else debugLog("error saving " . $collection["newsynckey"] . " - no state information available");

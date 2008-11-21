@@ -572,21 +572,6 @@ class ImportContentsChangesICS extends MAPIMapping {
     }
     
     function GetState() {
-        // This is a bit of a hack. We want to update the freebusy information once we're done sync'ing
-        // and since GetState() is called at the end, we can do it here. 
-        $storeprops = mapi_getprops($this->_store, array(PR_USER_ENTRYID));
-        $root = mapi_msgstore_openentry($this->_store);
-        $rootprops = mapi_getprops($root, array(PR_IPM_APPOINTMENT_ENTRYID));
-        $entryid = mapi_msgstore_entryidfromsourcekey($this->_store, $this->_folderid);
-        
-        if($rootprops[PR_IPM_APPOINTMENT_ENTRYID] == $entryid) {
-            debugLog("Update freebusy");
-            $calendar = mapi_msgstore_openentry($this->_store, $entryid);
-            
-  		    $pub = new FreeBusyPublish($this->_session, $this->_store, $calendar, $storeprops[PR_USER_ENTRYID]);
-            $pub->publishFB(time() - (7 * 24 * 60 * 60), 6 * 30 * 24 * 60 * 60); // publish from one week ago, 6 months ahead
-        }
-
         mapi_stream_seek($this->statestream, 0, STREAM_SEEK_SET);
         $data = mapi_stream_read($this->statestream, 4096);
         
@@ -1810,6 +1795,7 @@ class BackendICS {
     var $_session;
     var $_user;
     var $_devid;
+    var $_importedFolders;
 
     function Logon($user, $domain, $pass) {
         $pos = strpos($user, "\\");
@@ -1830,6 +1816,7 @@ class BackendICS {
             debugLog("user $user has no default store");
             return false;
         }
+        $this->_importedFolders = array();
         
         debugLog("User $user logged on");
         return true;
@@ -1842,8 +1829,23 @@ class BackendICS {
         return true;
     }
 
-		// completing protocol
     function Logoff() {
+    	// publish free busy time after finishing the synchronization process
+    	// update if the calendar folder received incoming changes 
+    	foreach($this->_importedFolders as $folderid) {
+	        $storeprops = mapi_getprops($this->_defaultstore, array(PR_USER_ENTRYID));
+	        $root = mapi_msgstore_openentry($this->_defaultstore);
+	        $rootprops = mapi_getprops($root, array(PR_IPM_APPOINTMENT_ENTRYID));
+	        $entryid = mapi_msgstore_entryidfromsourcekey($this->_defaultstore, hex2bin($folderid));
+	        
+	        if($rootprops[PR_IPM_APPOINTMENT_ENTRYID] == $entryid) {
+	            debugLog("Update freebusy for ". $folderid);
+	            $calendar = mapi_msgstore_openentry($this->_defaultstore, $entryid);
+	            
+	  		    $pub = new FreeBusyPublish($this->_session, $this->_defaultstore, $calendar, $storeprops[PR_USER_ENTRYID]);
+	            $pub->publishFB(time() - (7 * 24 * 60 * 60), 6 * 30 * 24 * 60 * 60); // publish from one week ago, 6 months ahead
+	        }
+    	}
         return true;
     }
 
@@ -1851,7 +1853,8 @@ class BackendICS {
         return new ImportHierarchyChangesICS($this->_defaultstore);
     }
     
-    function GetContentsImporter($folderid) {
+    function GetContentsImporter($folderid) {	
+    	$this->_importedFolders[] = $folderid;
         return new ImportContentsChangesICS($this->_session, $this->_defaultstore, hex2bin($folderid));
     }
     

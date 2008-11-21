@@ -27,7 +27,7 @@ function getDebugInfo() {
 function debugLog($message) {
     @$fp = fopen(BASE_PATH . "/debug.txt","a");
     @$date = strftime("%x %X");
-    @fwrite($fp, "$date $message\n");
+    @fwrite($fp, "$date [". getmypid() ."] $message\n");
     @fclose($fp);
 }
 
