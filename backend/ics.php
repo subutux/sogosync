@@ -198,7 +198,7 @@ class MAPIMapping {
                             // regenerate
                             // deadoccur
                             "reminderset" => "PT_BOOLEAN:{00062008-0000-0000-C000-000000000046}:0x8503",
-                            "remindertime" => "PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8560",
+                            "remindertime" => "PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8502",
                             "sensitivity" => PR_SENSITIVITY,
                             "startdate" => "PT_SYSTIME:{00062003-0000-0000-C000-000000000046}:0x8104",
                             "subject" => PR_SUBJECT,
