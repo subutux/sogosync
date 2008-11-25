@@ -1384,8 +1384,8 @@ class PHPContentsImportProxy extends MAPIMapping {
             }
         }
         
-        $message->to = implode(";", $to);
-        $message->cc = implode(";", $cc);
+        $message->to = implode(", ", $to);
+        $message->cc = implode(", ", $cc);
 
 		if (!isset($message->body) || strlen($message->body) == 0) 
 			$message->body = " ";
