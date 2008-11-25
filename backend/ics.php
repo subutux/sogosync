@@ -1026,6 +1026,10 @@ class PHPContentsImportProxy extends MAPIMapping {
         
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_taskmapping);
         
+        // when set the task to complete using the WebAccess, the dateComplete property is not set correctly
+        if ($message->complete == 1 && !isset($message->datecompleted)) 
+        	$message->datecompleted = time();
+
         return $message;
     }
     
