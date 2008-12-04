@@ -34,7 +34,7 @@ class BackendVCDir extends BackendDiff {
 		return false;
 	}
 	
-	function GetMessageList($folderid) {
+	function GetMessageList($folderid, $cutoffdate) {
 		debugLog('VCDir::GetMessageList('.$folderid.')');
 		$messages = array();
 		
@@ -179,7 +179,7 @@ class BackendVCDir extends BackendDiff {
 				case 'categories':
 					//case 'nickname':
 					$val = preg_split('/(?<!\\\\)(\,)/i', $value);
-					$val = array_map("w2u", $val);
+					$val = array_map("w2ui", $val);
 					break;
 				default:
 					$val = preg_split('/(?<!\\\\)(\;)/i', $value);
@@ -266,39 +266,39 @@ class BackendVCDir extends BackendDiff {
 				}
 				if(!empty($adr['val'][2])){
 					$b=$a.'street';
-					$message->$b = w2u($adr['val'][2]);
+					$message->$b = w2ui($adr['val'][2]);
 				}
 				if(!empty($adr['val'][3])){
 					$b=$a.'city';
-					$message->$b = w2u($adr['val'][3]);
+					$message->$b = w2ui($adr['val'][3]);
 				}
 				if(!empty($adr['val'][4])){
 					$b=$a.'state';
-					$message->$b = w2u($adr['val'][4]);
+					$message->$b = w2ui($adr['val'][4]);
 				}
 				if(!empty($adr['val'][5])){
 					$b=$a.'postalcode';
-					$message->$b = w2u($adr['val'][5]);
+					$message->$b = w2ui($adr['val'][5]);
 				}
 				if(!empty($adr['val'][6])){
 					$b=$a.'country';
-					$message->$b = w2u($adr['val'][6]);
+					$message->$b = w2ui($adr['val'][6]);
 				}
 			}
 		}
 		
 		if(!empty($vcard['fn'][0]['val'][0]))
-			$message->fileas = w2u($vcard['fn'][0]['val'][0]);
+			$message->fileas = w2ui($vcard['fn'][0]['val'][0]);
 		if(!empty($vcard['n'][0]['val'][0]))
-			$message->lastname = w2u($vcard['n'][0]['val'][0]);
+			$message->lastname = w2ui($vcard['n'][0]['val'][0]);
 		if(!empty($vcard['n'][0]['val'][1]))
-			$message->firstname = w2u($vcard['n'][0]['val'][1]);
+			$message->firstname = w2ui($vcard['n'][0]['val'][1]);
 		if(!empty($vcard['n'][0]['val'][2]))
-			$message->middlename = w2u($vcard['n'][0]['val'][2]);
+			$message->middlename = w2ui($vcard['n'][0]['val'][2]);
 		if(!empty($vcard['n'][0]['val'][3]))
-			$message->title = w2u($vcard['n'][0]['val'][3]);
+			$message->title = w2ui($vcard['n'][0]['val'][3]);
 		if(!empty($vcard['n'][0]['val'][4]))
-			$message->suffix = w2u($vcard['n'][0]['val'][4]);
+			$message->suffix = w2ui($vcard['n'][0]['val'][4]);
 		if(!empty($vcard['bday'][0]['val'][0])){
 			$tz = date_default_timezone_get();
 			date_default_timezone_set('UTC');
@@ -306,16 +306,16 @@ class BackendVCDir extends BackendDiff {
 			date_default_timezone_set($tz);
 		}
 		if(!empty($vcard['org'][0]['val'][0]))
-			$message->companyname = w2u($vcard['org'][0]['val'][0]);
+			$message->companyname = w2ui($vcard['org'][0]['val'][0]);
 		if(!empty($vcard['note'][0]['val'][0])){
-			$message->body = w2u($vcard['note'][0]['val'][0]);
+			$message->body = w2ui($vcard['note'][0]['val'][0]);
 			$message->bodysize = strlen($vcard['note'][0]['val'][0]);
 			$message->bodytruncated = 0;
 		}
 		if(!empty($vcard['role'][0]['val'][0]))
-			$message->jobtitle = w2u($vcard['role'][0]['val'][0]);//$vcard['title'][0]['val'][0]
+			$message->jobtitle = w2ui($vcard['role'][0]['val'][0]);//$vcard['title'][0]['val'][0]
 		if(!empty($vcard['url'][0]['val'][0]))
-			$message->webpage = w2u($vcard['url'][0]['val'][0]);
+			$message->webpage = w2ui($vcard['url'][0]['val'][0]);
 		if(!empty($vcard['categories'][0]['val']))
 			$message->categories = $vcard['categories'][0]['val'];
 		
@@ -388,13 +388,13 @@ class BackendVCDir extends BackendDiff {
 
 		if(!$id){
 			if(!empty($message->fileas)){
-				$name = u2w($message->fileas);
+				$name = u2wi($message->fileas);
 			}elseif(!empty($message->lastname)){
-				$name = $name = u2w($message->lastname);
+				$name = $name = u2wi($message->lastname);
 			}elseif(!empty($message->firstname)){
-				$name = $name = u2w($message->firstname);
+				$name = $name = u2wi($message->firstname);
 			}elseif(!empty($message->companyname)){
-				$name = $name = u2w($message->companyname);
+				$name = $name = u2wi($message->companyname);
 			}else{
 				$name = 'unknown';
 			}
@@ -430,7 +430,7 @@ class BackendVCDir extends BackendDiff {
 		$data = str_replace("\r\n", "\n", $data);
 		$data = str_replace("\r", "\n", $data);
 		$data = str_replace(array('\\', ';', ',', "\n"), array('\\\\', '\\;', '\\,', '\\n'), $data);
-		return u2w($data);
+		return u2wi($data);
 	}
 	
 	function unescape($data){

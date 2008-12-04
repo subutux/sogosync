@@ -76,19 +76,19 @@ function hex2bin($data)
     return $newdata;
 }
 
-function utf8_to_windows1252($string)
+function utf8_to_windows1252($string, $option = "")
 {
     if (function_exists("iconv")){
-        return iconv("UTF-8", "Windows-1252", $string);
+        return @iconv("UTF-8", "Windows-1252" . $option, $string);
     }else{
         return utf8_decode($string); // no euro support here
     }
 }
 
-function windows1252_to_utf8($string)
+function windows1252_to_utf8($string, $option = "")
 {
     if (function_exists("iconv")){
-        return iconv("Windows-1252", "UTF-8", $string);
+        return @iconv("Windows-1252", "UTF-8" . $option, $string);
     }else{
         return utf8_encode($string); // no euro support here
     }
@@ -96,4 +96,8 @@ function windows1252_to_utf8($string)
 
 function w2u($string) { return windows1252_to_utf8($string); }
 function u2w($string) { return utf8_to_windows1252($string); }
+
+function w2ui($string) { return windows1252_to_utf8($string, "//IGNORE"); }
+function u2wi($string) { return utf8_to_windows1252($string, "//IGNORE"); }
+
 ?>
