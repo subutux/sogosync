@@ -12,7 +12,7 @@
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+*  Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -115,7 +115,7 @@ class MAPIMapping {
                             "otherstate" => PR_OTHER_ADDRESS_STATE_OR_PROVINCE,
                             "otherstreet" => PR_OTHER_ADDRESS_STREET,
                             "pagernumber" => PR_PAGER_TELEPHONE_NUMBER,
-                            "radiophonenumber" => PR_PAGER_TELEPHONE_NUMBER,
+                            "radiophonenumber" => PR_RADIO_TELEPHONE_NUMBER,
                             "spouse" => PR_SPOUSE_NAME,
                             "suffix" => PR_GENERATION,
                             "title" => PR_DISPLAY_NAME_PREFIX,
@@ -856,6 +856,13 @@ class ImportContentsChangesICS extends MAPIMapping {
         if (!empty($nremails)) 
         	$props[$this->_getPropIDFromString("PT_MV_LONG:{00062004-0000-0000-C000-000000000046}:0x8028")] = $nremails;
         	
+       	//home address fix
+       	if (isset($contact->homecity))			$props[PR_HOME_ADDRESS_CITY] = $contact->homecity;
+       	if (isset($contact->homecountry))		$props[PR_HOME_ADDRESS_COUNTRY] = $contact->homecountry;
+       	if (isset($contact->homepostalcode))	$props[PR_HOME_ADDRESS_POSTAL_CODE] = $contact->homepostalcode;
+       	if (isset($contact->homestate))			$props[PR_HOME_ADDRESS_STATE_OR_PROVINCE] = $contact->homestate;
+       	if (isset($contact->homestreet))		$props[PR_HOME_ADDRESS_STREET] = $contact->homestreet;
+        	
         mapi_setprops($mapimessage, $props);	
     }
     
@@ -1042,10 +1049,17 @@ class PHPContentsImportProxy extends MAPIMapping {
 
     	// Disable reminder if it is off
     	$reminderset = $this->_getPropIDFromString("PT_BOOLEAN:{00062008-0000-0000-C000-000000000046}:0x8503");
-    	$messageprops = mapi_getprops($mapimessage, array ( $reminderset ));
+    	$remindertime = $this->_getPropIDFromString("PT_LONG:{00062008-0000-0000-C000-000000000046}:0x8501");
+    	$messageprops = mapi_getprops($mapimessage, array ( $reminderset, $remindertime ));
 
     	if(!isset($messageprops[$reminderset]) || $messageprops[$reminderset] == false)
 		    $message->reminder = "";
+		else {
+			if ($messageprops[$remindertime] == 0x5AE980E1)
+          		$message->reminder = 15;
+          	else
+            	$message->reminder = $messageprops[$remindertime];
+		}
 		  
         $messageprops = mapi_getprops($mapimessage, array ( PR_SOURCE_KEY ));
 
@@ -1315,10 +1329,19 @@ class PHPContentsImportProxy extends MAPIMapping {
 
         	// Disable reminder if it is off
         	$reminderset = $this->_getPropIDFromString("PT_BOOLEAN:{00062008-0000-0000-C000-000000000046}:0x8503");
-        	$messageprops = mapi_getprops($mapimessage, array ( $reminderset ));
+        	$remindertime = $this->_getPropIDFromString("PT_LONG:{00062008-0000-0000-C000-000000000046}:0x8501");
+        	$messageprops = mapi_getprops($mapimessage, array ( $reminderset, $remindertime ));
 
         	if(!isset($messageprops[$reminderset]) || $messageprops[$reminderset] == false)
                 $message->meetingrequest->reminder = "";
+            //the property saves reminder in minutes, but we need it in secs 
+            else {
+            	///set the default reminder time to seconds
+          		if ($messageprops[$remindertime] == 0x5AE980E1)
+          			$message->meetingrequest->reminder = 900;
+          		else
+            		$message->meetingrequest->reminder = $messageprops[$remindertime] * 60;
+            }
                 
             // Set sensitivity to 0 if missing
             if(!isset($message->meetingrequest->sensitivity))
