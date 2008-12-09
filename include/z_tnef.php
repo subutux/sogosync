@@ -1,5 +1,16 @@
 <?php
-/**
+/***********************************************
+* File      :   z_tnef.php
+* Project   :   Z-Push
+* Descr     :   
+*
+* Created   :   21.06.2008
+*
+* Zarafa Deutschland GmbH, www.zarafaserver.de
+* This file is distributed under GPL v2.
+* Consult LICENSE file for details
+************************************************
+
  * This is tnef implementation for z-push. It is based on 
  * Zarafa's tnef implementation.
  * 
