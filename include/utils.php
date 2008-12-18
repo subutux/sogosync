@@ -97,8 +97,8 @@ function windows1252_to_utf8($string, $option = "")
 function w2u($string) { return windows1252_to_utf8($string); }
 function u2w($string) { return utf8_to_windows1252($string); }
 
-function w2ui($string) { return windows1252_to_utf8($string, "//IGNORE"); }
-function u2wi($string) { return utf8_to_windows1252($string, "//IGNORE"); }
+function w2ui($string) { return windows1252_to_utf8($string, "//TRANSLIT"); }
+function u2wi($string) { return utf8_to_windows1252($string, "//TRANSLIT"); }
 
 /**
  * Build an address string from the components

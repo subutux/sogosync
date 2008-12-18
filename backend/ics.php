@@ -215,9 +215,9 @@ class MAPIMapping {
                 // UTF8->windows1252.. this is ok for all numerical values
                 if(mapi_prop_type($mapiprop) != PT_BINARY && mapi_prop_type($mapiprop) != PT_MV_BINARY) {
                     if(is_array($message->$asprop))
-                        $value = array_map("u2w", $message->$asprop);
+                        $value = array_map("u2wi", $message->$asprop);
                     else
-                        $value = u2w($message->$asprop);
+                        $value = u2wi($message->$asprop);
                 } else {
                     $value = $message->$asprop;
                 }
@@ -857,7 +857,8 @@ class ImportContentsChangesICS extends MAPIMapping {
         if (!empty($nremails)) 
         	$props[$this->_getPropIDFromString("PT_MV_LONG:{00062004-0000-0000-C000-000000000046}:0x8028")] = $nremails;
         	
-       	//home address fix
+        //home address fix
+        $homecity = $homestate = $homepostalcode = $homestate = $homestreet = "";
        	if (isset($contact->homecity))			$props[PR_HOME_ADDRESS_CITY] = $homecity = u2w($contact->homecity);
        	if (isset($contact->homecountry))		$props[PR_HOME_ADDRESS_COUNTRY] = $homestate = u2w($contact->homecountry);
        	if (isset($contact->homepostalcode))	$props[PR_HOME_ADDRESS_POSTAL_CODE] = $homepostalcode = u2w($contact->homepostalcode);
