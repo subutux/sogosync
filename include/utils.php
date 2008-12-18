@@ -7,7 +7,7 @@
 *
 * Created   :   03.04.2008
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+*  Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -100,4 +100,29 @@ function u2w($string) { return utf8_to_windows1252($string); }
 function w2ui($string) { return windows1252_to_utf8($string, "//IGNORE"); }
 function u2wi($string) { return utf8_to_windows1252($string, "//IGNORE"); }
 
+/**
+ * Build an address string from the components
+ *
+ * @param string $street - the street
+ * @param string $zip - the zip code
+ * @param string $city - the city
+ * @param string $state - the state
+ * @param string $country - the country
+ * @return string the address string or null
+ */
+function buildAddressString($street, $zip, $city, $state, $country) {
+	$out = "";
+	
+	if (isset($country) && $street != "") $out = $country;
+	
+	$zcs = "";
+	if (isset($zip) && $zip != "") $zcs = $zip;
+	if (isset($city) && $city != "") $zcs .= (($zcs)?" ":"") . $city;
+	if (isset($state) && $state != "") $zcs .= (($zcs)?" ":"") . $state;
+	if ($zcs) $out = $zcs . "\r\n" . $out;
+	
+	if (isset($street) && $street != "") $out = $street . (($out)?"\r\n\r\n". $out: "") ;
+	
+	return ($out)?$out:null;
+}
 ?>

@@ -33,6 +33,7 @@ require_once('Mail/RFC822.php');
 include_once('proto.php');
 include_once('backend.php');
 include_once('z_tnef.php');
+include_once('z_ical.php');
 
 
 function GetPropIDFromString($store, $mapiprop) {
@@ -857,11 +858,12 @@ class ImportContentsChangesICS extends MAPIMapping {
         	$props[$this->_getPropIDFromString("PT_MV_LONG:{00062004-0000-0000-C000-000000000046}:0x8028")] = $nremails;
         	
        	//home address fix
-       	if (isset($contact->homecity))			$props[PR_HOME_ADDRESS_CITY] = $contact->homecity;
-       	if (isset($contact->homecountry))		$props[PR_HOME_ADDRESS_COUNTRY] = $contact->homecountry;
-       	if (isset($contact->homepostalcode))	$props[PR_HOME_ADDRESS_POSTAL_CODE] = $contact->homepostalcode;
-       	if (isset($contact->homestate))			$props[PR_HOME_ADDRESS_STATE_OR_PROVINCE] = $contact->homestate;
-       	if (isset($contact->homestreet))		$props[PR_HOME_ADDRESS_STREET] = $contact->homestreet;
+       	if (isset($contact->homecity))			$props[PR_HOME_ADDRESS_CITY] = $homecity = u2w($contact->homecity);
+       	if (isset($contact->homecountry))		$props[PR_HOME_ADDRESS_COUNTRY] = $homestate = u2w($contact->homecountry);
+       	if (isset($contact->homepostalcode))	$props[PR_HOME_ADDRESS_POSTAL_CODE] = $homepostalcode = u2w($contact->homepostalcode);
+       	if (isset($contact->homestate))			$props[PR_HOME_ADDRESS_STATE_OR_PROVINCE] = $homestate = u2w($contact->homestate);
+       	if (isset($contact->homestreet))		$props[PR_HOME_ADDRESS_STREET] = $homestreet = u2w($contact->homestreet);
+       	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801A")] = buildAddressString($homestreet, $homepostalcode, $homecity, $homestate, $homestate);
         	
         mapi_setprops($mapimessage, $props);	
     }
@@ -912,7 +914,15 @@ class ImportHierarchyChangesICS  {
     }
 
     function Config($state) {
-        return mapi_importhierarchychanges_config($this->importer, $state);
+    // Put the state information in a stream that can be used by ICS
+        $stream = mapi_stream_create();
+        
+        if(strlen($state) > 0)
+            mapi_stream_write($stream, $state);
+        else
+            mapi_stream_write($stream, hex2bin("0000000000000000"));
+            
+        return mapi_importhierarchychanges_config($this->importer, $stream, 0);
     }
     
     function ImportFolderChange($id, $parent, $displayname, $type) {
@@ -2034,6 +2044,16 @@ class BackendICS {
 						foreach($part->parts as $part2)
 							if (isset($part2->disposition) && ($part2->disposition == "inline" || $part2->disposition == "attachment")) 
 								$this->_storeAttachment($mapimessage, $part2);
+				}
+				elseif($part->ctype_primary == "text" && $part->ctype_secondary == "calendar") {
+					
+					$zpical = new ZPush_ical($this->_defaultstore);
+					$mapiprops = array();
+					$zpical->extractProps($part->body, $mapiprops);
+					if (is_array($mapiprops) && !empty($mapiprops)) {						
+						mapi_setprops($mapimessage, $mapiprops);
+					}
+					else debugLog("ICAL: Mapi props array was empty");
 				}
 				else 
 					$this->_storeAttachment($mapimessage, $part);
