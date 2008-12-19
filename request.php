@@ -13,7 +13,7 @@
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+*  Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -86,7 +86,7 @@ function HandleMoveItems($backend, $protocolversion) {
         $result = $importer->ImportMessageMove($move["srcmsgid"], $move["dstfldid"]);
         // We discard the importer state for now.
 
-        $encoder->startTag(SYNC_MOVE_ERROR);
+        $encoder->startTag(SYNC_MOVE_STATUS);
         $encoder->content($result ? 3 : 1);
         $encoder->endTag();
 
@@ -123,7 +123,7 @@ function HandleNotify($backend, $protocolversion) {
 
     $encoder->startTag(SYNC_AIRNOTIFY_NOTIFY);
     {
-        $encoder->startTag(SYNC_AIRNOTIFY_ERROR);
+        $encoder->startTag(SYNC_AIRNOTIFY_STATUS);
         $encoder->content(1);
         $encoder->endTag();
         
@@ -268,7 +268,7 @@ function HandleFolderSync($backend, $protocolversion) {
     
     $encoder->startTag(SYNC_FOLDERHIERARCHY_FOLDERSYNC);
     {
-        $encoder->startTag(SYNC_FOLDERHIERARCHY_ERROR);
+        $encoder->startTag(SYNC_FOLDERHIERARCHY_STATUS);
         $encoder->content(1);
         $encoder->endTag();
 
@@ -593,7 +593,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                 $encoder->content($collection["collectionid"]);
                 $encoder->endTag();
                 
-                $encoder->startTag(SYNC_ERROR);
+                $encoder->startTag(SYNC_STATUS);
                 $encoder->content(1);
                 $encoder->endTag();
                 
@@ -608,7 +608,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                         $encoder->startTag(SYNC_SERVERENTRYID);
                         $encoder->content($serverid);
                         $encoder->endTag();
-                        $encoder->startTag(SYNC_ERROR);
+                        $encoder->startTag(SYNC_STATUS);
                         $encoder->content(1);
                         $encoder->endTag();
                         $encoder->endTag();
@@ -620,7 +620,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                             $encoder->startTag(SYNC_SERVERENTRYID);
                             $encoder->content($id);
                             $encoder->endTag();
-                            $encoder->startTag(SYNC_ERROR);
+                            $encoder->startTag(SYNC_STATUS);
                             $encoder->content(1);
                             $encoder->endTag();
                             $encoder->startTag(SYNC_DATA);
@@ -768,7 +768,7 @@ function HandleGetItemEstimate($backend, $protocolversion, $devid) {
         foreach($collections as $collection) {
             $encoder->startTag(SYNC_GETITEMESTIMATE_RESPONSE);
             {
-                $encoder->startTag(SYNC_GETITEMESTIMATE_ERROR);
+                $encoder->startTag(SYNC_GETITEMESTIMATE_STATUS);
                 $encoder->content(1);
                 $encoder->endTag();
                 
@@ -927,7 +927,7 @@ function HandlePing($backend, $devid) {
     
     $encoder->startTag(SYNC_PING_PING);
     {
-        $encoder->startTag(SYNC_PING_ERROR);
+        $encoder->startTag(SYNC_PING_STATUS);
         if(isset($error))
             $encoder->content(3);
         else
@@ -1085,7 +1085,7 @@ function HandleFolderCreate($backend, $protocolversion) {
     $encoder->startTag(SYNC_FOLDERHIERARCHY_FOLDERCREATE);
     {
         {
-            $encoder->startTag(SYNC_FOLDERHIERARCHY_ERROR);
+            $encoder->startTag(SYNC_FOLDERHIERARCHY_STATUS);
             $encoder->content(1);
             $encoder->endTag();
             
@@ -1166,7 +1166,7 @@ function HandleMeetingResponse($backend, $protocolversion) {
                 $encoder->content($req["requestid"]);
             $encoder->endTag();
             
-            $encoder->startTag(SYNC_MEETINGRESPONSE_ERROR);
+            $encoder->startTag(SYNC_MEETINGRESPONSE_STATUS);
                 $encoder->content($ok ? 1 : 2);
             $encoder->endTag();
             

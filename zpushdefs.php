@@ -6,7 +6,7 @@
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+*  Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -19,7 +19,7 @@ define("SYNC_FETCH","Fetch");
 define("SYNC_SYNCKEY","SyncKey");
 define("SYNC_CLIENTENTRYID","ClientEntryId");
 define("SYNC_SERVERENTRYID","ServerEntryId");
-define("SYNC_ERROR","Error");
+define("SYNC_STATUS","Status");
 define("SYNC_FOLDER","Folder");
 define("SYNC_FOLDERTYPE","FolderType");
 define("SYNC_VERSION","Version");
@@ -168,7 +168,7 @@ define("SYNC_AIRNOTIFY_SERVERENTRYID","AirNotify:ServerEntryId");
 define("SYNC_AIRNOTIFY_DEVICEADDRESS","AirNotify:DeviceAddress");
 define("SYNC_AIRNOTIFY_VALIDCARRIERPROFILES","AirNotify:ValidCarrierProfiles");
 define("SYNC_AIRNOTIFY_CARRIERPROFILE","AirNotify:CarrierProfile");
-define("SYNC_AIRNOTIFY_ERROR","AirNotify:Error");
+define("SYNC_AIRNOTIFY_STATUS","AirNotify:Status");
 define("SYNC_AIRNOTIFY_REPLIES","AirNotify:Replies");
 define("SYNC_AIRNOTIFY_VERSION='1.1'","AirNotify:Version='1.1'");
 define("SYNC_AIRNOTIFY_DEVICES","AirNotify:Devices");
@@ -222,7 +222,7 @@ define("SYNC_MOVE_SRCMSGID","Move:SrcMsgId");
 define("SYNC_MOVE_SRCFLDID","Move:SrcFldId");
 define("SYNC_MOVE_DSTFLDID","Move:DstFldId");
 define("SYNC_MOVE_RESPONSE","Move:Response");
-define("SYNC_MOVE_ERROR","Move:Error");
+define("SYNC_MOVE_STATUS","Move:Status");
 define("SYNC_MOVE_DSTMSGID","Move:DstMsgId");
 
 // GetItemEstimate
@@ -235,7 +235,7 @@ define("SYNC_GETITEMESTIMATE_FOLDERID","GetItemEstimate:FolderId");
 define("SYNC_GETITEMESTIMATE_DATETIME","GetItemEstimate:DateTime");
 define("SYNC_GETITEMESTIMATE_ESTIMATE","GetItemEstimate:Estimate");
 define("SYNC_GETITEMESTIMATE_RESPONSE","GetItemEstimate:Response");
-define("SYNC_GETITEMESTIMATE_ERROR","GetItemEstimate:Error");
+define("SYNC_GETITEMESTIMATE_STATUS","GetItemEstimate:Status");
 
 // FolderHierarchy
 define("SYNC_FOLDERHIERARCHY_FOLDERS","FolderHierarchy:Folders");
@@ -245,7 +245,7 @@ define("SYNC_FOLDERHIERARCHY_SERVERENTRYID","FolderHierarchy:ServerEntryId");
 define("SYNC_FOLDERHIERARCHY_PARENTID","FolderHierarchy:ParentId");
 define("SYNC_FOLDERHIERARCHY_TYPE","FolderHierarchy:Type");
 define("SYNC_FOLDERHIERARCHY_RESPONSE","FolderHierarchy:Response");
-define("SYNC_FOLDERHIERARCHY_ERROR","FolderHierarchy:Error");
+define("SYNC_FOLDERHIERARCHY_STATUS","FolderHierarchy:Status");
 define("SYNC_FOLDERHIERARCHY_CONTENTCLASS","FolderHierarchy:ContentClass");
 define("SYNC_FOLDERHIERARCHY_CHANGES","FolderHierarchy:Changes");
 define("SYNC_FOLDERHIERARCHY_ADD","FolderHierarchy:Add");
@@ -266,7 +266,7 @@ define("SYNC_MEETINGRESPONSE_MEETINGRESPONSE","MeetingResponse:MeetingResponse")
 define("SYNC_MEETINGRESPONSE_REQUESTID","MeetingResponse:RequestId");
 define("SYNC_MEETINGRESPONSE_REQUEST","MeetingResponse:Request");
 define("SYNC_MEETINGRESPONSE_RESULT","MeetingResponse:Result");
-define("SYNC_MEETINGRESPONSE_ERROR","MeetingResponse:Error");
+define("SYNC_MEETINGRESPONSE_STATUS","MeetingResponse:Status");
 define("SYNC_MEETINGRESPONSE_USERRESPONSE","MeetingResponse:UserResponse");
 define("SYNC_MEETINGRESPONSE_VERSION","MeetingResponse:Version");
 
@@ -304,7 +304,7 @@ define("SYNC_POOMTASKS_RTF","POOMTASKS:Rtf");
 // ResolveRecipients
 define("SYNC_RESOLVERECIPIENTS_RESOLVERECIPIENTS","ResolveRecipients:ResolveRecipients");
 define("SYNC_RESOLVERECIPIENTS_RESPONSE","ResolveRecipients:Response");
-define("SYNC_RESOLVERECIPIENTS_ERROR","ResolveRecipients:Error");
+define("SYNC_RESOLVERECIPIENTS_STATUS","ResolveRecipients:Status");
 define("SYNC_RESOLVERECIPIENTS_TYPE","ResolveRecipients:Type");
 define("SYNC_RESOLVERECIPIENTS_RECIPIENT","ResolveRecipients:Recipient");
 define("SYNC_RESOLVERECIPIENTS_DISPLAYNAME","ResolveRecipients:DisplayName");
@@ -326,7 +326,7 @@ define("SYNC_VALIDATECERT_CERTIFICATES","ValidateCert:Certificates");
 define("SYNC_VALIDATECERT_CERTIFICATE","ValidateCert:Certificate");
 define("SYNC_VALIDATECERT_CERTIFICATECHAIN","ValidateCert:CertificateChain");
 define("SYNC_VALIDATECERT_CHECKCRL","ValidateCert:CheckCRL");
-define("SYNC_VALIDATECERT_ERROR","ValidateCert:Error");
+define("SYNC_VALIDATECERT_STATUS","ValidateCert:Status");
 
 // POOMCONTACTS2
 define("SYNC_POOMCONTACTS2_CUSTOMERID","POOMCONTACTS2:CustomerId");
@@ -342,7 +342,7 @@ define("SYNC_POOMCONTACTS2_MMS","POOMCONTACTS2:MMS");
 
 // Ping
 define("SYNC_PING_PING","Ping:Ping");
-define("SYNC_PING_ERROR","Ping:Error");
+define("SYNC_PING_STATUS","Ping:Status");
 define("SYNC_PING_LIFETIME", "Ping:LifeTime");
 define("SYNC_PING_FOLDERS", "Ping:Folders");
 define("SYNC_PING_FOLDER", "Ping:Folder");

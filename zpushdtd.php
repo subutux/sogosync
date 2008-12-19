@@ -6,7 +6,7 @@
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+*  Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -22,7 +22,7 @@ $zpushdtd = array(
                         0x0b => "SyncKey",
                         0x0c => "ClientEntryId",
                         0x0d => "ServerEntryId",
-                        0x0e => "Error",
+                        0x0e => "Status",
                         0x0f => "Folder",
                         0x10 => "FolderType",
                         0x11 => "Version",
@@ -167,7 +167,7 @@ $zpushdtd = array(
                         0x0d => "DeviceAddress",
                         0x0e => "ValidCarrierProfiles",
                         0x0f => "CarrierProfile",
-                        0x10 => "Error",
+                        0x10 => "Status",
                         0x11 => "Replies",
 //                        0x05 => "Version='1.1'",
                         0x12 => "Devices",
@@ -219,7 +219,7 @@ $zpushdtd = array(
                         0x08 => "SrcFldId",
                         0x09 => "DstFldId",
                         0x0a => "Response",
-                        0x0b => "Error",
+                        0x0b => "Status",
                         0x0c => "DstMsgId",
                     ), 6 => array (                       
                         0x05 => "GetItemEstimate",
@@ -231,7 +231,7 @@ $zpushdtd = array(
                         0x0b => "DateTime",
                         0x0c => "Estimate",
                         0x0d => "Response",
-                        0x0e => "Error",
+                        0x0e => "Status",
                     ), 7 => array (                       
                         0x05 => "Folders",
                         0x06 => "Folder",
@@ -240,7 +240,7 @@ $zpushdtd = array(
                         0x09 => "ParentId",
                         0x0a => "Type",
                         0x0b => "Response",
-                        0x0c => "Error",
+                        0x0c => "Status",
                         0x0d => "ContentClass",
                         0x0e => "Changes",
                         0x0f => "Add",
@@ -260,7 +260,7 @@ $zpushdtd = array(
                         0x08 => "RequestId",
                         0x09 => "Request",
                         0x0a => "Result",
-                        0x0b => "Error",
+                        0x0b => "Status",
                         0x0c => "UserResponse",
                         0x0d => "Version",
                     ), 9 => array (                       
@@ -296,7 +296,7 @@ $zpushdtd = array(
                     ), 0xa => array (                       
                         0x05 => "ResolveRecipients",
                         0x06 => "Response",
-                        0x07 => "Error",
+                        0x07 => "Status",
                         0x08 => "Type",
                         0x09 => "Recipient",
                         0x0a => "DisplayName",
@@ -317,7 +317,7 @@ $zpushdtd = array(
                         0x07 => "Certificate",
                         0x08 => "CertificateChain",
                         0x09 => "CheckCRL",
-                        0x0a => "Error",
+                        0x0a => "Status",
                     ), 0xc => array (                     
                         0x05 => "CustomerId",
                         0x06 => "GovernmentId",
@@ -331,7 +331,7 @@ $zpushdtd = array(
                         0x0e => "MMS",
                     ), 0xd => array (
                         0x05 => "Ping",
-                        0x07 => "Error",
+                        0x07 => "Status",
                         0x08 => "LifeTime",
                         0x09 => "Folders",
                         0x0a => "Folder",
