@@ -264,7 +264,8 @@ class MAPIMapping {
             
             // Get long strings via openproperty
             if(isset($prop[mapi_prop_tag(PT_ERROR, mapi_prop_id($mapiprop))])) {
-                if($prop[mapi_prop_tag(PT_ERROR, mapi_prop_id($mapiprop))] == -2147024882) {
+                if($prop[mapi_prop_tag(PT_ERROR, mapi_prop_id($mapiprop))] == -2147024882 || // 32 bit
+                   $prop[mapi_prop_tag(PT_ERROR, mapi_prop_id($mapiprop))] == 2147942414) {  // 64 bit
                     $prop = array($mapiprop => readPropStream($mapimessage, $mapiprop));
                 }
             }
