@@ -1580,6 +1580,7 @@ class ExportChangesICS  {
         $folder = mapi_msgstore_openentry($this->_store, $entryid);
         if(!$folder) {
             $this->exporter = false;
+			debugLog("ExportChangesICS->Constructor: can not open folder");
             return;
         }
         
@@ -1647,7 +1648,12 @@ class ExportChangesICS  {
         } else {
             $includeprops = array(PR_SOURCE_KEY, PR_DISPLAY_NAME);
         }
-        
+
+        if ($this->exporter === false) {
+        	debugLog("ExportChangesICS->Config failed. Exporter not available.");
+        	return false;
+        }
+
         $ret = mapi_exportchanges_config($this->exporter, $stream, $exporterflags, $mapiimporter, $restriction, $includeprops, false, 1);
         
         if($ret) {
