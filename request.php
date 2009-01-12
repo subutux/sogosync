@@ -900,6 +900,15 @@ function HandlePing($backend, $devid) {
             $state = $collection["state"];
             $importer = false;
             $ret = $exporter->Config($importer, false, false, $state, BACKEND_DISCARD_DATA, 0);
+
+            // stop ping if exporter can not be configured (e.g. after Zarafa-server restart)
+            if ($ret === false ) {
+            	// force "ping" to stop
+            	$n = $lifetime / $timeout;
+            	debugLog("Ping error: Exporter can not be configured. Waiting 30 seconds before ping is retried.");
+            	sleep(30);
+            	break;
+            }
             
             $changecount = $exporter->GetChangeCount();
 
