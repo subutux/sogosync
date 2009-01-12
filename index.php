@@ -8,7 +8,7 @@
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+*  Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -39,6 +39,7 @@ if(!isset($_SERVER['PHP_AUTH_PW'])) {
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     header("HTTP/1.0 401 Unauthorized");
     print("Access denied. Please send authorisation information");
+	debugLog("Access denied: no password sent.");
     return;
 }
 
@@ -103,6 +104,7 @@ if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false) {
     header("HTTP/1.0 401 Unauthorized");
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     print("Access denied. Username or password incorrect.");
+    debugLog("Access denied: backend logon failed.");
     return;
 }
 
@@ -112,6 +114,7 @@ if($backend->Setup($user, $devid, $protocolversion) == false) {
     header("HTTP/1.0 401 Unauthorized");
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     print("Access denied or user '$user' unknown.");
+    debugLog("Access denied: backend setup failed.");
     return;
 }
 
