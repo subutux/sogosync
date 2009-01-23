@@ -18,7 +18,7 @@
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+* ï¿½ Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -183,7 +183,7 @@ class BackendMaildir extends BackendDiff {
             $inbox->type = SYNC_FOLDER_TYPE_INBOX;
             
             return $inbox;
-        } else if($id = "sub") {
+        } else if($id == "sub") {
             $inbox = new SyncFolder();
             $inbox->serverid = $id;
             $inbox->parentid = "root";
