@@ -98,11 +98,11 @@ class MAPIMapping {
                             "fileas" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8005",
                             "firstname" => PR_GIVEN_NAME,
                             "home2phonenumber" => PR_HOME2_TELEPHONE_NUMBER,
-                            "homecity" => PR_LOCALITY,
-                            "homecountry" => PR_COUNTRY,
-                            "homepostalcode" => PR_POSTAL_CODE,
-                            "homestate" => PR_STATE_OR_PROVINCE,
-                            "homestreet" => PR_STREET_ADDRESS,
+    						"homecity" => PR_HOME_ADDRESS_CITY,
+							"homecountry" => PR_HOME_ADDRESS_COUNTRY,
+							"homepostalcode" => PR_HOME_ADDRESS_POSTAL_CODE,
+							"homestate" => PR_HOME_ADDRESS_STATE_OR_PROVINCE,
+							"homestreet" => PR_HOME_ADDRESS_STREET,
                             "homefaxnumber" => PR_HOME_FAX_NUMBER,
                             "homephonenumber" => PR_HOME_TELEPHONE_NUMBER,
                             "jobtitle" => PR_TITLE,
@@ -858,16 +858,62 @@ class ImportContentsChangesICS extends MAPIMapping {
         if (!empty($nremails)) 
         	$props[$this->_getPropIDFromString("PT_MV_LONG:{00062004-0000-0000-C000-000000000046}:0x8028")] = $nremails;
         	
-        //home address fix
-        $homecity = $homestate = $homepostalcode = $homestate = $homestreet = "";
+        //addresses' fix
+        $homecity = $homecountry = $homepostalcode = $homestate = $homestreet = $homeaddress = "";
        	if (isset($contact->homecity))			$props[PR_HOME_ADDRESS_CITY] = $homecity = u2w($contact->homecity);
-       	if (isset($contact->homecountry))		$props[PR_HOME_ADDRESS_COUNTRY] = $homestate = u2w($contact->homecountry);
+       	if (isset($contact->homecountry))		$props[PR_HOME_ADDRESS_COUNTRY] = $homecountry = u2w($contact->homecountry);
        	if (isset($contact->homepostalcode))	$props[PR_HOME_ADDRESS_POSTAL_CODE] = $homepostalcode = u2w($contact->homepostalcode);
        	if (isset($contact->homestate))			$props[PR_HOME_ADDRESS_STATE_OR_PROVINCE] = $homestate = u2w($contact->homestate);
        	if (isset($contact->homestreet))		$props[PR_HOME_ADDRESS_STREET] = $homestreet = u2w($contact->homestreet);
-       	$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801A")] = buildAddressString($homestreet, $homepostalcode, $homecity, $homestate, $homestate);
-        	
-        mapi_setprops($mapimessage, $props);	
+       	$homeaddress = buildAddressString($homestreet, $homepostalcode, $homecity, $homestate, $homecountry);       
+       	if ($homeaddress) $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801A")] = $homeaddress;
+       	
+        $businesscity = $businesscountry = $businesspostalcode = $businessstate = $businessstreet = $businessaddress = "";
+       	if (isset($contact->businesscity))
+       		$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8046")] = $businesscity = u2w($contact->businesscity);
+       	if (isset($contact->businesscountry))
+       		$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8049")] = $businesscountry = u2w($contact->businesscountry);
+       	if (isset($contact->businesspostalcode))
+       		$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8048")] = $businesspostalcode = u2w($contact->businesspostalcode);
+       	if (isset($contact->businessstate))
+       		$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8047")] = $businessstate = u2w($contact->businessstate);
+       	if (isset($contact->businessstreet))
+       		$props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8045")] = $businessstreet = u2w($contact->businessstreet);
+       	$businessaddress = buildAddressString($businessstreet, $businesspostalcode, $businesscity, $businessstate, $businesscountry);       
+       	if ($businessaddress) $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801B")] = $businessaddress;
+       	       	
+        $othercity = $othercountry = $otherpostalcode = $otherstate = $otherstreet = $otheraddress = "";
+       	if (isset($contact->othercity))			$props[PR_OTHER_ADDRESS_CITY] = $othercity = u2w($contact->othercity);
+       	if (isset($contact->othercountry))		$props[PR_OTHER_ADDRESS_COUNTRY] = $othercountry = u2w($contact->othercountry);
+       	if (isset($contact->otherpostalcode))	$props[PR_OTHER_ADDRESS_POSTAL_CODE] = $otherpostalcode = u2w($contact->otherpostalcode);
+       	if (isset($contact->otherstate))		$props[PR_OTHER_ADDRESS_STATE_OR_PROVINCE] = $otherstate = u2w($contact->otherstate);
+       	if (isset($contact->otherstreet))		$props[PR_OTHER_ADDRESS_STREET] = $otherstreet = u2w($contact->otherstreet);
+       	$otheraddress = buildAddressString($otherstreet, $otherpostalcode, $othercity, $otherstate, $othercountry);       
+       	if ($otheraddress) $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801C")] = $otheraddress;
+       	
+       	$mailingadresstype = 0;
+       	
+       	if ($businessaddress) $mailingadresstype = 2;
+       	elseif ($homeaddress) $mailingadresstype = 1;
+       	elseif ($othercity) $mailingadresstype = 3;
+       	       	
+       	if ($mailingadresstype) {
+       		$props[$this->_getPropIDFromString("PT_LONG:{00062004-0000-0000-C000-000000000046}:0x8022")] = $mailingadresstype;
+       		
+       		switch ($mailingadresstype) {
+       			case 1:
+       				$this->_setMailingAdress($homestreet, $homepostalcode, $homecity, $homestate, $homecountry, $homeaddress, $props);
+       				break;
+       			case 2:
+       				$this->_setMailingAdress($businessstreet, $businesspostalcode, $businesscity, $businessstate, $businesscountry, $businessaddress, $props);
+       				break;
+       			case 3:
+       				$this->_setMailingAdress($otherstreet, $otherpostalcode, $othercity, $otherstate, $othercountry, $otheraddress, $props);
+       				break;
+       		}
+       	}
+       	
+       	mapi_setprops($mapimessage, $props);	
     }
     
     function _setTask($mapimessage, $task) {
@@ -893,6 +939,15 @@ class ImportContentsChangesICS extends MAPIMapping {
             }
         }
     }
+    
+    function _setMailingAdress($street, $zip, $city, $state, $country, $address, &$props) {
+    	$props[PR_STREET_ADDRESS] = $street;
+        $props[PR_LOCALITY] = $city;
+        $props[PR_COUNTRY] = $country;
+        $props[PR_POSTAL_CODE] = $zip;
+        $props[PR_STATE_OR_PROVINCE] = $state;
+        $props[PR_POSTAL_ADDRESS] = $address;
+    }
 };
 
 // This is our local hierarchy changes importer. It receives folder change
@@ -913,27 +968,49 @@ class ImportHierarchyChangesICS  {
         }
         
         $this->importer = mapi_openproperty($folder, PR_COLLECTOR, IID_IExchangeImportHierarchyChanges, 0 , 0);
+        $this->store = $store;
     }
 
-    function Config($state) {
-    // Put the state information in a stream that can be used by ICS
+    function Config($state, $flags = 0) {
+   		// Put the state information in a stream that can be used by ICS
+         
         $stream = mapi_stream_create();
-        
-        if(strlen($state) > 0)
-            mapi_stream_write($stream, $state);
-        else
-            mapi_stream_write($stream, hex2bin("0000000000000000"));
-            
-        return mapi_importhierarchychanges_config($this->importer, $stream, 0);
+        if(strlen($state) == 0) {
+            $state = hex2bin("0000000000000000");
+        }
+
+        mapi_stream_write($stream, $state);
+        $this->statestream = $stream;
+       
+        return mapi_importhierarchychanges_config($this->importer, $stream, $flags);
     }
     
     function ImportFolderChange($id, $parent, $displayname, $type) {
+    	//create a new folder if $id is not set
+    	if (!$id) {
+    		$parentfentryid = mapi_msgstore_entryidfromsourcekey($this->store, hex2bin($parent));
+			$parentfolder = mapi_msgstore_openentry($this->store, $parentfentryid);
+			$parentpros = mapi_getprops($parentfolder, array(PR_DISPLAY_NAME));
+    		$newfolder = mapi_folder_createfolder($parentfolder, $displayname, "");
+			$props =  mapi_getprops($newfolder, array(PR_SOURCE_KEY));
+			$id = bin2hex($props[PR_SOURCE_KEY]);
+    	}
+		    
         // 'type' is ignored because you can only create email (standard) folders
-        return mapi_importhierarchychanges_importfolderchange( array ( PR_SOURCE_KEY => $id, PR_PARENT_SOURCE_KEY => $parent, PR_DISPLAY_NAME => $displayname ) );
+        mapi_importhierarchychanges_importfolderchange($this->importer, array ( PR_SOURCE_KEY => hex2bin($id), PR_PARENT_SOURCE_KEY => hex2bin($parent), PR_DISPLAY_NAME => $displayname) );
+        debugLog("Imported changes for folder:$id");       
+        return $id;
     }
 
     function ImportFolderDeletion($id, $parent) {
         return mapi_importhierarchychanges_importfolderdeletion ( array ($id) );
+    }
+    
+	function GetState() {
+        mapi_stream_seek($this->statestream, 0, STREAM_SEEK_SET);
+        $data = mapi_stream_read($this->statestream, 4096);
+        
+        return $data;
     }
 };
 

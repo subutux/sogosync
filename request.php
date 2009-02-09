@@ -1090,26 +1090,44 @@ function HandleFolderCreate($backend, $protocolversion) {
     $serverid = $importer->ImportFolderChange($serverid, $parentid, $displayname, $type);
 
     $encoder->startWBXML();
-    
-    $encoder->startTag(SYNC_FOLDERHIERARCHY_FOLDERCREATE);
-    {
-        {
-            $encoder->startTag(SYNC_FOLDERHIERARCHY_STATUS);
-            $encoder->content(1);
-            $encoder->endTag();
-            
-            $encoder->startTag(SYNC_FOLDERHIERARCHY_SYNCKEY);
-            $encoder->content($newsynckey);
-            $encoder->endTag();
-            
-            $encoder->startTag(SYNC_FOLDERHIERARCHY_SERVERENTRYID);
-            $encoder->content($serverid);
-            $encoder->endTag();
-        }    
-        $encoder->endTag();
+    if ($create) {
+	    $encoder->startTag(SYNC_FOLDERHIERARCHY_FOLDERCREATE);
+	    {
+	        {
+	            $encoder->startTag(SYNC_FOLDERHIERARCHY_STATUS);
+	            $encoder->content(1);
+	            $encoder->endTag();
+	            
+	            $encoder->startTag(SYNC_FOLDERHIERARCHY_SYNCKEY);
+	            $encoder->content($newsynckey);
+	            $encoder->endTag();
+	            
+	            $encoder->startTag(SYNC_FOLDERHIERARCHY_SERVERENTRYID);
+	            $encoder->content($serverid);
+	            $encoder->endTag();
+	        }    
+	        $encoder->endTag();
+	    }
+	    $encoder->endTag();
     }
-    $encoder->endTag();
 
+	elseif ($update) {
+
+		$encoder->startTag(SYNC_FOLDERHIERARCHY_FOLDERUPDATE);
+	    {
+	        {
+	            $encoder->startTag(SYNC_FOLDERHIERARCHY_STATUS);
+	            $encoder->content(1);
+	            $encoder->endTag();
+	            
+	            $encoder->startTag(SYNC_FOLDERHIERARCHY_SYNCKEY);
+	            $encoder->content($newsynckey);
+	            $encoder->endTag();
+	        }    
+	        $encoder->endTag();
+	    }
+	}
+    $encoder->endTag();
     // Save the sync state for the next time
     $statemachine->setSyncState($newsynckey, $importer->GetState());
 
