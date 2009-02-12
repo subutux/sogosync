@@ -10,7 +10,7 @@
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+* ï¿½ Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -184,6 +184,7 @@ class SyncContact extends Streamer {
     var $yomilastname;
     var $rtf;
     var $picture;
+    var $nickname;
     
     function SyncContact() {
         global $protocolversion;
