@@ -2,7 +2,7 @@
 /***********************************************
 * File      :   index.php
 * Project   :   Z-Push
-* Descr     :   This is the entry point 
+* Descr     :   This is the entry point
 *				through which all requests
 *				are called.
 *
@@ -54,13 +54,13 @@ if($pos === false){
 }
 $auth_pw = $_SERVER['PHP_AUTH_PW'];
 
-// Parse the standard GET parameters        
+// Parse the standard GET parameters
 if(isset($_GET["Cmd"]))
     $cmd = $_GET["Cmd"];
 if(isset($_GET["User"]))
     $user = $_GET["User"];
 if(isset($_GET["DeviceId"]))
-    $devid = $_GET["DeviceId"];	
+    $devid = $_GET["DeviceId"];
 if(isset($_GET["DeviceType"]))
     $devtype = $_GET["DeviceType"];
 
@@ -74,6 +74,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // Get the request headers so we can see the versions
 $requestheaders = apache_request_headers();
+if (isset($requestheaders["Ms-Asprotocolversion"])) $requestheaders["MS-ASProtocolVersion"] = $requestheaders["Ms-Asprotocolversion"];
 if(isset($requestheaders["MS-ASProtocolVersion"])) {
     global $protocolversion;
 
@@ -91,9 +92,9 @@ while($entry = readdir($backend_dir)) {
     if(substr($entry,0,1) == "." || substr($entry,-3) != "php")
         continue;
 
-    if (!function_exists("mapi_logon") && ($entry == "ics.php")) 
+    if (!function_exists("mapi_logon") && ($entry == "ics.php"))
         continue;
-        
+
     include_once(BASE_PATH . "/backend/" . $entry);
 }
 
@@ -124,7 +125,7 @@ switch($_SERVER["REQUEST_METHOD"]) {
         header("MS-Server-ActiveSync: 6.5.7638.1");
         header("MS-ASProtocolVersions: 1.0,2.0,2.1,2.5");
         header("MS-ASProtocolCommands: Sync,SendMail,SmartForward,SmartReply,GetAttachment,GetHierarchy,CreateCollection,DeleteCollection,MoveCollection,FolderSync,FolderCreate,FolderDelete,FolderUpdate,MoveItems,GetItemEstimate,MeetingResponse,ResolveRecipipents,ValidateCert,Provision,Search,Ping");
-        break;
+		break;
     case 'POST':
         header("MS-Server-ActiveSync: 6.5.7638.1");
         debugLog("POST cmd: $cmd");
