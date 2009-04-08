@@ -151,7 +151,7 @@ class Mail_mimeDecode {
         $isStatic = !(isset($this) && get_class($this) == __CLASS__);
 
         // Have we been called statically?
-	// If so, create an object and pass details to that.
+    // If so, create an object and pass details to that.
         if ($isStatic AND isset($params['input'])) {
 
             $obj = new Mail_mimeDecode($params['input'], $params['crlf']);
@@ -164,11 +164,11 @@ class Mail_mimeDecode {
         // Called via an object
         } else {
             $this->_include_bodies = isset($params['include_bodies']) ?
-	                             $params['include_bodies'] : false;
+                                 $params['include_bodies'] : false;
             $this->_decode_bodies  = isset($params['decode_bodies']) ?
-	                             $params['decode_bodies']  : false;
+                                 $params['decode_bodies']  : false;
             $this->_decode_headers = isset($params['decode_headers']) ?
-	                             $params['decode_headers'] : false;
+                                 $params['decode_headers'] : false;
             $this->_charset = isset($params['charset']) ?
                                  $params['charset'] : 'iso-8859-15';
 
@@ -402,7 +402,7 @@ class Mail_mimeDecode {
     function _boundarySplit($input, $boundary)
     {
         $tmp = explode('--'.$boundary, $input);
-		$parts = array();
+        $parts = array();
         for ($i=1; $i<count($tmp)-1; $i++) {
             $parts[] = $tmp[$i];
         }

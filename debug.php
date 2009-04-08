@@ -6,7 +6,7 @@
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+* ï¿½ Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -31,8 +31,8 @@ function debugLog($message) {
     @fclose($fp);
 }
 
-function zarafa_error_handler($errno, $errstr, $errfile, $errline, $errcontext) {	
-	debugLog("$errfile:$errline $errstr ($errno)");
+function zarafa_error_handler($errno, $errstr, $errfile, $errline, $errcontext) {    
+    debugLog("$errfile:$errline $errstr ($errno)");
 }
 
 error_reporting(E_ALL);

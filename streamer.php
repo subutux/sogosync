@@ -2,18 +2,18 @@
 /***********************************************
 * File      :   streamer.php
 * Project   :   Z-Push
-* Descr     :   This file handles streaming of 
-*				WBXML objects. It must be
-*				subclassed so the internals of
-*				the object can be specified via
-*				$mapping. Basically we set/read
-*				the object variables of the
-*				subclass according to the mappings
+* Descr     :   This file handles streaming of
+*               WBXML objects. It must be
+*               subclassed so the internals of
+*               the object can be specified via
+*               $mapping. Basically we set/read
+*               the object variables of the
+*               subclass according to the mappings
 *
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+* ï¿½ Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -30,23 +30,23 @@ define('STREAMER_TYPE_DATE_DASHES', 3);
 
 class Streamer {
     var $_mapping;
-    
+
     var $content;
     var $attributes;
     var $flags;
-    
+
     function Streamer($mapping) {
         $this->_mapping = $mapping;
         $this->flags = false;
     }
-    
+
     // Decodes the WBXML from $input until we reach the same depth level of WBXML. This
     // means that if there are multiple objects at this level, then only the first is decoded
     // SubOjects are auto-instantiated and decoded using the same functionality
     function decode(&$decoder) {
         while(1) {
             $entity = $decoder->getElement();
-            
+
             if($entity[EN_TYPE] == EN_TYPE_STARTTAG) {
                 if(! ($entity[EN_FLAGS] & EN_FLAGS_CONTENT)) {
                     $map = $this->_mapping[$entity[EN_TAG]];
@@ -54,7 +54,7 @@ class Streamer {
                         $this->$map[STREAMER_VAR] = "";
                     } else if ($map[STREAMER_TYPE] == STREAMER_TYPE_DATE || $map[STREAMER_TYPE] == STREAMER_TYPE_DATE_DASHES ) {
                         $this->$map[STREAMER_VAR] = "";
-                    } 
+                    }
                     continue;
                 }
                 // Found a start tag
@@ -64,7 +64,7 @@ class Streamer {
                     return false;
                 } else {
                     $map = $this->_mapping[$entity[EN_TAG]];
-                    
+
                     // Handle an array
                     if(isset($map[STREAMER_ARRAY])) {
                         while(1) {
@@ -76,12 +76,12 @@ class Streamer {
                             } else {
                                 $decoded = $decoder->getElementContent();
                             }
-                            
+
                             if(!isset($this->$map[STREAMER_VAR]))
                                 $this->$map[STREAMER_VAR] = array($decoded);
                             else
                                 array_push($this->$map[STREAMER_VAR], $decoded);
-                                
+
                             if(!$decoder->getElementEndTag())
                                 return false;
                         }
@@ -102,7 +102,7 @@ class Streamer {
                                 $subdecoder = new $map[STREAMER_TYPE]();
                                 if($subdecoder->decode($decoder) === false)
                                     return false;
-                                
+
                                 $decoded = $subdecoder;
 
                                 if(!$decoder->getElementEndTag()) {
@@ -113,12 +113,12 @@ class Streamer {
                         } else {
                             // Simple type, just get content
                             $decoded = $decoder->getElementContent();
-                            
+
                             if($decoded === false) {
                                 debug("Unable to get content for " . $entity[EN_TAG]);
                                 return false;
                             }
-                                
+
                             if(!$decoder->getElementEndTag()) {
                                 debug("Unable to get end tag for " . $entity[EN_TAG]);
                                 return false;
@@ -137,13 +137,13 @@ class Streamer {
                 debug("Unexpected content in type");
                 break;
             }
-        }            
+        }
     }
 
     // Encodes this object and any subobjects - output is ordered according to mapping
     function encode(&$encoder) {
         $attributes = isset($this->attributes) ? $this->attributes : array();
-        
+
         foreach($this->_mapping as $tag => $map) {
             if(isset($this->$map[STREAMER_VAR])) {
                 // Variable is available
@@ -177,9 +177,9 @@ class Streamer {
                     if(strlen($this->$map[STREAMER_VAR]) == 0) {
                           // Do not output empty items. See above: $encoder->startTag($tag, false, true);
                         continue;
-                    } else 
+                    } else
                         $encoder->startTag($tag);
-                    
+
                     if(isset($map[STREAMER_TYPE]) && ($map[STREAMER_TYPE] == STREAMER_TYPE_DATE || $map[STREAMER_TYPE] == STREAMER_TYPE_DATE_DASHES)) {
                         if($this->$map[STREAMER_VAR] != 0) // don't output 1-1-1970
                             $encoder->content($this->formatDate($this->$map[STREAMER_VAR], $map[STREAMER_TYPE]));
@@ -195,22 +195,22 @@ class Streamer {
         // Output our own content
         if(isset($this->content))
             $encoder->content($this->content);
-            
+
     }
-    
-    
+
+
 
     // Oh yeah. This is beautiful. Exchange outputs date fields differently in calendar items
     // and emails. We could just always send one or the other, but unfortunately nokia's 'Mail for
     // exchange' depends on this quirk. So we have to send a different date type depending on where
-    // it's used. Sigh.    
+    // it's used. Sigh.
     function formatDate($ts, $type) {
         if($type == STREAMER_TYPE_DATE)
             return gmstrftime("%Y%m%dT%H%M%SZ", $ts);
-        else if($type == STREAMER_TYPE_DATE_DASHES) 
+        else if($type == STREAMER_TYPE_DATE_DASHES)
             return gmstrftime("%Y-%m-%dT%H:%M:%S.000Z", $ts);
     }
-    
+
     function parseDate($ts) {
         if(preg_match("/(\d{4})[^0-9]*(\d{2})[^0-9]*(\d{2})T(\d{2})[^0-9]*(\d{2})[^0-9]*(\d{2})(.\d+)?Z/", $ts, $matches)) {
             return gmmktime($matches[4], $matches[5], $matches[6], $matches[2], $matches[3], $matches[1]);

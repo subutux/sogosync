@@ -3,10 +3,10 @@
 * File      :   proto.php
 * Project   :   Z-Push
 * Descr     :   WBXML entities that can be parsed
-*				directly (as a stream) from WBXML.
-*				They are automatically decoded
-*				according to $mapping,
-*				and the Sync WBXML mappings.
+*               directly (as a stream) from WBXML.
+*               They are automatically decoded
+*               according to $mapping,
+*               and the Sync WBXML mappings.
 *
 * Created   :   01.10.2007
 *
@@ -22,7 +22,7 @@ class SyncFolder extends Streamer {
     var $parentid;
     var $displayname;
     var $type;
-    
+
     function SyncFolder() {
         $mapping = array (
                                 SYNC_FOLDERHIERARCHY_SERVERENTRYID => array (STREAMER_VAR => "serverid"),
@@ -30,7 +30,7 @@ class SyncFolder extends Streamer {
                                 SYNC_FOLDERHIERARCHY_DISPLAYNAME => array (STREAMER_VAR => "displayname"),
                                 SYNC_FOLDERHIERARCHY_TYPE => array (STREAMER_VAR => "type")
                               );
-                              
+
         parent::Streamer($mapping);
     }
 };
@@ -42,42 +42,42 @@ class SyncAttachment extends Streamer {
     var $attname;
     var $attoid;
     var $attremoved;
-    
+
     function SyncAttachment() {
         $mapping = array(
-                                SYNC_POOMMAIL_ATTMETHOD =>		array ( STREAMER_VAR => "attmethod" ),
-                                SYNC_POOMMAIL_ATTSIZE =>			array ( STREAMER_VAR => "attsize" ),
-                                SYNC_POOMMAIL_DISPLAYNAME => 	array ( STREAMER_VAR => "displayname" ),
-                                SYNC_POOMMAIL_ATTNAME =>			array ( STREAMER_VAR => "attname" ),
-                                SYNC_POOMMAIL_ATTOID =>			array ( STREAMER_VAR => "attoid" ),
-                                SYNC_POOMMAIL_ATTREMOVED =>		array ( STREAMER_VAR => "attremoved" ),
+                                SYNC_POOMMAIL_ATTMETHOD =>        array ( STREAMER_VAR => "attmethod" ),
+                                SYNC_POOMMAIL_ATTSIZE =>            array ( STREAMER_VAR => "attsize" ),
+                                SYNC_POOMMAIL_DISPLAYNAME =>     array ( STREAMER_VAR => "displayname" ),
+                                SYNC_POOMMAIL_ATTNAME =>            array ( STREAMER_VAR => "attname" ),
+                                SYNC_POOMMAIL_ATTOID =>            array ( STREAMER_VAR => "attoid" ),
+                                SYNC_POOMMAIL_ATTREMOVED =>        array ( STREAMER_VAR => "attremoved" ),
                         );
-                        
+
         parent::Streamer($mapping);
     }
 };
 
 class SyncMeetingRequest extends Streamer {
     function SyncMeetingRequest() {
-        $mapping = array ( 
-                                SYNC_POOMMAIL_ALLDAYEVENT => 	array (STREAMER_VAR => "alldayevent" ),
-                                SYNC_POOMMAIL_STARTTIME => 		array (STREAMER_VAR => "starttime", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES),
-                                SYNC_POOMMAIL_DTSTAMP => 		array (STREAMER_VAR => "dtstamp", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES),
-                                SYNC_POOMMAIL_ENDTIME => 		array (STREAMER_VAR => "endtime", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES),
-                                SYNC_POOMMAIL_INSTANCETYPE =>	array ( STREAMER_VAR => "instancetype" ),
-                                SYNC_POOMMAIL_LOCATION => 		array (STREAMER_VAR => "location"),
-                                SYNC_POOMMAIL_ORGANIZER =>	 	array (STREAMER_VAR => "organizer"),
-                                SYNC_POOMMAIL_REMINDER => 		array (STREAMER_VAR => "reminder"),
+        $mapping = array (
+                                SYNC_POOMMAIL_ALLDAYEVENT =>     array (STREAMER_VAR => "alldayevent" ),
+                                SYNC_POOMMAIL_STARTTIME =>         array (STREAMER_VAR => "starttime", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES),
+                                SYNC_POOMMAIL_DTSTAMP =>         array (STREAMER_VAR => "dtstamp", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES),
+                                SYNC_POOMMAIL_ENDTIME =>         array (STREAMER_VAR => "endtime", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES),
+                                SYNC_POOMMAIL_INSTANCETYPE =>    array ( STREAMER_VAR => "instancetype" ),
+                                SYNC_POOMMAIL_LOCATION =>         array (STREAMER_VAR => "location"),
+                                SYNC_POOMMAIL_ORGANIZER =>         array (STREAMER_VAR => "organizer"),
+                                SYNC_POOMMAIL_REMINDER =>         array (STREAMER_VAR => "reminder"),
                                 SYNC_POOMMAIL_RESPONSEREQUESTED => array ( STREAMER_VAR => "responserequested" ),
-                                SYNC_POOMMAIL_SENSITIVITY =>		array ( STREAMER_VAR => "sensitivity" ),
-                                SYNC_POOMMAIL_BUSYSTATUS => 		array (STREAMER_VAR => "busystatus" ),
-                                SYNC_POOMMAIL_TIMEZONE => 		array (STREAMER_VAR => "timezone" ),
-//                                SYNC_POOMMAIL_RECURRENCES => 	array (STREAMER_VAR => "recurrences", STREAMER_TYPE => "SyncRecurrence", STREAMER_ARRAY => SYNC_POOMMAIL_RECURRENCE),
-//                                SYNC_POOMMAIL_RECURRENCEID =>	array (STREAMER_VAR => "recurrenceid"),
-                                SYNC_POOMMAIL_GLOBALOBJID =>		array ( STREAMER_VAR => "globalobjid" ),
+                                SYNC_POOMMAIL_SENSITIVITY =>        array ( STREAMER_VAR => "sensitivity" ),
+                                SYNC_POOMMAIL_BUSYSTATUS =>         array (STREAMER_VAR => "busystatus" ),
+                                SYNC_POOMMAIL_TIMEZONE =>         array (STREAMER_VAR => "timezone" ),
+//                                SYNC_POOMMAIL_RECURRENCES =>     array (STREAMER_VAR => "recurrences", STREAMER_TYPE => "SyncRecurrence", STREAMER_ARRAY => SYNC_POOMMAIL_RECURRENCE),
+//                                SYNC_POOMMAIL_RECURRENCEID =>    array (STREAMER_VAR => "recurrenceid"),
+                                SYNC_POOMMAIL_GLOBALOBJID =>        array ( STREAMER_VAR => "globalobjid" ),
                               );
-        
-        parent::Streamer($mapping);              
+
+        parent::Streamer($mapping);
     }
 
 };
@@ -98,34 +98,34 @@ class SyncMail extends Streamer {
     var $reply_to;
 
     var $attachments = array();
-    
+
     function SyncMail() {
-        $mapping = array ( 
-                                SYNC_POOMMAIL_TO =>				array ( STREAMER_VAR => "to" ),
-                                SYNC_POOMMAIL_CC =>				array ( STREAMER_VAR => "cc" ),
-                                SYNC_POOMMAIL_FROM =>			array ( STREAMER_VAR => "from" ),
-                                SYNC_POOMMAIL_SUBJECT =>			array ( STREAMER_VAR => "subject" ),
-                                SYNC_POOMMAIL_THREADTOPIC =>		array ( STREAMER_VAR => "threadtopic" ),
-                                SYNC_POOMMAIL_DATERECEIVED => 	array ( STREAMER_VAR => "datereceived", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES ),
-                                SYNC_POOMMAIL_DISPLAYTO =>		array ( STREAMER_VAR => "displayto" ),
-                                SYNC_POOMMAIL_IMPORTANCE =>		array ( STREAMER_VAR => "importance" ),
-                                SYNC_POOMMAIL_READ =>			array ( STREAMER_VAR => "read" ),
-                                SYNC_POOMMAIL_ATTACHMENTS =>		array ( STREAMER_VAR => "attachments", STREAMER_TYPE => "SyncAttachment", STREAMER_ARRAY => SYNC_POOMMAIL_ATTACHMENT ),
-                                SYNC_POOMMAIL_BODYTRUNCATED => 	array ( STREAMER_VAR => "bodytruncated" ),
-                                SYNC_POOMMAIL_BODY => 			array ( STREAMER_VAR => "body" ),
-                                SYNC_POOMMAIL_BODYSIZE => 		array ( STREAMER_VAR => "bodysize" ),
-                                SYNC_POOMMAIL_MESSAGECLASS =>	array ( STREAMER_VAR => "messageclass" ),
-                                SYNC_POOMMAIL_MEETINGREQUEST	=>	array ( STREAMER_VAR => "meetingrequest", STREAMER_TYPE => "SyncMeetingRequest" ),
-                                SYNC_POOMMAIL_REPLY_TO =>		array ( STREAMER_VAR => "reply_to" ),
+        $mapping = array (
+                                SYNC_POOMMAIL_TO =>                array ( STREAMER_VAR => "to" ),
+                                SYNC_POOMMAIL_CC =>                array ( STREAMER_VAR => "cc" ),
+                                SYNC_POOMMAIL_FROM =>            array ( STREAMER_VAR => "from" ),
+                                SYNC_POOMMAIL_SUBJECT =>            array ( STREAMER_VAR => "subject" ),
+                                SYNC_POOMMAIL_THREADTOPIC =>        array ( STREAMER_VAR => "threadtopic" ),
+                                SYNC_POOMMAIL_DATERECEIVED =>     array ( STREAMER_VAR => "datereceived", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES ),
+                                SYNC_POOMMAIL_DISPLAYTO =>        array ( STREAMER_VAR => "displayto" ),
+                                SYNC_POOMMAIL_IMPORTANCE =>        array ( STREAMER_VAR => "importance" ),
+                                SYNC_POOMMAIL_READ =>            array ( STREAMER_VAR => "read" ),
+                                SYNC_POOMMAIL_ATTACHMENTS =>        array ( STREAMER_VAR => "attachments", STREAMER_TYPE => "SyncAttachment", STREAMER_ARRAY => SYNC_POOMMAIL_ATTACHMENT ),
+                                SYNC_POOMMAIL_BODYTRUNCATED =>     array ( STREAMER_VAR => "bodytruncated" ),
+                                SYNC_POOMMAIL_BODY =>             array ( STREAMER_VAR => "body" ),
+                                SYNC_POOMMAIL_BODYSIZE =>         array ( STREAMER_VAR => "bodysize" ),
+                                SYNC_POOMMAIL_MESSAGECLASS =>    array ( STREAMER_VAR => "messageclass" ),
+                                SYNC_POOMMAIL_MEETINGREQUEST    =>    array ( STREAMER_VAR => "meetingrequest", STREAMER_TYPE => "SyncMeetingRequest" ),
+                                SYNC_POOMMAIL_REPLY_TO =>        array ( STREAMER_VAR => "reply_to" ),
                               );
 
         if(isset($protocolversion) && $protocolversion >= 2.5) {
             $mapping += array(
-                                SYNC_POOMMAIL_INTERNETCPID =>	array ( STREAMER_VAR => "internetcpid" ),
+                                SYNC_POOMMAIL_INTERNETCPID =>    array ( STREAMER_VAR => "internetcpid" ),
                               );
         }
-        
-        parent::Streamer($mapping);              
+
+        parent::Streamer($mapping);
     }
 };
 
@@ -185,10 +185,10 @@ class SyncContact extends Streamer {
     var $rtf;
     var $picture;
     var $nickname;
-    
+
     function SyncContact() {
         global $protocolversion;
-        
+
         $mapping = array (
             SYNC_POOMCONTACTS_ANNIVERSARY => array ( STREAMER_VAR => "anniversary", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES  ),
             SYNC_POOMCONTACTS_ASSISTANTNAME => array ( STREAMER_VAR => "assistantname" ),
@@ -244,7 +244,7 @@ class SyncContact extends Streamer {
             SYNC_POOMCONTACTS_RTF => array ( STREAMER_VAR => "rtf" ),
             SYNC_POOMCONTACTS_PICTURE => array ( STREAMER_VAR => "picture" ),
             SYNC_POOMCONTACTS_CATEGORIES => array ( STREAMER_VAR => "categories", STREAMER_ARRAY => SYNC_POOMCONTACTS_CATEGORY ),
-	);
+    );
 
         if(isset($protocolversion) && $protocolversion >= 2.5) {
             $mapping += array(
@@ -260,7 +260,7 @@ class SyncContact extends Streamer {
                 SYNC_POOMCONTACTS2_MMS => array ( STREAMER_VAR => "mms" ),
             );
         }
-        
+
         parent::Streamer($mapping);
     }
 }
@@ -271,7 +271,7 @@ class SyncAttendee extends Streamer {
                       SYNC_POOMCAL_EMAIL => array (STREAMER_VAR => "email" ),
                       SYNC_POOMCAL_NAME => array (STREAMER_VAR => "name" )
                   );
-                  
+
         parent::Streamer($mapping);
     }
 }
@@ -289,7 +289,7 @@ class SyncAppointment extends Streamer {
                       SYNC_POOMCAL_LOCATION => array (STREAMER_VAR => "location"),
                       SYNC_POOMCAL_ENDTIME => array (STREAMER_VAR => "endtime", STREAMER_TYPE => STREAMER_TYPE_DATE),
                       SYNC_POOMCAL_RECURRENCE => array (STREAMER_VAR => "recurrence", STREAMER_TYPE => "SyncRecurrence"),
-                      SYNC_POOMCAL_SENSITIVITY => array (STREAMER_VAR => "sensitivity"), 
+                      SYNC_POOMCAL_SENSITIVITY => array (STREAMER_VAR => "sensitivity"),
                       SYNC_POOMCAL_BUSYSTATUS => array (STREAMER_VAR => "busystatus" ),
                       SYNC_POOMCAL_ALLDAYEVENT => array (STREAMER_VAR => "alldayevent" ),
                       SYNC_POOMCAL_REMINDER => array (STREAMER_VAR => "reminder"),
@@ -302,9 +302,9 @@ class SyncAppointment extends Streamer {
                       SYNC_POOMCAL_DELETED => array (STREAMER_VAR => "deleted"),
                       SYNC_POOMCAL_EXCEPTIONSTARTTIME => array (STREAMER_VAR => "exceptionstarttime", STREAMER_TYPE => STREAMER_TYPE_DATE),
                       SYNC_POOMCAL_CATEGORIES => array (STREAMER_VAR => "categories", STREAMER_ARRAY => SYNC_POOMCAL_CATEGORY),
-                      
+
         );
-        
+
         parent::Streamer($mapping);
     }
 }
@@ -318,7 +318,7 @@ class SyncRecurrence extends Streamer {
     var $dayofmonth;
     var $weekofmonth;
     var $monthofyear;
-    
+
     function SyncRecurrence() {
         $mapping = array (
                       SYNC_POOMCAL_TYPE => array (STREAMER_VAR => "type"),
@@ -330,7 +330,7 @@ class SyncRecurrence extends Streamer {
                       SYNC_POOMCAL_WEEKOFMONTH => array (STREAMER_VAR => "weekofmonth"),
                       SYNC_POOMCAL_MONTHOFYEAR => array (STREAMER_VAR => "monthofyear")
         );
-        
+
         parent::Streamer($mapping);
     }
 }
@@ -348,11 +348,11 @@ class SyncTaskRecurrence extends Streamer {
                       SYNC_POOMTASKS_WEEKOFMONTH => array (STREAMER_VAR => "weekofmonth"),
                       SYNC_POOMTASKS_MONTHOFYEAR => array (STREAMER_VAR => "monthofyear"),
         );
-        
+
         parent::Streamer($mapping);
     }
 }
-     
+
 class SyncTask extends Streamer {
     var $body;
     var $categories = array();
@@ -371,7 +371,7 @@ class SyncTask extends Streamer {
     var $utcstartdate;
     var $subject;
     var $rtf;
-    
+
     function SyncTask() {
         $mapping = array (
                       SYNC_POOMTASKS_BODY => array (STREAMER_VAR => "body"),
@@ -395,6 +395,6 @@ class SyncTask extends Streamer {
 
         parent::Streamer($mapping);
     }
-}                      
+}
 
 ?>

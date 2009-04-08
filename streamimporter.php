@@ -6,7 +6,7 @@
 *
 * Created   :   01.10.2007
 *
-* © Zarafa Deutschland GmbH, www.zarafaserver.de
+* ï¿½ Zarafa Deutschland GmbH, www.zarafaserver.de
 * This file is distributed under GPL v2.
 * Consult LICENSE file for details
 ************************************************/
@@ -24,11 +24,11 @@ class ImportContentsChangesStream {
         if(strtolower(get_class($message)) != $this->_type)
             return true; // ignore other types
 
-		if ($message->flags === false || $message->flags === SYNC_NEWMESSAGE)           
-        	$this->_encoder->startTag(SYNC_ADD);
+        if ($message->flags === false || $message->flags === SYNC_NEWMESSAGE)           
+            $this->_encoder->startTag(SYNC_ADD);
         else
-        	$this->_encoder->startTag(SYNC_MODIFY);
-        	
+            $this->_encoder->startTag(SYNC_MODIFY);
+            
         $this->_encoder->startTag(SYNC_SERVERENTRYID);
         $this->_encoder->content($id);
         $this->_encoder->endTag();

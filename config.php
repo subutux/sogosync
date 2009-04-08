@@ -19,13 +19,13 @@
     define('BASE_PATH', dirname($_SERVER['SCRIPT_FILENAME']) . "/");
 
     // Define the include paths
-	ini_set('include_path',
-						BASE_PATH. "include/" . PATH_SEPARATOR .
-						BASE_PATH. PATH_SEPARATOR .
-						ini_get('include_path') . PATH_SEPARATOR .
-						"/usr/share/php/" . PATH_SEPARATOR .
-						"/usr/share/php5/" . PATH_SEPARATOR .
-						"/usr/share/pear/");
+    ini_set('include_path',
+                        BASE_PATH. "include/" . PATH_SEPARATOR .
+                        BASE_PATH. PATH_SEPARATOR .
+                        ini_get('include_path') . PATH_SEPARATOR .
+                        "/usr/share/php/" . PATH_SEPARATOR .
+                        "/usr/share/php5/" . PATH_SEPARATOR .
+                        "/usr/share/pear/");
 
     define('STATE_DIR', 'state');
 
@@ -33,36 +33,36 @@
     define('SCRIPT_TIMEOUT', 0);
 
     // The data providers that we are using (see configuration below)
-    $BACKEND_PROVIDER = "BackendICS";
+    $BACKEND_PROVIDER = "BackendIMAP";
 
     // ************************
     //  BackendICS settings
     // ************************
-    
+
     // Defines the server to which we want to connect
     define('MAPI_SERVER', 'file:///var/run/zarafa');
-    
-    
+
+
     // ************************
     //  BackendIMAP settings
     // ************************
-    
+
     // Defines the server to which we want to connect
     // recommended to use local servers only
-    define('IMAP_SERVER', 'localhost');
+    define('IMAP_SERVER', 'imap.gmail.com');
     // connecting to default port (143)
-    define('IMAP_PORT', 143);
+    define('IMAP_PORT', 993);
     // best cross-platform compatibility (see http://php.net/imap_open for options)
-    define('IMAP_OPTIONS', '/notls/norsh');
+    define('IMAP_OPTIONS', '/notls/norsh/ssl/novalidate-cert');
     // overwrite the "from" header if it isn't set when sending emails
-    // options: 'username'	- the username will be set (usefull if your login is equal to your emailaddress)
-    //		'domain'	- the value of the "domain" field is used
-    //		'@mydomain.com' - the username is used and the given string will be appended
+    // options: 'username'    - the username will be set (usefull if your login is equal to your emailaddress)
+    //        'domain'    - the value of the "domain" field is used
+    //        '@mydomain.com' - the username is used and the given string will be appended
     define('IMAP_DEFAULTFROM', '');
-    // copy outgoing mail to this folder. If not set z-push will try the default folders  
+    // copy outgoing mail to this folder. If not set z-push will try the default folders
     define('IMAP_SENTFOLDER', '');
-    
-    
+
+
     // ************************
     //  BackendMaildir settings
     // ************************
@@ -73,5 +73,5 @@
     //  BackendVCDir settings
     // **********************
     define('VCARDDIR_DIR', '/home/%u/.kde/share/apps/kabc/stdvcf');
-    
+
 ?>

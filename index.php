@@ -3,8 +3,8 @@
 * File      :   index.php
 * Project   :   Z-Push
 * Descr     :   This is the entry point
-*				through which all requests
-*				are called.
+*               through which all requests
+*               are called.
 *
 * Created   :   01.10.2007
 *
@@ -39,7 +39,7 @@ if(!isset($_SERVER['PHP_AUTH_PW'])) {
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     header("HTTP/1.0 401 Unauthorized");
     print("Access denied. Please send authorisation information");
-	debugLog("Access denied: no password sent.");
+    debugLog("Access denied: no password sent.");
     return;
 }
 
@@ -125,7 +125,7 @@ switch($_SERVER["REQUEST_METHOD"]) {
         header("MS-Server-ActiveSync: 6.5.7638.1");
         header("MS-ASProtocolVersions: 1.0,2.0,2.1,2.5");
         header("MS-ASProtocolCommands: Sync,SendMail,SmartForward,SmartReply,GetAttachment,GetHierarchy,CreateCollection,DeleteCollection,MoveCollection,FolderSync,FolderCreate,FolderDelete,FolderUpdate,MoveItems,GetItemEstimate,MeetingResponse,ResolveRecipipents,ValidateCert,Provision,Search,Ping");
-		break;
+        break;
     case 'POST':
         header("MS-Server-ActiveSync: 6.5.7638.1");
         debugLog("POST cmd: $cmd");
