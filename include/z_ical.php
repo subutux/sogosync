@@ -156,20 +156,4 @@ class ZPush_ical{
     }
 }
 
-    /*
-     * Converts an YYYYMMDDTHHMMSSZ kind of string into an unixtimestamp
-     *
-     * @param string $data
-     * @return long
-     */
-    function getTimestampFromStreamerDate ($data) {
-        $data = str_replace('Z', '', $data);
-        $data = str_replace('T', '', $data);
-
-        preg_match ('/([0-9]{4})([0-9]{2})([0-9]{2})([0-9]{0,2})([0-9]{0,2})([0-9]{0,2})/', $data, $regs);
-        if ($regs[1] < 1970) {
-            $regs[1] = '1971';
-        }
-        return mktime($regs[4], $regs[5], $regs[6], $regs[2], $regs[3], $regs[1]);
-    }
 ?>
