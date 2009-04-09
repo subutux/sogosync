@@ -33,7 +33,7 @@
     define('SCRIPT_TIMEOUT', 0);
 
     // The data providers that we are using (see configuration below)
-    $BACKEND_PROVIDER = "BackendIMAP";
+    $BACKEND_PROVIDER = "BackendICS";
 
     // ************************
     //  BackendICS settings
@@ -49,11 +49,11 @@
 
     // Defines the server to which we want to connect
     // recommended to use local servers only
-    define('IMAP_SERVER', 'imap.gmail.com');
+    define('IMAP_SERVER', 'localhost');
     // connecting to default port (143)
-    define('IMAP_PORT', 993);
+    define('IMAP_PORT', 143);
     // best cross-platform compatibility (see http://php.net/imap_open for options)
-    define('IMAP_OPTIONS', '/notls/norsh/ssl/novalidate-cert');
+    define('IMAP_OPTIONS', '/notls/norsh');
     // overwrite the "from" header if it isn't set when sending emails
     // options: 'username'    - the username will be set (usefull if your login is equal to your emailaddress)
     //        'domain'    - the value of the "domain" field is used
