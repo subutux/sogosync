@@ -12,7 +12,7 @@
 ************************************************/
 include_once('debug.php');
 
-define('WBXML_DEBUG', true);
+define('WBXML_DEBUG', false);
 
 define('WBXML_SWITCH_PAGE',     0x00);
 define('WBXML_END',             0x01);
