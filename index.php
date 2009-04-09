@@ -37,7 +37,7 @@ $output = fopen("php://output", "w+");
 // The script must always be called with authorisation info
 if(!isset($_SERVER['PHP_AUTH_PW'])) {
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
-    header("HTTP/1.0 401 Unauthorized");
+    header("HTTP/1.1 401 Unauthorized");
     print("Access denied. Please send authorisation information");
     debugLog("Access denied: no password sent.");
     return;
@@ -102,7 +102,7 @@ while($entry = readdir($backend_dir)) {
 $backend = new $BACKEND_PROVIDER();
 
 if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false) {
-    header("HTTP/1.0 401 Unauthorized");
+    header("HTTP/1.1 401 Unauthorized");
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     print("Access denied. Username or password incorrect.");
     debugLog("Access denied: backend logon failed.");
@@ -112,7 +112,7 @@ if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false) {
 // $user is usually the same as the PHP_AUTH_USER. This allows you to sync the 'john' account if you
 // have sufficient privileges as user 'joe'.
 if($backend->Setup($user, $devid, $protocolversion) == false) {
-    header("HTTP/1.0 401 Unauthorized");
+    header("HTTP/1.1 401 Unauthorized");
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     print("Access denied or user '$user' unknown.");
     debugLog("Access denied: backend setup failed.");
