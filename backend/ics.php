@@ -152,7 +152,6 @@ class MAPIMapping {
                             // "cc"
                             // "threadtopic" => PR_CONVERSATION_TOPIC,
                             "internetcpid" => PR_INTERNET_CPID,
-                            "internetcpid" => PR_INTERNET_CPID,
                             );
 
     var $_meetingrequestmapping = array (
