@@ -18,7 +18,7 @@ include_once('diffbackend.php');
 // The is an improved version of mimeDecode from PEAR that correctly
 // handles charsets and charset conversion
 include_once('mimeDecode.php');
-include_once('Mail/RFC822.php');
+require_once('z_RFC822.php');
 
 class BackendIMAP extends BackendDiff {
     /* Called to logon a user. These are the three authentication strings that you must

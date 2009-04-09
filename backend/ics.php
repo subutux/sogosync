@@ -28,7 +28,7 @@ include_once('mapi/class.freebusypublish.php');
 
 // We need this to parse the rfc822 messages that we are passed in SendMail
 include_once('mimeDecode.php');
-require_once('Mail/RFC822.php');
+require_once('z_RFC822.php');
 
 include_once('proto.php');
 include_once('backend.php');
