@@ -121,7 +121,7 @@ class MAPIMapping {
                             "spouse" => PR_SPOUSE_NAME,
                             "suffix" => PR_GENERATION,
                             "title" => PR_DISPLAY_NAME_PREFIX,
-                            "webpage" => PR_BUSINESS_HOME_PAGE,
+                            "webpage" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x802b",
                             "yomicompanyname" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x802e",
                             "yomifirstname" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x802c",
                             "yomilastname" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x802d",
