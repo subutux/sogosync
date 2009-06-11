@@ -74,6 +74,16 @@ function readPropStream($message, $prop)
     return $string;
 }
 
+function getContactPicRestriction() {
+    return array ( RES_PROPERTY,
+                    array (
+                        RELOP => RELOP_EQ,
+                        ULPROPTAG => mapi_prop_tag(PT_BOOLEAN, 0x7FFF),
+                        VALUE => true
+                    )
+    );
+}
+
 class MAPIMapping {
     var $_contactmapping = array (
                             "anniversary" => PR_WEDDING_ANNIVERSARY,
@@ -914,7 +924,52 @@ class ImportContentsChangesICS extends MAPIMapping {
                }
            }
 
-           mapi_setprops($mapimessage, $props);
+        if (isset($contact->picture)) {
+            $picbinary = base64_decode($contact->picture);
+            $picsize = strlen($picbinary);
+            if ($picsize < MAX_EMBEDDED_SIZE) {
+                //set the has picture property to true
+                $haspic = $this->_getPropIDFromString("PT_BOOLEAN:{00062004-0000-0000-C000-000000000046}:0x8015");
+                //check if contact has already got a picture. delete it first in that case
+                $props[$haspic] = true;
+
+                $picprops = mapi_getprops($mapimessage, array($haspic));
+
+                if (isset($picprops[$haspic]) && $picprops[$haspic]) {
+                    debugLog("Contact already has a picture. Delete it");
+
+                    $attachtable = mapi_message_getattachmenttable($mapimessage);
+                    mapi_table_restrict($attachtable, getContactPicRestriction());
+                    $rows = mapi_table_queryallrows($attachtable, array(PR_ATTACH_NUM));
+                    if (isset($rows) && is_array($rows)) {
+                        foreach ($rows as $row) {
+                            mapi_message_deleteattach($mapimessage, $row[PR_ATTACH_NUM]);
+                        }
+                    }
+                }
+
+                $pic = mapi_message_createattach($mapimessage);
+
+                // Set properties of the attachment
+                $picprops = array(
+                    PR_ATTACH_LONG_FILENAME_A => "ContactPicture.jpg",
+                    PR_DISPLAY_NAME => "ContactPicture.jpg",
+                    0x7FFF000B => true,
+                    PR_ATTACHMENT_HIDDEN => false,
+                    PR_ATTACHMENT_FLAGS => 1,
+                    PR_ATTACH_METHOD => ATTACH_BY_VALUE,
+                    PR_ATTACH_EXTENSION_A => ".jpg",
+                    PR_ATTACH_NUM => 1,
+                    PR_ATTACH_SIZE => $picsize,
+                    PR_ATTACH_DATA_BIN => $picbinary,
+                );
+
+                mapi_setprops($pic, $picprops);
+                mapi_savechanges($pic);
+            }
+        }
+
+        mapi_setprops($mapimessage, $props);
     }
 
     function _setTask($mapimessage, $task) {
@@ -1110,9 +1165,28 @@ class PHPContentsImportProxy extends MAPIMapping {
 
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_contactmapping);
 
-    if(!isset($message->lastname) || strlen($message->lastname) == 0) {
-        $message->lastname = $message->fileas;
-    }
+        if(!isset($message->lastname) || strlen($message->lastname) == 0) {
+            $message->lastname = $message->fileas;
+        }
+
+        //check the picture
+        $haspic = $this->_getPropIDFromString("PT_BOOLEAN:{00062004-0000-0000-C000-000000000046}:0x8015");
+        $messageprops = mapi_getprops($mapimessage, array( $haspic ));
+        if (isset($messageprops[$haspic]) && $messageprops[$haspic]) {
+            // Add attachments
+            $attachtable = mapi_message_getattachmenttable($mapimessage);
+            mapi_table_restrict($attachtable, getContactPicRestriction());
+            $rows = mapi_table_queryallrows($attachtable, array(PR_ATTACH_NUM, PR_ATTACH_SIZE));
+
+            foreach($rows as $row) {
+                if(isset($row[PR_ATTACH_NUM])) {
+                    if (isset($row[PR_ATTACH_SIZE]) && $row[PR_ATTACH_SIZE] < MAX_EMBEDDED_SIZE) {
+                        $mapiattach = mapi_message_openattach($mapimessage, $row[PR_ATTACH_NUM]);
+                        $message->picture = base64_encode(mapi_attach_openbin($mapiattach, PR_ATTACH_DATA_BIN));
+                    }
+                }
+            }
+        }
 
         return $message;
     }
