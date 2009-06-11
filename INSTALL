@@ -7,6 +7,8 @@ Requirements
 Z-Push runs on either PHP4 or PHP5 but requires the 'Mail' package from
 PEAR, so you may need to install the php-pear package on your system if it
 has not been preinstalled.
+NOTE: beginning with the version 1.2.2RC z-push includes RFC822.php file, so
+'Mail' package is no longer required.
 
 On some systems, this means you must install the 'php-pear' AND the
 'php-mail' packages, or the packages may even be called something completely
