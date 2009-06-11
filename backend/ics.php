@@ -1490,8 +1490,14 @@ class PHPContentsImportProxy extends MAPIMapping {
 
             if($name == "" || $name == $address)
                 $fulladdr = $address;
-            else
-                $fulladdr = "\"" . w2u($name) ."\" <" . $address . ">";
+            else {
+                if (substr($name, 0, 1) != '"' && substr($name, -1) != '"') {
+                    $fulladdr = "\"" . w2u($name) ."\" <" . $address . ">";
+                }
+                else {
+                    $fulladdr = w2u($name) ."<" . $address . ">";
+                }
+            }
 
             if($row[PR_RECIPIENT_TYPE] == MAPI_TO) {
                 array_push($to, $fulladdr);
