@@ -638,6 +638,22 @@ class BackendDiff {
         return false;
     }
 
+    function getPolicyKey() {
+        return false;
+    }
+
+    function generatePolicyKey(){
+        return false;
+    }
+
+    function setPolicyKey($policykey, $devid) {
+        return false;
+    }
+
+    function setPolicyKey($policykey, $devid) {
+        return false;
+    }
+
 
 
 }
