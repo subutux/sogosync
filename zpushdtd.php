@@ -337,7 +337,18 @@ $zpushdtd = array(
                         0x0a => "Folder",
                         0x0b => "ServerEntryId",
                         0x0c => "FolderType",
-                    ), 0xf => array(
+                    ), 0xe => array (
+                        0x05 => "Provision",
+                        0x06 => "Policies",
+                        0x07 => "Policy",
+                        0x08 => "PolicyType",
+                        0x09 => "PolicyKey",
+                        0x0A => "Data",
+                        0x0B => "Status",
+                        0x0C => "RemoteWipe",
+                        0x0D => "EASProvisionDoc",
+                        ),
+                    0xf => array(
                         0x05 => "Search",
                         0x07 => "Store",
                         0x08 => "Name",
@@ -388,6 +399,7 @@ $zpushdtd = array(
                   0xB => "ValidateCerts",
                   0xC => "POOMCONTACTS2",
                   0xD => "Ping",
+                  0xE => "Provision",//
                   0xF => "Search",//
                   0x10 => "GAL",
               )

@@ -86,6 +86,28 @@ if(isset($requestheaders["MS-ASProtocolVersion"])) {
     $protocolversion = "1.0";
 }
 
+if (isset($requestheaders["X-Ms-Policykey"])) $requestheaders["X-MS-PolicyKey"] = $requestheaders["X-Ms-Policykey"];
+if (isset($requestheaders["X-MS-PolicyKey"])) {
+    global $policykey;
+    $policykey = $requestheaders["X-MS-PolicyKey"];
+
+    debugLog ("X-MS-PolicyKey:$policykey");
+} else {
+    global $policykey;
+    $policykey = 0;
+}
+
+//get user agent
+if (isset($requestheaders["User-Agent"])) {
+    global $useragent;
+    $useragent = $requestheaders["User-Agent"];
+
+    debugLog ("User-Agent:$useragent");
+} else {
+    global $useragent;
+    $useragent = "unknown";
+}
+
 // Load our backend driver
 $backend_dir = opendir(BASE_PATH . "/backend");
 while($entry = readdir($backend_dir)) {
@@ -101,7 +123,7 @@ while($entry = readdir($backend_dir)) {
 // Initialize our backend
 $backend = new $BACKEND_PROVIDER();
 
-if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false) {
+if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false  && !$policykey) {
     header("HTTP/1.1 401 Unauthorized");
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     print("Access denied. Username or password incorrect.");

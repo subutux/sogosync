@@ -349,6 +349,17 @@ define("SYNC_PING_FOLDER", "Ping:Folder");
 define("SYNC_PING_SERVERENTRYID", "Ping:ServerEntryId");
 define("SYNC_PING_FOLDERTYPE", "Ping:FolderType");
 
+//Provision
+define("SYNC_PROVISION_PROVISION", "Provision:Provision");
+define("SYNC_PROVISION_POLICIES", "Provision:Policies");
+define("SYNC_PROVISION_POLICY", "Provision:Policy");
+define("SYNC_PROVISION_POLICYTYPE", "Provision:PolicyType");
+define("SYNC_PROVISION_POLICYKEY", "Provision:PolicyKey");
+define("SYNC_PROVISION_DATA", "Provision:Data");
+define("SYNC_PROVISION_STATUS", "Provision:Status");
+define("SYNC_PROVISION_REMOTEWIPE", "Provision:RemoteWipe");
+define("SYNC_PROVISION_EASPROVISIONDOC", "Provision:EASProvisionDoc");
+
 //Search
 define("SYNC_SEARCH_SEARCH", "Search:Search");
 define("SYNC_SEARCH_STORE", "Search:Store");
@@ -419,4 +430,14 @@ define("SYNC_TRUNCATION_1K", 2);
 define("SYNC_TRUNCATION_5K", 4);
 define("SYNC_TRUNCATION_ALL", 9);
 
+define("SYNC_PROVISION_STATUS_SUCCESS", 1);
+define("SYNC_PROVISION_STATUS_PROTERROR", 2);
+define("SYNC_PROVISION_STATUS_SERVERERROR", 3);
+define("SYNC_PROVISION_STATUS_DEVEXTMANAGED", 4);
+define("SYNC_PROVISION_STATUS_POLKEYMISM", 5);
+
+define("SYNC_PROVISION_RWSTATUS_NA", 0);
+define("SYNC_PROVISION_RWSTATUS_OK", 1);
+define("SYNC_PROVISION_RWSTATUS_PENDING", 2);
+define("SYNC_PROVISION_RWSTATUS_WIPED", 3);
 ?>

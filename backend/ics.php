@@ -69,7 +69,7 @@ function readPropStream($message, $prop)
         if(strlen($data) == 0)
             break;
         $string .= $data;
-    }
+}
 
     return $string;
 }
@@ -793,8 +793,9 @@ class ImportContentsChangesICS extends MAPIMapping {
 
             $recurrence->setRecurrence($tz, $recur);
 
-        } else {
-        $isrecurringtag = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x8223");
+        }
+        else {
+            $isrecurringtag = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x8223");
             mapi_setprops($mapimessage, array($isrecurringtag => false));
         }
 
@@ -871,58 +872,70 @@ class ImportContentsChangesICS extends MAPIMapping {
 
         //addresses' fix
         $homecity = $homecountry = $homepostalcode = $homestate = $homestreet = $homeaddress = "";
-           if (isset($contact->homecity))            $props[PR_HOME_ADDRESS_CITY] = $homecity = u2w($contact->homecity);
-           if (isset($contact->homecountry))        $props[PR_HOME_ADDRESS_COUNTRY] = $homecountry = u2w($contact->homecountry);
-           if (isset($contact->homepostalcode))    $props[PR_HOME_ADDRESS_POSTAL_CODE] = $homepostalcode = u2w($contact->homepostalcode);
-           if (isset($contact->homestate))            $props[PR_HOME_ADDRESS_STATE_OR_PROVINCE] = $homestate = u2w($contact->homestate);
-           if (isset($contact->homestreet))        $props[PR_HOME_ADDRESS_STREET] = $homestreet = u2w($contact->homestreet);
-           $homeaddress = buildAddressString($homestreet, $homepostalcode, $homecity, $homestate, $homecountry);
-           if ($homeaddress) $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801A")] = $homeaddress;
+        if (isset($contact->homecity))
+            $props[PR_HOME_ADDRESS_CITY] = $homecity = u2w($contact->homecity);
+        if (isset($contact->homecountry))
+            $props[PR_HOME_ADDRESS_COUNTRY] = $homecountry = u2w($contact->homecountry);
+        if (isset($contact->homepostalcode))
+            $props[PR_HOME_ADDRESS_POSTAL_CODE] = $homepostalcode = u2w($contact->homepostalcode);
+        if (isset($contact->homestate))
+            $props[PR_HOME_ADDRESS_STATE_OR_PROVINCE] = $homestate = u2w($contact->homestate);
+        if (isset($contact->homestreet))
+            $props[PR_HOME_ADDRESS_STREET] = $homestreet = u2w($contact->homestreet);
+        $homeaddress = buildAddressString($homestreet, $homepostalcode, $homecity, $homestate, $homecountry);
+        if ($homeaddress)
+            $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801A")] = $homeaddress;
 
         $businesscity = $businesscountry = $businesspostalcode = $businessstate = $businessstreet = $businessaddress = "";
-           if (isset($contact->businesscity))
-               $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8046")] = $businesscity = u2w($contact->businesscity);
-           if (isset($contact->businesscountry))
-               $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8049")] = $businesscountry = u2w($contact->businesscountry);
-           if (isset($contact->businesspostalcode))
-               $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8048")] = $businesspostalcode = u2w($contact->businesspostalcode);
-           if (isset($contact->businessstate))
-               $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8047")] = $businessstate = u2w($contact->businessstate);
-           if (isset($contact->businessstreet))
-               $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8045")] = $businessstreet = u2w($contact->businessstreet);
-           $businessaddress = buildAddressString($businessstreet, $businesspostalcode, $businesscity, $businessstate, $businesscountry);
-           if ($businessaddress) $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801B")] = $businessaddress;
+        if (isset($contact->businesscity))
+            $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8046")] = $businesscity = u2w($contact->businesscity);
+        if (isset($contact->businesscountry))
+            $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8049")] = $businesscountry = u2w($contact->businesscountry);
+        if (isset($contact->businesspostalcode))
+            $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8048")] = $businesspostalcode = u2w($contact->businesspostalcode);
+        if (isset($contact->businessstate))
+            $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8047")] = $businessstate = u2w($contact->businessstate);
+        if (isset($contact->businessstreet))
+            $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8045")] = $businessstreet = u2w($contact->businessstreet);
+        $businessaddress = buildAddressString($businessstreet, $businesspostalcode, $businesscity, $businessstate, $businesscountry);
+        if ($businessaddress) $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801B")] = $businessaddress;
 
         $othercity = $othercountry = $otherpostalcode = $otherstate = $otherstreet = $otheraddress = "";
-           if (isset($contact->othercity))            $props[PR_OTHER_ADDRESS_CITY] = $othercity = u2w($contact->othercity);
-           if (isset($contact->othercountry))        $props[PR_OTHER_ADDRESS_COUNTRY] = $othercountry = u2w($contact->othercountry);
-           if (isset($contact->otherpostalcode))    $props[PR_OTHER_ADDRESS_POSTAL_CODE] = $otherpostalcode = u2w($contact->otherpostalcode);
-           if (isset($contact->otherstate))        $props[PR_OTHER_ADDRESS_STATE_OR_PROVINCE] = $otherstate = u2w($contact->otherstate);
-           if (isset($contact->otherstreet))        $props[PR_OTHER_ADDRESS_STREET] = $otherstreet = u2w($contact->otherstreet);
-           $otheraddress = buildAddressString($otherstreet, $otherpostalcode, $othercity, $otherstate, $othercountry);
-           if ($otheraddress) $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801C")] = $otheraddress;
+        if (isset($contact->othercity))
+            $props[PR_OTHER_ADDRESS_CITY] = $othercity = u2w($contact->othercity);
+        if (isset($contact->othercountry))
+            $props[PR_OTHER_ADDRESS_COUNTRY] = $othercountry = u2w($contact->othercountry);
+        if (isset($contact->otherpostalcode))
+            $props[PR_OTHER_ADDRESS_POSTAL_CODE] = $otherpostalcode = u2w($contact->otherpostalcode);
+        if (isset($contact->otherstate))
+            $props[PR_OTHER_ADDRESS_STATE_OR_PROVINCE] = $otherstate = u2w($contact->otherstate);
+        if (isset($contact->otherstreet))
+            $props[PR_OTHER_ADDRESS_STREET] = $otherstreet = u2w($contact->otherstreet);
+        $otheraddress = buildAddressString($otherstreet, $otherpostalcode, $othercity, $otherstate, $othercountry);
+        if ($otheraddress)
+            $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x801C")] = $otheraddress;
 
            $mailingadresstype = 0;
 
-           if ($businessaddress) $mailingadresstype = 2;
-           elseif ($homeaddress) $mailingadresstype = 1;
-           elseif ($othercity) $mailingadresstype = 3;
+        if ($businessaddress) $mailingadresstype = 2;
+        elseif ($homeaddress) $mailingadresstype = 1;
+        elseif ($othercity) $mailingadresstype = 3;
 
-           if ($mailingadresstype) {
-               $props[$this->_getPropIDFromString("PT_LONG:{00062004-0000-0000-C000-000000000046}:0x8022")] = $mailingadresstype;
+        if ($mailingadresstype) {
+            $props[$this->_getPropIDFromString("PT_LONG:{00062004-0000-0000-C000-000000000046}:0x8022")] = $mailingadresstype;
 
-               switch ($mailingadresstype) {
-                   case 1:
-                       $this->_setMailingAdress($homestreet, $homepostalcode, $homecity, $homestate, $homecountry, $homeaddress, $props);
-                       break;
-                   case 2:
-                       $this->_setMailingAdress($businessstreet, $businesspostalcode, $businesscity, $businessstate, $businesscountry, $businessaddress, $props);
-                       break;
-                   case 3:
-                       $this->_setMailingAdress($otherstreet, $otherpostalcode, $othercity, $otherstate, $othercountry, $otheraddress, $props);
-                       break;
-               }
-           }
+            switch ($mailingadresstype) {
+                case 1:
+                    $this->_setMailingAdress($homestreet, $homepostalcode, $homecity, $homestate, $homecountry, $homeaddress, $props);
+                    break;
+                case 2:
+                    $this->_setMailingAdress($businessstreet, $businesspostalcode, $businesscity, $businessstate, $businesscountry, $businessaddress, $props);
+                    break;
+                case 3:
+                    $this->_setMailingAdress($otherstreet, $otherpostalcode, $othercity, $otherstate, $othercountry, $otheraddress, $props);
+                    break;
+                }
+            }
 
         if (isset($contact->picture)) {
             $picbinary = base64_decode($contact->picture);
@@ -1028,7 +1041,7 @@ class ImportHierarchyChangesICS  {
     }
 
     function Config($state, $flags = 0) {
-           // Put the state information in a stream that can be used by ICS
+        // Put the state information in a stream that can be used by ICS
 
         $stream = mapi_stream_create();
         if(strlen($state) == 0) {
@@ -1220,8 +1233,8 @@ class PHPContentsImportProxy extends MAPIMapping {
             $message->reminder = "";
         else {
             if ($messageprops[$remindertime] == 0x5AE980E1)
-                  $message->reminder = 15;
-              else
+                $message->reminder = 15;
+            else
                 $message->reminder = $messageprops[$remindertime];
         }
 
@@ -1300,7 +1313,7 @@ class PHPContentsImportProxy extends MAPIMapping {
 
             // Correct 'alldayevent' because outlook fails to set it on recurring items of 24 hours or longer
             if($recurrence->recur["endocc"] - $recurrence->recur["startocc"] >= 1440)
-            $message->alldayevent = true;
+                $message->alldayevent = true;
 
             // Interval is different according to the type/subtype
             switch($recurrence->recur["type"]) {
@@ -1449,7 +1462,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             $fromaddr = $this->_getSMTPAddressFromEntryID($messageprops[PR_SENT_REPRESENTING_ENTRYID]);
 
         if($fromname == $fromaddr)
-              $fromname = "";
+            $fromname = "";
 
         if($fromname)
             $from = "\"" . w2u($fromname) . "\" <" . $fromaddr . ">";
@@ -1501,16 +1514,15 @@ class PHPContentsImportProxy extends MAPIMapping {
             //the property saves reminder in minutes, but we need it in secs
             else {
                 ///set the default reminder time to seconds
-                  if ($messageprops[$remindertime] == 0x5AE980E1)
-                      $message->meetingrequest->reminder = 900;
-                  else
+                if ($messageprops[$remindertime] == 0x5AE980E1)
+                    $message->meetingrequest->reminder = 900;
+                else
                     $message->meetingrequest->reminder = $messageprops[$remindertime] * 60;
             }
 
             // Set sensitivity to 0 if missing
             if(!isset($message->meetingrequest->sensitivity))
                 $message->meetingrequest->sensitivity = 0;
-
         }
 
 
@@ -1992,10 +2004,7 @@ class ExportChangesICS  {
 
         return $restriction;
     }
-
-
-
-};
+}
 
 class BackendICS {
     var $_session;
@@ -2051,7 +2060,181 @@ class BackendICS {
                 $pub->publishFB(time() - (7 * 24 * 60 * 60), 6 * 30 * 24 * 60 * 60); // publish from one week ago, 6 months ahead
             }
         }
+        global $cmd;
+        //do not update last sync time on ping and provision
+        if ($cmd != 'Ping' && $cmd != 'Provision' ) $this->setLastSyncTime();
+
         return true;
+    }
+
+    function generatePolicyKey() {
+        return mt_rand(1000000000, 9999999999);
+    }
+
+    function setPolicyKey($policykey, $devid) {
+        global $devtype, $useragent;
+        if ($this->_defaultstore !== false) {
+            //get devices properties
+            $devicesprops = mapi_getprops($this->_defaultstore, array(0x6880101E, 0x6881101E, 0x6882101E, 0x6883101E, 0x68841003, 0x6885101E, 0x6886101E, 0x6887101E, 0x68881040, 0x68891040));
+
+            if (!$policykey) {
+                $policykey = $this->generatePolicyKey();
+            }
+
+            //check if devid is known
+            if (isset($devicesprops[0x6881101E]) && is_array($devicesprops[0x6881101E])) {
+                $ak = array_search($devid, $devicesprops[0x6881101E]);
+                if ($ak !== false) {
+                    //update policykey
+                    $devicesprops[0x6880101E][$ak] = $policykey;
+                }
+                else {
+                    //Unknown device. Store its information.
+                    $devicesprops[0x6880101E][] = $policykey;
+                    $devicesprops[0x6881101E][] = $devid;
+                    $devicesprops[0x6882101E][] = ($devtype) ? $devtype : "unknown";
+                    $devicesprops[0x6883101E][] = $useragent;
+                    $devicesprops[0x68841003][] = SYNC_PROVISION_RWSTATUS_OK;
+                    $devicesprops[0x6885101E][] = "undefined"; //wipe requested (date)
+                    $devicesprops[0x6886101E][] = "undefined"; //wipe requested by
+                    $devicesprops[0x6887101E][] = "undefined"; //wipe executed
+                    $devicesprops[0x68881040][] = time(); //first sync
+                    $devicesprops[0x68891040][] = 0; //last sync
+                }
+            }
+            else {
+                //First device. Store its information.
+                $devicesprops[0x6880101E][] = $policykey;
+                $devicesprops[0x6881101E][] = $devid;
+                $devicesprops[0x6882101E][] = ($devtype) ? $devtype : "unknown";
+                $devicesprops[0x6883101E][] = $useragent;
+                $devicesprops[0x68841003][] = SYNC_PROVISION_RWSTATUS_OK;
+                $devicesprops[0x6885101E][] = "undefined"; //wipe requested (date)
+                $devicesprops[0x6886101E][] = "undefined"; //wipe requested by
+                $devicesprops[0x6887101E][] = "undefined"; //wipe executed
+                $devicesprops[0x68881040][] = time(); //first sync
+                $devicesprops[0x68891040][] = 0; //last sync
+            }
+            mapi_setprops($this->_defaultstore, $devicesprops);
+
+            return $policykey;
+        }
+        else
+            debugLog("ERROR: user store not available for policykey update");
+
+        return false;
+    }
+
+
+    function getPolicyKey ($user, $pass, $devid) {
+        //user is logged in or can login, get the policy key and device id
+        if ($this->_defaultstore !== false || $this->Logon($user, "", $pass)) {
+            $devicesprops = mapi_getprops($this->_defaultstore, array(0x6880101E, 0x6881101E));
+            if (isset($devicesprops[0x6881101E]) && is_array($devicesprops[0x6881101E])) {
+                $ak = array_search($devid, $devicesprops[0x6881101E]);
+                if ($ak !== false) {
+                    //return policykey
+                    return $devicesprops[0x6880101E][$ak];
+                }
+                else {
+                    //new device is. generate new policy for it.
+                    return $this->setPolicyKey(0, $devid);
+                }
+
+            }
+            //user's first device, generate a new key
+            //and set firstsync, deviceid, devicetype and useragent
+            else {
+                return $this->setPolicyKey(0, $devid);
+            }
+        }
+        //get policy key without logging in somehow
+        else {
+            return false;
+        }
+        return false;
+    }
+
+    function getDeviceRWStatus($user, $pass, $devid) {
+
+        if($this->_session === false) {
+            debugLog("logon failed for user $user");
+            return false;
+        }
+
+        // Get/open default store - we have to do this because otherwise it returns old values :(
+        $defaultstore = $this->_openDefaultMessageStore($this->_session);
+
+        //user is logged in or can login, get the remote wipe status
+        if ($defaultstore !== false || $this->Logon($user, "", $pass)) {
+            $devicesprops = mapi_getprops($defaultstore, array(0x68841003, 0x6881101E));
+            if (isset($devicesprops[0x6881101E]) && is_array($devicesprops[0x6881101E])) {
+                $ak = array_search($devid, $devicesprops[0x6881101E]);
+                if ($ak !== false) {
+                    //return remote wipe status
+                    return $devicesprops[0x68841003][$ak];
+                }
+            }
+            return SYNC_PROVISION_RWSTATUS_NA;
+        }
+        //get policy key without logging in somehow
+        else {
+            return false;
+        }
+        return false;
+    }
+
+
+    function setDeviceRWStatus($user, $pass, $devid, $status) {
+
+        if($this->_session === false) {
+            debugLog("Set rw status: logon failed for user $user");
+            return false;
+        }
+
+        // Get/open default store - we have to do this because otherwise it returns old values :(
+        $defaultstore = $this->_openDefaultMessageStore($this->_session);
+
+        //user is logged in or can login, get the remote wipe status
+        if ($defaultstore !== false || $this->Logon($user, "", $pass)) {
+            $devicesprops = mapi_getprops($defaultstore, array(0x68841003, 0x6881101E));
+            if (isset($devicesprops[0x6881101E]) && is_array($devicesprops[0x6881101E])) {
+                $ak = array_search($devid, $devicesprops[0x6881101E]);
+                if ($ak !== false) {
+                    //set new status remote wipe status
+                    $devicesprops[0x68841003][$ak] = $status;
+                    mapi_setprops($defaultstore, array(0x68841003=>$devicesprops[0x68841003]));
+                    return true;
+                }
+            }
+            return true;
+        }
+        //get policy key without logging in somehow
+        else {
+            return false;
+        }
+        return false;
+    }
+
+    function setLastSyncTime () {
+        if ($this->_defaultstore !== false) {
+            $devicesprops = mapi_getprops($this->_defaultstore,
+            array(0x6881101E, 0x68891040));
+            if (isset($devicesprops[0x6881101E]) && is_array($devicesprops[0x6881101E])) {
+                $ak = array_search($this->_devid, $devicesprops[0x6881101E]);
+                if ($ak !== false) {
+                    //set new sync time
+                    $devicesprops[0x68891040][$ak] = time();
+                    mapi_setprops($this->_defaultstore, array(0x68891040=>$devicesprops[0x68891040]));
+                }
+                else {
+                    debugLog("No device found with id:{$this->_devid}");
+                }
+            }
+            else {
+                debugLog("No devices found");
+            }
+        }
     }
 
     function getSearchResults($searchquery){
@@ -2459,7 +2642,7 @@ class BackendICS {
         switch($response) {
             case 1:     // accept
             default:
-                   $entryid = $meetingrequest->doAccept(false, false, $meetingrequest->isInCalendar());
+                $entryid = $meetingrequest->doAccept(false, false, $meetingrequest->isInCalendar());
                 break;
             case 2:        // tentative
                 $meetingrequest->doAccept(true, false, $meetingrequest->isInCalendar());

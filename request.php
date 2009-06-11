@@ -821,6 +821,7 @@ function HandleGetAttachment($backend, $protocolversion) {
 
 function HandlePing($backend, $devid) {
     global $zpushdtd, $input, $output;
+    global $user, $auth_pw;
     $timeout = 5;
 
     debugLog("Ping received");
@@ -888,6 +889,14 @@ function HandlePing($backend, $devid) {
     debugLog("Waiting for changes... (lifetime $lifetime)");
     // Wait for something to happen
     for($n=0;$n<$lifetime / $timeout; $n++ ) {
+        //check the remote wipe status
+        $rwstatus = $backend->getDeviceRWStatus($user, $auth_pw, $devid);
+        if ($rwstatus == SYNC_PROVISION_RWSTATUS_PENDING || $rwstatus == SYNC_PROVISION_RWSTATUS_WIPED) {
+            //return 7 because it forces folder sync
+            $pingstatus = 7;
+            break;
+        }
+
         if(count($collections) == 0) {
             $error = 1;
             break;
@@ -939,6 +948,8 @@ function HandlePing($backend, $devid) {
         $encoder->startTag(SYNC_PING_STATUS);
         if(isset($error))
             $encoder->content(3);
+        elseif (isset($pingstatus))
+            $encoder->content($pingstatus);
         else
             $encoder->content(count($changes) > 0 ? 2 : 1);
         $encoder->endTag();
@@ -1216,6 +1227,154 @@ function HandleFolderUpdate($backend, $protocolversion) {
     return HandleFolderCreate($backend, $protocolversion);
 }
 
+function HandlePolicy($backend, $devid, $protocolversion) {
+    global $user, $auth_pw, $policykey;
+
+    $status = SYNC_PROVISION_STATUS_SUCCESS;
+
+    $user_policykey = $backend->getPolicyKey($user, $auth_pw, $devid);
+
+    if ($user_policykey != $policykey) {
+        $status = SYNC_PROVISION_STATUS_POLKEYMISM;
+    }
+
+    if (!$policykey) $policykey = $user_policykey;
+    return $status;
+}
+
+function HandleProvision($backend, $devid, $protocolversion) {
+    global $user, $auth_pw, $policykey;
+
+    global $zpushdtd, $policies;
+    global $output, $input;
+
+    $status = SYNC_PROVISION_STATUS_SUCCESS;
+
+    $phase2 = true;
+
+    $decoder = new WBXMLDecoder($input, $zpushdtd);
+    $encoder = new WBXMLEncoder($output, $zpushdtd);
+
+    if(!$decoder->getElementStartTag(SYNC_PROVISION_PROVISION))
+        return false;
+
+    if(!$decoder->getElementStartTag(SYNC_PROVISION_POLICIES))
+        return false;
+
+    if(!$decoder->getElementStartTag(SYNC_PROVISION_POLICY))
+        return false;
+
+    if(!$decoder->getElementStartTag(SYNC_PROVISION_POLICYTYPE))
+        return false;
+
+    $policytype = $decoder->getElementContent();
+    if ($policytype != 'MS-WAP-Provisioning-XML') {
+        $status = SYNC_PROVISION_STATUS_SERVERERROR;
+    }
+    if(!$decoder->getElementEndTag())
+        return false;
+
+    if ($decoder->getElementStartTag(SYNC_PROVISION_POLICYKEY)) {
+        $devpolicykey = $decoder->getElementContent();
+
+        if(!$decoder->getElementEndTag())
+            return false;
+
+        if(!$decoder->getElementStartTag(SYNC_PROVISION_STATUS))
+            return false;
+
+        $status = $decoder->getElementContent();
+        //do status handling
+        $status = SYNC_PROVISION_STATUS_SUCCESS;
+
+        if(!$decoder->getElementEndTag())
+            return false;
+
+        $phase2 = false;
+    }
+
+    if(!$decoder->getElementEndTag())
+        return false;
+
+    if(!$decoder->getElementEndTag())
+        return false;
+
+    if ($decoder->getElementStartTag(SYNC_PROVISION_REMOTEWIPE)) {
+        if(!$decoder->getElementStartTag(SYNC_PROVISION_STATUS))
+            return false;
+
+        $status = $decoder->getElementContent();
+
+        if(!$decoder->getElementEndTag())
+            return false;
+
+        if(!$decoder->getElementEndTag())
+            return false;
+    }
+
+    if(!$decoder->getElementEndTag())
+        return false;
+
+    $encoder->StartWBXML();
+
+    //set the new final policy key in the backend
+    if (!$phase2) {
+        $policykey = $backend->generatePolicyKey();
+        $backend->setPolicyKey($policykey, $devid);
+    }
+
+    $encoder->startTag(SYNC_PROVISION_PROVISION);
+    {
+        $encoder->startTag(SYNC_PROVISION_STATUS);
+            $encoder->content($status);
+        $encoder->endTag();
+
+        $encoder->startTag(SYNC_PROVISION_POLICIES);
+            $encoder->startTag(SYNC_PROVISION_POLICY);
+
+            $encoder->startTag(SYNC_PROVISION_POLICYTYPE);
+                   $encoder->content($policytype);
+            $encoder->endTag();
+
+            $encoder->startTag(SYNC_PROVISION_STATUS);
+                $encoder->content($status);
+            $encoder->endTag();
+
+            $encoder->startTag(SYNC_PROVISION_POLICYKEY);
+                   $encoder->content($policykey);
+            $encoder->endTag();
+
+            if ($phase2) {
+                $encoder->startTag(SYNC_PROVISION_DATA);
+                if ($policytype == 'MS-WAP-Provisioning-XML') {
+                    $encoder->content('<wap-provisioningdoc><characteristic type="SecurityPolicy"><parm name="4131" value="1"/><parm name="4133" value="1"/></characteristic></wap-provisioningdoc>');
+                }
+                else {
+                    debugLog("Wrong policy type");
+                    return false;
+                }
+
+                $encoder->endTag();//data
+            }
+            $encoder->endTag();//policy
+        $encoder->endTag(); //policies
+    }
+    $rwstatus = $backend->getDeviceRWStatus($user, $auth_pw, $devid);
+
+
+    //wipe data if status is pending or wiped
+    if ($rwstatus == SYNC_PROVISION_RWSTATUS_PENDING || $rwstatus == SYNC_PROVISION_RWSTATUS_WIPED) {
+        $encoder->startTag(SYNC_PROVISION_REMOTEWIPE, false, true);
+        $backend->setDeviceRWStatus($user, $auth_pw, $devid, SYNC_PROVISION_RWSTATUS_WIPED);
+        //$rwstatus = SYNC_PROVISION_RWSTATUS_WIPED;
+    }
+
+    $encoder->endTag();//provision
+
+    return true;
+}
+
+
 function HandleSearch($backend, $devid, $protocolversion) {
     global $zpushdtd;
     global $input, $output;
@@ -1327,6 +1486,19 @@ function HandleSearch($backend, $devid, $protocolversion) {
 }
 
 function HandleRequest($backend, $cmd, $devid, $protocolversion) {
+
+    $status = HandlePolicy($backend, $devid, $protocolversion);
+    if ($cmd != 'Ping' && $cmd != 'Provision' ) {
+        if ($status != SYNC_PROVISION_STATUS_SUCCESS) {
+            header("HTTP/1.1 449 Retry after sending a PROVISION command");
+            header("MS-Server-ActiveSync: 6.5.7638.1");
+            header("MS-ASProtocolVersions: 1.0,2.0,2.1,2.5");
+            header("MS-ASProtocolCommands: Sync,SendMail,SmartForward,SmartReply,GetAttachment,GetHierarchy,CreateCollection,DeleteCollection,MoveCollection,FolderSync,FolderCreate,FolderDelete,FolderUpdate,MoveItems,GetItemEstimate,MeetingResponse,Provision,ResolveRecipipents,ValidateCert,Search,Ping");
+            header("Cache-Control: private");
+            return 1;
+        }
+    }
+
     switch($cmd) {
         case 'Sync':
             $status = HandleSync($backend, $protocolversion, $devid);
@@ -1381,6 +1553,9 @@ function HandleRequest($backend, $cmd, $devid, $protocolversion) {
             break;
         case 'Ping': // Used for http-based notifications (pushmail)
             $status = HandlePing($backend, $devid, $protocolversion);
+            break;
+        case 'Provision':
+            $status = HandleProvision($backend, $devid, $protocolversion);
             break;
         case 'Search':
             $status = HandleSearch($backend, $devid, $protocolversion);
