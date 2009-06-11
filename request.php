@@ -1216,6 +1216,116 @@ function HandleFolderUpdate($backend, $protocolversion) {
     return HandleFolderCreate($backend, $protocolversion);
 }
 
+function HandleSearch($backend, $devid, $protocolversion) {
+    global $zpushdtd;
+    global $input, $output;
+
+    $decoder = new WBXMLDecoder($input, $zpushdtd);
+    $encoder = new WBXMLEncoder($output, $zpushdtd);
+
+    if(!$decoder->getElementStartTag(SYNC_SEARCH_SEARCH))
+        return false;
+
+    if(!$decoder->getElementStartTag(SYNC_SEARCH_STORE))
+        return false;
+
+    if(!$decoder->getElementStartTag(SYNC_SEARCH_NAME))
+        return false;
+    $searchname = $decoder->getElementContent();
+    if(!$decoder->getElementEndTag())
+        return false;
+
+    if(!$decoder->getElementStartTag(SYNC_SEARCH_QUERY))
+        return false;
+    $searchquery = $decoder->getElementContent();
+    if(!$decoder->getElementEndTag())
+        return false;
+
+    if($decoder->getElementStartTag(SYNC_SEARCH_OPTIONS)) {
+        while(1) {
+            if($decoder->getElementStartTag(SYNC_SEARCH_RANGE)) {
+                $searchrange = $decoder->getElementContent();
+                if(!$decoder->getElementEndTag())
+                    return false;
+                }
+                $e = $decoder->peek();
+                if($e[EN_TYPE] == EN_TYPE_ENDTAG) {
+                    $decoder->getElementEndTag();
+                    break;
+                }
+            }
+        //if(!$decoder->getElementEndTag())
+            //return false;
+    }
+    if(!$decoder->getElementEndTag()) //store
+        return false;
+
+    if(!$decoder->getElementEndTag()) //search
+        return false;
+
+
+    if (strtoupper($searchname) != "GAL") {
+        debugLog("Searchtype $searchname is not supported");
+        return false;
+    }
+    //get search results from backend
+    $rows = $backend->getSearchResults($searchquery);
+
+    $encoder->startWBXML();
+
+    $encoder->startTag(SYNC_SEARCH_SEARCH);
+
+        $encoder->startTag(SYNC_SEARCH_STATUS);
+        $encoder->content(1);
+        $encoder->endTag();
+
+        $encoder->startTag(SYNC_SEARCH_RESPONSE);
+            $encoder->startTag(SYNC_SEARCH_STORE);
+
+                $encoder->startTag(SYNC_SEARCH_STATUS);
+                $encoder->content(1);
+                $encoder->endTag();
+
+                if (is_array($rows) && !empty($rows)) {
+                    $searchtotal = count($rows);
+                    $searchrange = '0';
+                    if ($searchtotal) $searchrange .= "-".($searchtotal - 1);
+                    foreach ($rows as $u) {
+                        $encoder->startTag(SYNC_SEARCH_RESULT);
+                            $encoder->startTag(SYNC_SEARCH_PROPERTIES);
+
+                                $encoder->startTag(SYNC_GAL_DISPLAYNAME);
+                                $encoder->content($u["fullname"]);
+                                $encoder->endTag();
+
+                                $encoder->startTag(SYNC_GAL_ALIAS);
+                                $encoder->content($u["username"]);
+                                $encoder->endTag();
+
+                                $encoder->startTag(SYNC_GAL_EMAILADDRESS);
+                                $encoder->content($u["emailaddress"]);
+                                $encoder->endTag();
+
+                            $encoder->endTag();//result
+                        $encoder->endTag();//properties
+                    }
+                    $encoder->startTag(SYNC_SEARCH_RANGE);
+                    $encoder->content($searchrange);
+                    $encoder->endTag();
+
+                    $encoder->startTag(SYNC_SEARCH_TOTAL);
+                    $encoder->content($searchtotal);
+                    $encoder->endTag();
+                }
+
+            $encoder->endTag();//store
+        $encoder->endTag();//response
+    $encoder->endTag();//search
+
+
+    return true;
+}
+
 function HandleRequest($backend, $cmd, $devid, $protocolversion) {
     switch($cmd) {
         case 'Sync':
@@ -1272,6 +1382,10 @@ function HandleRequest($backend, $cmd, $devid, $protocolversion) {
         case 'Ping': // Used for http-based notifications (pushmail)
             $status = HandlePing($backend, $devid, $protocolversion);
             break;
+        case 'Search':
+            $status = HandleSearch($backend, $devid, $protocolversion);
+            break;
+
         default:
             debugLog("unknown command - not implemented");
             $status = false;

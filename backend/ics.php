@@ -1980,6 +1980,32 @@ class BackendICS {
         return true;
     }
 
+    function getSearchResults($searchquery){
+        // only return users from who the displayName or the username starts with $name
+        //TODO: use PR_ANR for this restriction instead of PR_DISPLAY_NAME and PR_ACCOUNT
+        $addrbook = mapi_openaddressbook($this->_session);
+        $ab_entryid = mapi_ab_getdefaultdir($addrbook);
+        $ab_dir = mapi_ab_openentry($addrbook, $ab_entryid);
+
+        $table = mapi_folder_getcontentstable($ab_dir);
+        $restriction = $this->_getSearchRestriction(u2w($searchquery));
+
+        mapi_table_restrict($table, $restriction);
+        mapi_table_sort($table, array(PR_DISPLAY_NAME => TABLE_SORT_ASCEND));
+        $items = array();
+        for ($i = 0; $i < mapi_table_getrowcount($table); $i++) {
+            $user_data = mapi_table_queryrows($table, array(PR_ACCOUNT, PR_DISPLAY_NAME, PR_SMTP_ADDRESS), $i, 1);
+            $item = array();
+            $item["username"] = w2u($user_data[0][PR_ACCOUNT]);
+            $item["fullname"] = w2u($user_data[0][PR_DISPLAY_NAME]);
+            $item["emailaddress"] = w2u($user_data[0][PR_SMTP_ADDRESS]);
+            $item["nameid"] = $searchquery;
+            array_push($items, $item);
+        }
+        return $items;
+    }
+
+
     function GetHierarchyImporter() {
         return new ImportHierarchyChangesICS($this->_defaultstore);
     }
@@ -2491,6 +2517,23 @@ class BackendICS {
         $mapiprops[$props[6]] = olMeetingReceived; // The recipient is receiving the request
         $mapiprops[$props[7]] = olResponseNotResponded;
         $mapiprops[$props[8]] = true;
+    }
+
+    function _getSearchRestriction($query) {
+        return array(RES_AND,
+                    array(
+                        array(RES_OR,
+                            array(
+                                array(RES_CONTENT, array(FUZZYLEVEL => FL_SUBSTRING | FL_IGNORECASE, ULPROPTAG => PR_DISPLAY_NAME, VALUE => $query)),
+                                array(RES_CONTENT, array(FUZZYLEVEL => FL_SUBSTRING | FL_IGNORECASE, ULPROPTAG => PR_ACCOUNT, VALUE => $query)),
+                            ), // RES_OR
+                        ),
+                        array(
+                            RES_PROPERTY,
+                            array(RELOP => RELOP_EQ, ULPROPTAG => PR_OBJECT_TYPE, VALUE => MAPI_MAILUSER)
+                        )
+                    ) // RES_AND
+        );
     }
 }
 

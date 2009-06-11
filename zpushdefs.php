@@ -349,6 +349,44 @@ define("SYNC_PING_FOLDER", "Ping:Folder");
 define("SYNC_PING_SERVERENTRYID", "Ping:ServerEntryId");
 define("SYNC_PING_FOLDERTYPE", "Ping:FolderType");
 
+//Search
+define("SYNC_SEARCH_SEARCH", "Search:Search");
+define("SYNC_SEARCH_STORE", "Search:Store");
+define("SYNC_SEARCH_NAME", "Search:Name");
+define("SYNC_SEARCH_QUERY", "Search:Query");
+define("SYNC_SEARCH_OPTIONS", "Search:Options");
+define("SYNC_SEARCH_RANGE", "Search:Range");
+define("SYNC_SEARCH_STATUS", "Search:Status");
+define("SYNC_SEARCH_RESPONSE", "Search:Response");
+define("SYNC_SEARCH_RESULT", "Search:Result");
+define("SYNC_SEARCH_PROPERTIES", "Search:Properties");
+define("SYNC_SEARCH_TOTAL", "Search:Total");
+define("SYNC_SEARCH_EQUALTO", "Search:EqualTo");
+define("SYNC_SEARCH_VALUE", "Search:Value");
+define("SYNC_SEARCH_AND", "Search:And");
+define("SYNC_SEARCH_OR", "Search:Or");
+define("SYNC_SEARCH_FREETEXT", "Search:FreeText");
+define("SYNC_SEARCH_DEEPTRAVERSAL", "Search:DeepTraversal");
+define("SYNC_SEARCH_LONGID", "Search:LongId");
+define("SYNC_SEARCH_REBUILDRESULTS", "Search:RebuildResults");
+define("SYNC_SEARCH_LESSTHAN", "Search:LessThan");
+define("SYNC_SEARCH_GREATERTHAN", "Search:GreaterThan");
+define("SYNC_SEARCH_SCHEMA", "Search:Schema");
+define("SYNC_SEARCH_SUPPORTED", "Search:Supported");
+
+//GAL
+define("SYNC_GAL_DISPLAYNAME", "GAL:DisplayName");
+define("SYNC_GAL_PHONE", "GAL:Phone");
+define("SYNC_GAL_OFFICE", "GAL:Office");
+define("SYNC_GAL_TITLE", "GAL:Title");
+define("SYNC_GAL_COMPANY", "GAL:Company");
+define("SYNC_GAL_ALIAS", "GAL:Alias");
+define("SYNC_GAL_FIRSTNAME", "GAL:FirstName");
+define("SYNC_GAL_LASTNAME", "GAL:LastName");
+define("SYNC_GAL_HOMEPHONE", "GAL:HomePhone");
+define("SYNC_GAL_MOBILEPHONE", "GAL:MobilePhone");
+define("SYNC_GAL_EMAILADDRESS", "GAL:EmailAddress");
+
 // Other constants
 define("SYNC_FOLDER_TYPE_INBOX", 2);
 define("SYNC_FOLDER_TYPE_DRAFTS", 3);
@@ -380,5 +418,5 @@ define("SYNC_TRUNCATION_512B", 1);
 define("SYNC_TRUNCATION_1K", 2);
 define("SYNC_TRUNCATION_5K", 4);
 define("SYNC_TRUNCATION_ALL", 9);
- 
+
 ?>

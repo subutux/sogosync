@@ -634,6 +634,11 @@ class BackendDiff {
         }
     }
 
+    function getSearchResults($searchquery) {
+        return false;
+    }
+
+
 
 }
 ?>
