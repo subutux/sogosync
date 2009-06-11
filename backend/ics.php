@@ -26,7 +26,8 @@ include_once('mapi/class.recurrence.php');
 include_once('mapi/class.meetingrequest.php');
 include_once('mapi/class.freebusypublish.php');
 
-// We need this to parse the rfc822 messages that we are passed in SendMail
+// We need this in order to parse the rfc822 messages
+//that are passed in SendMail
 include_once('mimeDecode.php');
 require_once('z_RFC822.php');
 
@@ -1963,17 +1964,16 @@ class BackendICS {
     function Logoff() {
         // publish free busy time after finishing the synchronization process
         // update if the calendar folder received incoming changes
+        $storeprops = mapi_getprops($this->_defaultstore, array(PR_USER_ENTRYID));
+        $root = mapi_msgstore_openentry($this->_defaultstore);
+        $rootprops = mapi_getprops($root, array(PR_IPM_APPOINTMENT_ENTRYID));
         foreach($this->_importedFolders as $folderid) {
-            $storeprops = mapi_getprops($this->_defaultstore, array(PR_USER_ENTRYID));
-            $root = mapi_msgstore_openentry($this->_defaultstore);
-            $rootprops = mapi_getprops($root, array(PR_IPM_APPOINTMENT_ENTRYID));
             $entryid = mapi_msgstore_entryidfromsourcekey($this->_defaultstore, hex2bin($folderid));
-
             if($rootprops[PR_IPM_APPOINTMENT_ENTRYID] == $entryid) {
                 debugLog("Update freebusy for ". $folderid);
                 $calendar = mapi_msgstore_openentry($this->_defaultstore, $entryid);
 
-                  $pub = new FreeBusyPublish($this->_session, $this->_defaultstore, $calendar, $storeprops[PR_USER_ENTRYID]);
+                $pub = new FreeBusyPublish($this->_session, $this->_defaultstore, $calendar, $storeprops[PR_USER_ENTRYID]);
                 $pub->publishFB(time() - (7 * 24 * 60 * 60), 6 * 30 * 24 * 60 * 60); // publish from one week ago, 6 months ahead
             }
         }
@@ -2364,14 +2364,7 @@ class BackendICS {
                 break;
         }
 
-        // Update F/B
-        $root = mapi_msgstore_openentry($this->_defaultstore);
-        $rootprops = mapi_getprops($root, array(PR_IPM_APPOINTMENT_ENTRYID));
-        $calendar = mapi_msgstore_openentry($this->_defaultstore, $rootprops[PR_IPM_APPOINTMENT_ENTRYID]);
-        $storeprops = mapi_getprops($this->_defaultstore, array(PR_USER_ENTRYID));
-
-        $pub = new FreeBusyPublish($this->_session, $this->_defaultstore, $calendar, $storeprops[PR_USER_ENTRYID]);
-        $pub->publishFB(time() - (7 * 24 * 60 * 60), 6 * 30 * 24 * 60 * 60); // publish from one week ago, 6 months ahead
+        // F/B will be updated on logoff
 
         // We have to return the ID of the new calendar item, so do that here
         $newitem = mapi_msgstore_openentry($this->_defaultstore, $entryid);
