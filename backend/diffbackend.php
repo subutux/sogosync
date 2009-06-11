@@ -650,11 +650,5 @@ class BackendDiff {
         return false;
     }
 
-    function setPolicyKey($policykey, $devid) {
-        return false;
-    }
-
-
-
 }
 ?>
