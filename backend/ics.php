@@ -2074,6 +2074,11 @@ class BackendICS {
             $item["fullname"] = w2u($user_data[0][PR_DISPLAY_NAME]);
             $item["emailaddress"] = w2u($user_data[0][PR_SMTP_ADDRESS]);
             $item["nameid"] = $searchquery;
+            if (strlen(trim($item["fullname"])) == 0) $item["fullname"] = $item["username"];
+
+            //do not return users without email
+            if (strlen(trim($item["emailaddress"])) == 0) continue;
+
             array_push($items, $item);
         }
         return $items;
