@@ -91,7 +91,6 @@ if (isset($requestheaders["X-MS-PolicyKey"])) {
     global $policykey;
     $policykey = $requestheaders["X-MS-PolicyKey"];
 
-    debugLog ("X-MS-PolicyKey:$policykey");
 } else {
     global $policykey;
     $policykey = 0;
@@ -101,8 +100,6 @@ if (isset($requestheaders["X-MS-PolicyKey"])) {
 if (isset($requestheaders["User-Agent"])) {
     global $useragent;
     $useragent = $requestheaders["User-Agent"];
-
-    debugLog ("User-Agent:$useragent");
 } else {
     global $useragent;
     $useragent = "unknown";
