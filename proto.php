@@ -113,6 +113,9 @@ class SyncMail extends Streamer {
                                 SYNC_POOMMAIL_IMPORTANCE => array (STREAMER_VAR => "importance"),
                                 SYNC_POOMMAIL_READ => array (STREAMER_VAR => "read"),
                                 SYNC_POOMMAIL_ATTACHMENTS => array (STREAMER_VAR => "attachments", STREAMER_TYPE => "SyncAttachment", STREAMER_ARRAY => SYNC_POOMMAIL_ATTACHMENT ),
+                                SYNC_POOMMAIL_MIMETRUNCATED => array ( STREAMER_VAR => "mimetruncated" ),//
+                                SYNC_POOMMAIL_MIMEDATA => array ( STREAMER_VAR => "mimedata", STREAMER_TYPE => STREAMER_TYPE_MAPI_STREAM),//
+                                SYNC_POOMMAIL_MIMESIZE => array ( STREAMER_VAR => "mimesize" ),//
                                 SYNC_POOMMAIL_BODYTRUNCATED => array (STREAMER_VAR => "bodytruncated"),
                                 SYNC_POOMMAIL_BODY => array (STREAMER_VAR => "body"),
                                 SYNC_POOMMAIL_BODYSIZE => array (STREAMER_VAR => "bodysize"),

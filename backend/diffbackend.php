@@ -569,8 +569,8 @@ class BackendDiff {
         return $folders;
     }
 
-    function Fetch($folderid, $id) {
-        return $this->GetMessage($folderid, $id, 1024*1024); // Forces entire message (up to 1Mb)
+    function Fetch($folderid, $id, $mimesupport = 0) {
+        return $this->GetMessage($folderid, $id, 1024*1024, $mimesupport); // Forces entire message (up to 1Mb)
     }
 
     function GetAttachmentData($attname) {
@@ -593,7 +593,7 @@ class BackendDiff {
         return false;
     }
 
-    function GetMessage($folderid, $id, $truncsize) {
+    function GetMessage($folderid, $id, $truncsize, $mimesupport = 0) {
         return false;
     }
 

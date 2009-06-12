@@ -26,6 +26,7 @@ define('STREAMER_TYPE', 3);
 define('STREAMER_TYPE_DATE', 1);
 define('STREAMER_TYPE_HEX', 2);
 define('STREAMER_TYPE_DATE_DASHES', 3);
+define('STREAMER_TYPE_MAPI_STREAM', 4);
 
 
 class Streamer {
@@ -185,6 +186,8 @@ class Streamer {
                             $encoder->content($this->formatDate($this->$map[STREAMER_VAR], $map[STREAMER_TYPE]));
                     } else if(isset($map[STREAMER_TYPE]) && $map[STREAMER_TYPE] == STREAMER_TYPE_HEX) {
                         $encoder->content(bin2hex($this->$map[STREAMER_VAR]));
+                    } else if(isset($map[STREAMER_TYPE]) && $map[STREAMER_TYPE] == STREAMER_TYPE_MAPI_STREAM) {
+                        $encoder->content($this->$map[STREAMER_VAR]);
                     } else {
                         $encoder->content($this->$map[STREAMER_VAR]);
                     }

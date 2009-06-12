@@ -597,6 +597,9 @@ function HandleSync($backend, $protocolversion, $devid) {
                 $encoder->content(1);
                 $encoder->endTag();
 
+                //check the mimesupport because we need it for advanced emails
+                $mimesupport = isset($collection['mimesupport']) ? isset($collection['mimesupport']) : 0;
+
                 // Output server IDs for new items we received from the PDA
                 if(isset($collection["clientids"]) || count($collection["fetchids"]) > 0) {
                     $encoder->startTag(SYNC_REPLIES);
@@ -614,7 +617,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                         $encoder->endTag();
                     }
                     foreach($collection["fetchids"] as $id) {
-                        $data = $backend->Fetch($collection["collectionid"], $id);
+                        $data = $backend->Fetch($collection["collectionid"], $id, $mimesupport);
                         if($data !== false) {
                             $encoder->startTag(SYNC_FETCH);
                             $encoder->startTag(SYNC_SERVERENTRYID);

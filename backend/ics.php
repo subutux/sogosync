@@ -1153,7 +1153,7 @@ class PHPContentsImportProxy extends MAPIMapping {
 
     // ------------------------------------------------------------------------------------------------------------
 
-    function _getMessage($mapimessage, $truncsize) {
+    function _getMessage($mapimessage, $truncsize, $mimesupport = 0) {
         // Gets the Sync object from a MAPI object according to its message class
 
         $props = mapi_getprops($mapimessage, array(PR_MESSAGE_CLASS));
@@ -1163,17 +1163,17 @@ class PHPContentsImportProxy extends MAPIMapping {
             $messageclass = "IPM";
 
         if(strpos($messageclass,"IPM.Contact") === 0)
-            return $this->_getContact($mapimessage, $truncsize);
+            return $this->_getContact($mapimessage, $truncsize, $mimesupport);
         else if(strpos($messageclass,"IPM.Appointment") === 0)
-            return $this->_getAppointment($mapimessage, $truncsize);
+            return $this->_getAppointment($mapimessage, $truncsize, $mimesupport);
         else if(strpos($messageclass,"IPM.Task") === 0)
-            return $this->_getTask($mapimessage, $truncsize);
+            return $this->_getTask($mapimessage, $truncsize, $mimesupport);
         else
-            return $this->_getEmail($mapimessage, $truncsize);
+            return $this->_getEmail($mapimessage, $truncsize, $mimesupport);
     }
 
     // Get an SyncContact object
-    function _getContact($mapimessage, $truncsize) {
+    function _getContact($mapimessage, $truncsize, $mimesupport = 0) {
         $message = new SyncContact();
 
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_contactmapping);
@@ -1205,7 +1205,7 @@ class PHPContentsImportProxy extends MAPIMapping {
     }
 
     // Get an SyncTask object
-    function _getTask($mapimessage, $truncsize) {
+    function _getTask($mapimessage, $truncsize, $mimesupport = 0) {
         $message = new SyncTask();
 
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_taskmapping);
@@ -1218,7 +1218,7 @@ class PHPContentsImportProxy extends MAPIMapping {
     }
 
     // Get an SyncAppointment object
-    function _getAppointment($mapimessage, $truncsize) {
+    function _getAppointment($mapimessage, $truncsize, $mimesupport = 0) {
         $message = new SyncAppointment();
 
         // Standard one-to-one mappings first
@@ -1430,7 +1430,7 @@ class PHPContentsImportProxy extends MAPIMapping {
     }
 
     // Get an SyncEmail object
-    function _getEmail($mapimessage, $truncsize) {
+    function _getEmail($mapimessage, $truncsize, $mimesupport = 0) {
         $message = new SyncMail();
 
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_emailmapping);
@@ -1598,6 +1598,20 @@ class PHPContentsImportProxy extends MAPIMapping {
 
         if (!isset($message->body) || strlen($message->body) == 0)
             $message->body = " ";
+
+        if ($mimesupport == 2) {
+            $addrBook = mapi_openaddressbook($this->_session);
+            $mstream = mapi_inetmapi_imtoinet($this->_session, $addrBook, $mapimessage, array());
+
+            $mstreamstat = mapi_stream_stat($mstream);
+            if ($mstreamstat['cb'] < MAX_EMBEDDED_SIZE) {
+                $message->mimetruncated = 0;
+                $mstreamcontent = mapi_stream_read($mstream, MAX_EMBEDDED_SIZE);
+                $message->mimedata = $mstreamcontent;
+                $message->mimesize = $mstreamstat["cb"];
+                unset($message->body, $message->bodytruncated);
+            }
+        }
 
         return $message;
     }
@@ -2543,7 +2557,7 @@ class BackendICS {
         return true;
     }
 
-    function Fetch($folderid, $id) {
+    function Fetch($folderid, $id, $mimesupport = 0) {
         $foldersourcekey = hex2bin($folderid);
         $messagesourcekey = hex2bin($id);
 
@@ -2564,7 +2578,7 @@ class BackendICS {
             return false;
         }
 
-        return $importer->_getMessage($message, 1024*1024); // Get 1MB of body size
+        return $importer->_getMessage($message, 1024*1024, $mimesupport); // Get 1MB of body size
     }
 
     function GetWasteBasket() {
