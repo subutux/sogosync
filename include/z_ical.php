@@ -152,7 +152,7 @@ class ZPush_ical{
         if ($regs[1] < 1970) {
             $regs[1] = '1971';
         }
-        return mktime($regs[4], $regs[5], $regs[6], $regs[2], $regs[3], $regs[1]);
+        return gmmktime($regs[4], $regs[5], $regs[6], $regs[2], $regs[3], $regs[1]);
     }
 }
 
