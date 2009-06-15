@@ -1496,7 +1496,7 @@ function HandleRequest($backend, $cmd, $devid, $protocolversion) {
             header("HTTP/1.1 449 Retry after sending a PROVISION command");
             header("MS-Server-ActiveSync: 6.5.7638.1");
             header("MS-ASProtocolVersions: 1.0,2.0,2.1,2.5");
-            header("MS-ASProtocolCommands: Sync,SendMail,SmartForward,SmartReply,GetAttachment,GetHierarchy,CreateCollection,DeleteCollection,MoveCollection,FolderSync,FolderCreate,FolderDelete,FolderUpdate,MoveItems,GetItemEstimate,MeetingResponse,Provision,ResolveRecipipents,ValidateCert,Search,Ping");
+            header("MS-ASProtocolCommands: Sync,SendMail,SmartForward,SmartReply,GetAttachment,GetHierarchy,CreateCollection,DeleteCollection,MoveCollection,FolderSync,FolderCreate,FolderDelete,FolderUpdate,MoveItems,GetItemEstimate,MeetingResponse,Provision,ResolveRecipients,ValidateCert,Search,Ping");
             header("Cache-Control: private");
             return 1;
         }
