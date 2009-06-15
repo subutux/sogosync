@@ -1599,7 +1599,7 @@ class PHPContentsImportProxy extends MAPIMapping {
         if (!isset($message->body) || strlen($message->body) == 0)
             $message->body = " ";
 
-        if ($mimesupport == 2) {
+        if ($mimesupport == 2 && function_exists("mapi_inetmapi_imtoinet")) {
             $addrBook = mapi_openaddressbook($this->_session);
             $mstream = mapi_inetmapi_imtoinet($this->_session, $addrBook, $mapimessage, array());
 
