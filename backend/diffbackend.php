@@ -634,21 +634,76 @@ class BackendDiff {
         }
     }
 
+    /**
+     * Returns array of items which contain contact information
+     *
+     * @param string $searchquery
+     *
+     * @return array
+     */
     function getSearchResults($searchquery) {
         return false;
     }
 
-    function getPolicyKey() {
+    /**
+     * Return a policy key for given user with a given device id.
+     * If there is no combination user-deviceid available, a new key
+     * should be generated.
+     *
+     * @param string $user
+     * @param string $pass
+     * @param string $devid
+     *
+     * @return unknown
+     */
+    function getPolicyKey($user, $pass, $devid) {
         return false;
     }
 
+    /**
+     * Generate a random policy key. Right now it's a 10-digit number.
+     *
+     * @return unknown
+     */
     function generatePolicyKey(){
-        return false;
+        return mt_rand(1000000000, 9999999999);
     }
 
+    /**
+     * Set a new policy key for the given device id.
+     *
+     * @param string $policykey
+     * @param string $devid
+     * @return unknown
+     */
     function setPolicyKey($policykey, $devid) {
         return false;
     }
 
+    /**
+     * Return a device wipe status
+     *
+     * @param string $user
+     * @param string $pass
+     * @param string $devid
+     * @return int
+     */
+    function getDeviceRWStatus($user, $pass, $devid) {
+        return false;
+    }
+
+    /**
+     * Set a new rw status for the device
+     *
+     * @param string $user
+     * @param string $pass
+     * @param string $devid
+     * @param string $status
+     *
+     * @return boolean
+     */
+    function setDeviceRWStatus($user, $pass, $devid, $status) {
+        return false;
+    }
 }
 ?>
