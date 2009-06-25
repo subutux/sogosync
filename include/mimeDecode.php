@@ -28,7 +28,7 @@
 * Mime Decoding class
 *
 * This class will parse a raw mime email and return
-* the structure. Returned structure is similar to 
+* the structure. Returned structure is similar to
 * that returned by imap_fetchstructure().
 *
 * USAGE: (assume $input is your raw email)
@@ -106,7 +106,7 @@ class Mail_mimeDecode {
 
     /**
      * Constructor.
-     * 
+     *
      * Sets up the object, initialise the variables, and splits and
      * stores the header and body of the input.
      *
@@ -130,7 +130,7 @@ class Mail_mimeDecode {
      * Begins the decoding process. If called statically
      * it will create an object and call the decode() method
      * of it.
-     * 
+     *
      * @param array An array of various parameters that determine
      *              various things:
      *              include_bodies - Whether to include the body in the returned
@@ -153,7 +153,6 @@ class Mail_mimeDecode {
         // Have we been called statically?
     // If so, create an object and pass details to that.
         if ($isStatic AND isset($params['input'])) {
-
             $obj = new Mail_mimeDecode($params['input'], $params['crlf']);
             $structure = $obj->decode($params);
 
@@ -171,7 +170,6 @@ class Mail_mimeDecode {
                                  $params['decode_headers'] : false;
             $this->_charset = isset($params['charset']) ?
                                  $params['charset'] : 'iso-8859-15';
-
             $structure = $this->_decode($this->_header, $this->_body);
             if ($structure === false) {
                 $structure = $this->raiseError($this->_error);
@@ -185,7 +183,7 @@ class Mail_mimeDecode {
      * Performs the decoding. Decodes the body string passed to it
      * If it finds certain content-types it will call itself in a
      * recursive fashion
-     * 
+     *
      * @param string Header section
      * @param string Body section
      * @return object Results of decoding process
@@ -216,12 +214,12 @@ class Mail_mimeDecode {
 
                 case 'content-type':
                     $content_type = $this->_parseHeaderValue($headers[$key]['value']);
-    
+
                     if (preg_match('/([0-9a-z+.-]+)\/([0-9a-z+.-]+)/i', $content_type['value'], $regs)) {
                         $return->ctype_primary   = $regs[1];
                         $return->ctype_secondary = $regs[2];
                     }
-    
+
                     if (isset($content_type['other'])) {
                         while (list($p_name, $p_value) = each($content_type['other'])) {
                             $return->ctype_parameters[$p_name] = $p_value;
@@ -246,7 +244,7 @@ class Mail_mimeDecode {
         }
 
         if (isset($content_type)) {
-        
+
             $cte = isset($content_transfer_encoding['value']) ? $content_transfer_encoding['value'] : '7bit';
 
             switch (strtolower($content_type['value'])) {
@@ -254,7 +252,7 @@ class Mail_mimeDecode {
                     $charset = isset($return->ctype_parameters['charset']) ? $return->ctype_parameters['charset'] : 'iso-8859-15';
                     $this->_include_bodies ? $return->body = ($this->_decode_bodies ? $this->_decodeBody($body, $cte, $charset) : $body) : null;
                     break;
-    
+
                 case 'text/html':
                     $charset = isset($return->ctype_parameters['charset']) ? $return->ctype_parameters['charset'] : 'iso-8859-15';
                     $this->_include_bodies ? $return->body = ($this->_decode_bodies ? $this->_decodeBody($body, $cte, $charset) : $body) : null;
@@ -269,7 +267,7 @@ class Mail_mimeDecode {
                         $this->_error = 'No boundary found for ' . $content_type['value'] . ' part';
                         return false;
                     }
-                    
+
                     $default_ctype = (strtolower($content_type['value']) === 'multipart/digest') ? 'message/rfc822' : 'text/plain';
 
                     $parts = $this->_boundarySplit($body, $content_type['other']['boundary']);
@@ -299,7 +297,7 @@ class Mail_mimeDecode {
             $return->ctype_secondary = $ctype[1];
             $this->_include_bodies ? $return->body = ($this->_decode_bodies ? $this->_decodeBody($body) : $body) : null;
         }
-        
+
         return $return;
     }
 
@@ -307,7 +305,7 @@ class Mail_mimeDecode {
      * Given a string containing a header and body
      * section, this function will split them (at the first
      * blank line) and return them.
-     * 
+     *
      * @param string Input to split apart
      * @return array Contains header and body section
      * @access private
@@ -319,7 +317,10 @@ class Mail_mimeDecode {
             $this->_error = 'Could not split header and body';
             return false;
         }
-
+        //android fix
+        if (($pos+(2*strlen($this->_crlf))) == strlen($input)) {
+            $pos = strpos ($input, "\n\r");
+        }
         $header = substr($input, 0, $pos);
         $body   = substr($input, $pos+(2*strlen($this->_crlf)));
 
@@ -329,19 +330,25 @@ class Mail_mimeDecode {
     /**
      * Parse headers given in $input and return
      * as assoc array.
-     * 
+     *
      * @param string Headers to parse
      * @return array Contains parsed headers
      * @access private
      */
     function _parseHeaders($input)
     {
-
         if ($input !== '') {
             // Unfold the input
-            $input   = preg_replace('/' . $this->_crlf . "(\t| )/", ' ', $input);
-            $headers = explode($this->_crlf, trim($input));
-    
+            //android fix
+
+            if (substr_count($input, "\r\n") == 0 && substr_count($input, "\n") > 0) {
+                $headers = explode("\n", trim($input));
+            }
+            else {
+                $input  = preg_replace('/' . $this->_crlf . "(\t| )/", ' ', $input);
+                $headers = explode($this->_crlf, trim($input));
+            }
+
             foreach ($headers as $value) {
                 $hdr_name = substr($value, 0, $pos = strpos($value, ':'));
                 $hdr_value = substr($value, $pos+1);
@@ -353,7 +360,6 @@ class Mail_mimeDecode {
         } else {
             $return = array();
         }
-
         return $return;
     }
 
@@ -363,7 +369,7 @@ class Mail_mimeDecode {
      * parts (after ;) This function is not as
      * robust as it could be. Eg. header comments
      * in the wrong place will probably break it.
-     * 
+     *
      * @param string Header value to parse
      * @return array Contains parsed result
      * @access private
@@ -387,14 +393,14 @@ class Mail_mimeDecode {
         } else {
             $return['value'] = trim($input);
         }
-        
+
         return $return;
     }
 
     /**
      * This function splits the input based
      * on the given boundary
-     * 
+     *
      * @param string Input to parse
      * @return array Contains array of resulting mime parts
      * @access private
@@ -406,7 +412,6 @@ class Mail_mimeDecode {
         for ($i=1; $i<count($tmp)-1; $i++) {
             $parts[] = $tmp[$i];
         }
-
         return $parts;
     }
 
@@ -448,12 +453,12 @@ class Mail_mimeDecode {
 
             $input = str_replace($encoded, $this->_fromCharset($charset, $text), $input);
         }
-        
+
         return $input;
     }
 
     /**
-     * Given a body string and an encoding type, 
+     * Given a body string and an encoding type,
      * this function will decode and return it.
      *
      * @param  string Input body to decode
@@ -508,11 +513,11 @@ class Mail_mimeDecode {
 
         return $input;
     }
-    
+
     function _fromCharset($charset, $input) {
         if($charset == '')
             return $input;
-            
+
         return iconv($charset, $this->_charset, $input);
     }
 
