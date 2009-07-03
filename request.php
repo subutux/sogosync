@@ -1262,47 +1262,7 @@ function HandleProvision($backend, $devid, $protocolversion) {
     if(!$decoder->getElementStartTag(SYNC_PROVISION_PROVISION))
         return false;
 
-    if(!$decoder->getElementStartTag(SYNC_PROVISION_POLICIES))
-        return false;
-
-    if(!$decoder->getElementStartTag(SYNC_PROVISION_POLICY))
-        return false;
-
-    if(!$decoder->getElementStartTag(SYNC_PROVISION_POLICYTYPE))
-        return false;
-
-    $policytype = $decoder->getElementContent();
-    if ($policytype != 'MS-WAP-Provisioning-XML') {
-        $status = SYNC_PROVISION_STATUS_SERVERERROR;
-    }
-    if(!$decoder->getElementEndTag()) //policytype
-        return false;
-
-    if ($decoder->getElementStartTag(SYNC_PROVISION_POLICYKEY)) {
-        $devpolicykey = $decoder->getElementContent();
-
-        if(!$decoder->getElementEndTag())
-            return false;
-
-        if(!$decoder->getElementStartTag(SYNC_PROVISION_STATUS))
-            return false;
-
-        $status = $decoder->getElementContent();
-        //do status handling
-        $status = SYNC_PROVISION_STATUS_SUCCESS;
-
-        if(!$decoder->getElementEndTag())
-            return false;
-
-        $phase2 = false;
-    }
-
-    if(!$decoder->getElementEndTag()) //policy
-        return false;
-
-    if(!$decoder->getElementEndTag()) //policies
-        return false;
-
+    //handle android remote wipe.
     if ($decoder->getElementStartTag(SYNC_PROVISION_REMOTEWIPE)) {
         if(!$decoder->getElementStartTag(SYNC_PROVISION_STATUS))
             return false;
@@ -1314,6 +1274,63 @@ function HandleProvision($backend, $devid, $protocolversion) {
 
         if(!$decoder->getElementEndTag())
             return false;
+    }
+
+    else {
+
+        if(!$decoder->getElementStartTag(SYNC_PROVISION_POLICIES))
+            return false;
+
+        if(!$decoder->getElementStartTag(SYNC_PROVISION_POLICY))
+            return false;
+
+        if(!$decoder->getElementStartTag(SYNC_PROVISION_POLICYTYPE))
+            return false;
+
+        $policytype = $decoder->getElementContent();
+        if ($policytype != 'MS-WAP-Provisioning-XML') {
+            $status = SYNC_PROVISION_STATUS_SERVERERROR;
+        }
+        if(!$decoder->getElementEndTag()) //policytype
+            return false;
+
+        if ($decoder->getElementStartTag(SYNC_PROVISION_POLICYKEY)) {
+            $devpolicykey = $decoder->getElementContent();
+
+            if(!$decoder->getElementEndTag())
+                return false;
+
+            if(!$decoder->getElementStartTag(SYNC_PROVISION_STATUS))
+                return false;
+
+            $status = $decoder->getElementContent();
+            //do status handling
+            $status = SYNC_PROVISION_STATUS_SUCCESS;
+
+            if(!$decoder->getElementEndTag())
+                return false;
+
+            $phase2 = false;
+        }
+
+        if(!$decoder->getElementEndTag()) //policy
+            return false;
+
+        if(!$decoder->getElementEndTag()) //policies
+            return false;
+
+        if ($decoder->getElementStartTag(SYNC_PROVISION_REMOTEWIPE)) {
+            if(!$decoder->getElementStartTag(SYNC_PROVISION_STATUS))
+                return false;
+
+            $status = $decoder->getElementContent();
+
+            if(!$decoder->getElementEndTag())
+                return false;
+
+            if(!$decoder->getElementEndTag())
+                return false;
+        }
     }
     if(!$decoder->getElementEndTag()) //provision
         return false;
