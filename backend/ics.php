@@ -2211,13 +2211,14 @@ class BackendICS {
 
         //user is logged in or can login, get the remote wipe status
         if ($defaultstore !== false || $this->Logon($user, "", $pass)) {
-            $devicesprops = mapi_getprops($defaultstore, array(0x68841003, 0x6881101E));
+            $devicesprops = mapi_getprops($defaultstore, array(0x68841003, 0x6881101E, 0x6887101E));
             if (isset($devicesprops[0x6881101E]) && is_array($devicesprops[0x6881101E])) {
                 $ak = array_search($devid, $devicesprops[0x6881101E]);
                 if ($ak !== false) {
                     //set new status remote wipe status
                     $devicesprops[0x68841003][$ak] = $status;
-                    mapi_setprops($defaultstore, array(0x68841003=>$devicesprops[0x68841003]));
+                    if ($status == SYNC_PROVISION_RWSTATUS_WIPED) $devicesprops[0x6887101E][$ak] = time();
+                    mapi_setprops($defaultstore, array(0x68841003 => $devicesprops[0x68841003], 0x6887101E =>$devicesprops[0x6887101E]));
                     return true;
                 }
             }
@@ -2242,7 +2243,7 @@ class BackendICS {
                     mapi_setprops($this->_defaultstore, array(0x68891040=>$devicesprops[0x68891040]));
                 }
                 else {
-                    debugLog("No device found with id:{$this->_devid}");
+                    debugLog("No device found.");
                 }
             }
             else {
