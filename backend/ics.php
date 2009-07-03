@@ -2415,7 +2415,9 @@ class BackendICS {
         $body = "";
         if($message->ctype_primary == "multipart" && ($message->ctype_secondary == "mixed" || $message->ctype_secondary == "alternative")) {
             foreach($message->parts as $part) {
-                if($part->ctype_primary == "text" && $part->ctype_secondary == "plain" && isset($part->body)) {// discard any other kind of text, like html
+                //the last part of if (after !) is an android fix.
+                //it sends attachment as a plain text but content transport is base64 encoded.
+                if($part->ctype_primary == "text" && $part->ctype_secondary == "plain" && isset($part->body) && !(isset($part->headers['content-transfer-encoding']) && strpos($part->headers['content-transfer-encoding'], 'base64') !== false)) {// discard any other kind of text, like html
                         $body .= u2w($part->body); // assume only one text body
                 }
                 elseif($part->ctype_primary == "ms-tnef" || $part->ctype_secondary == "ms-tnef") {
@@ -2439,8 +2441,8 @@ class BackendICS {
                             if (isset($part2->disposition) && ($part2->disposition == "inline" || $part2->disposition == "attachment"))
                                 $this->_storeAttachment($mapimessage, $part2);
                 }
-                elseif($part->ctype_primary == "text" && $part->ctype_secondary == "calendar") {
 
+                elseif($part->ctype_primary == "text" && $part->ctype_secondary == "calendar") {
                     $zpical = new ZPush_ical($this->_defaultstore);
                     $mapiprops = array();
                     $zpical->extractProps($part->body, $mapiprops);
@@ -2744,6 +2746,18 @@ class BackendICS {
             $filename = $part->d_parameters["filename"];
         else if (isset($part->d_parameters["filename"])) //sending appointment with nokia only filename is set
             $filename = $part->d_parameters["filename"];
+        //Android just puts enconding and filename into content-transfer-encoding
+        //filename is something like filename="filename.extension (yes " is only once)
+        //meeting requests are sent the same way, there is text/calendar somewhere inside content-transfer-encoding
+        else if (isset($part->headers['content-transfer-encoding']) && strpos($part->headers['content-transfer-encoding'], 'base64')) {
+            $pos = strpos($part->headers['content-transfer-encoding'], "filename=");
+            $filename = ($pos !== false) ? substr($part->headers['content-transfer-encoding'], ($pos + 10)) : "untitled";
+            if (strpos($part->headers['content-transfer-encoding'], 'text/calendar') !== false) {
+                $part->ctype_primary = 'text';
+                $part->ctype_secondary = 'calendar';
+            }
+            $part->body = base64_decode($part->body);
+        }
         else
             $filename = "untitled";
 
