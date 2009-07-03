@@ -343,6 +343,7 @@ function HandleSync($backend, $protocolversion, $devid) {
             return false;
 
         $collection["class"] = $decoder->getElementContent();
+        debugLog("Sync folder:{$collection["class"]}");
 
         if(!$decoder->getElementEndTag())
             return false;
@@ -1274,7 +1275,7 @@ function HandleProvision($backend, $devid, $protocolversion) {
     if ($policytype != 'MS-WAP-Provisioning-XML') {
         $status = SYNC_PROVISION_STATUS_SERVERERROR;
     }
-    if(!$decoder->getElementEndTag())
+    if(!$decoder->getElementEndTag()) //policytype
         return false;
 
     if ($decoder->getElementStartTag(SYNC_PROVISION_POLICYKEY)) {
@@ -1296,10 +1297,10 @@ function HandleProvision($backend, $devid, $protocolversion) {
         $phase2 = false;
     }
 
-    if(!$decoder->getElementEndTag())
+    if(!$decoder->getElementEndTag()) //policy
         return false;
 
-    if(!$decoder->getElementEndTag())
+    if(!$decoder->getElementEndTag()) //policies
         return false;
 
     if ($decoder->getElementStartTag(SYNC_PROVISION_REMOTEWIPE)) {
@@ -1314,8 +1315,7 @@ function HandleProvision($backend, $devid, $protocolversion) {
         if(!$decoder->getElementEndTag())
             return false;
     }
-
-    if(!$decoder->getElementEndTag())
+    if(!$decoder->getElementEndTag()) //provision
         return false;
 
     $encoder->StartWBXML();
