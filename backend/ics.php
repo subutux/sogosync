@@ -632,21 +632,35 @@ class ImportContentsChangesICS extends MAPIMapping {
         // non-leapyear. Why this is, is totally unclear.
         $monthminutes = array(0,44640,84960,129600,172800,217440,260640,305280,348480,393120,437760,480960);
 
-        mapi_setprops($mapimessage, array(PR_MESSAGE_CLASS => "IPM.Appointment"));
-
-        $this->_setPropsInMAPI($mapimessage, $appointment, $this->_appointmentmapping);
-
         // Get timezone info
         if(isset($appointment->timezone))
             $tz = $this->_getTZFromSyncBlob(base64_decode($appointment->timezone));
         else
             $tz = false;
 
-        // Set commonstart/commonend to start/end and remindertime to start
+        //calculate duration because without it some webaccess views are broken. duration is in min
+        $localstart = $this->_getLocaltimeByTZ($appointment->starttime, $tz);
+        $localend = $this->_getLocaltimeByTZ($appointment->endtime, $tz);
+        $duration = ($localend - $localstart)/60;
+
+        //nokia sends an yearly event with 0 mins duration but as all day event,
+        //so make it end next day
+        if ($appointment->starttime == $appointment->endtime && isset($appointment->alldayevent) && $appointment->alldayevent) {
+            $duration = 1440;
+            $appointment->endtime = $appointment->starttime + 24 * 60 * 60;
+            $localend = $localstart + 24 * 60 * 60;
+        }
+
+        mapi_setprops($mapimessage, array(PR_MESSAGE_CLASS => "IPM.Appointment"));
+
+        $this->_setPropsInMAPI($mapimessage, $appointment, $this->_appointmentmapping);
+
+        // Set commonstart/commonend to start/end and remindertime to start and duration
         mapi_setprops($mapimessage, array(
-            $this->_getPropIDFromString("PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8516") => $appointment->starttime,
-            $this->_getPropIDFromString("PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8517") => $appointment->endtime,
-            $this->_getPropIDFromString("PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8502") => $appointment->starttime,
+            $this->_getPropIDFromString("PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8516") =>  $appointment->starttime,
+            $this->_getPropIDFromString("PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8517") =>  $appointment->endtime,
+            $this->_getPropIDFromString("PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8502") =>  $appointment->starttime,
+            $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8213") =>     $duration
             ));
 
         // Set named prop 8510, unknown property, but enables deleting a single occurrence of a recurring
@@ -715,12 +729,8 @@ class ImportContentsChangesICS extends MAPIMapping {
                     break;
             }
 
-            $localstart = $this->_getLocaltimeByTZ($appointment->starttime, $tz);
-            $localend = $this->_getLocaltimeByTZ($appointment->endtime, $tz);
-
             $starttime = $this->gmtime($localstart);
             $endtime = $this->gmtime($localend);
-            $duration = ($localend - $localstart)/60;
 
             $recur["startocc"] = $starttime["tm_hour"] * 60 + $starttime["tm_min"];
             $recur["endocc"] = $recur["startocc"] + $duration; // Note that this may be > 24*60 if multi-day
