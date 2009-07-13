@@ -852,6 +852,9 @@ function HandlePing($backend, $devid) {
         }
 
         if($decoder->getElementStartTag(SYNC_PING_FOLDERS)) {
+            // avoid ping init if not necessary
+            $saved_collections = $collections;
+
             $collections = array();
 
             while($decoder->getElementStartTag(SYNC_PING_FOLDER)) {
@@ -868,14 +871,27 @@ function HandlePing($backend, $devid) {
 
                 $decoder->getElementEndTag();
 
+                // initialize empty state
+                $collection["state"] = "";
+
+                // try to find old state in saved states
+                foreach ($saved_collections as $saved_col) {
+                    if ($saved_col["serverid"] == $collection["serverid"] && $saved_col["class"] == $collection["class"]) {
+                        $collection["state"] = $saved_col["state"];
+                        debugLog("reusing saved state for ". $collection["class"]);
+                        break;
+                    }
+                }
+
+                if ($collection["state"] == "")
+                    debugLog("empty state for ". $collection["class"]);
+
                 // Create start state for this collection
                 $exporter = $backend->GetExporter($collection["serverid"]);
-                $state = "";
                 $importer = false;
-                $exporter->Config($importer, false, false, $state, BACKEND_DISCARD_DATA, 0);
+                $exporter->Config($importer, false, false, $collection["state"], BACKEND_DISCARD_DATA, 0);
                 while(is_array($exporter->Synchronize()));
-                $state = $exporter->GetState();
-                $collection["state"] = $state;
+                $collection["state"] = $exporter->GetState();
                 array_push($collections, $collection);
             }
 

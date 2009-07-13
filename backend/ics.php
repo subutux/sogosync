@@ -2086,7 +2086,8 @@ class BackendICS {
         }
         global $cmd;
         //do not update last sync time on ping and provision
-        if ($cmd != 'Ping' && $cmd != 'Provision' ) $this->setLastSyncTime();
+        if (isset($cmd) && $cmd != '' && $cmd != 'Ping' && $cmd != 'Provision' )
+            $this->setLastSyncTime();
 
         return true;
     }
