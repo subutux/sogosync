@@ -1694,7 +1694,7 @@ class PHPHierarchyImportProxy {
     function _getFolder($mapifolder) {
         $folder = new SyncFolder();
 
-        $folderprops = mapi_getprops($mapifolder, array(PR_DISPLAY_NAME, PR_PARENT_ENTRYID, PR_SOURCE_KEY, PR_PARENT_SOURCE_KEY, PR_ENTRYID));
+        $folderprops = mapi_getprops($mapifolder, array(PR_DISPLAY_NAME, PR_PARENT_ENTRYID, PR_SOURCE_KEY, PR_PARENT_SOURCE_KEY, PR_ENTRYID, PR_CONTAINER_CLASS));
         $storeprops = mapi_getprops($this->_store, array(PR_IPM_SUBTREE_ENTRYID));
 
         if(!isset($folderprops[PR_DISPLAY_NAME]) ||
@@ -1714,6 +1714,18 @@ class PHPHierarchyImportProxy {
             $folder->parentid = bin2hex($folderprops[PR_PARENT_SOURCE_KEY]);
         $folder->displayname = w2u($folderprops[PR_DISPLAY_NAME]);
         $folder->type = $this->_getFolderType($folderprops[PR_ENTRYID]);
+    
+        // try to find a correct type if not one of the default folders
+        if ($folder->type == SYNC_FOLDER_TYPE_OTHER) {
+            if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Task")
+                $folder->type = SYNC_FOLDER_TYPE_TASK;
+            if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Appointment")
+                $folder->type = SYNC_FOLDER_TYPE_APPOINTMENT;
+            if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Contact")
+                $folder->type = SYNC_FOLDER_TYPE_CONTACT;
+            if ($folderprops[PR_CONTAINER_CLASS] == "IPF.StickyNote")
+                $folder->type = SYNC_FOLDER_TYPE_NOTE;                        
+        }
 
         return $folder;
     }
