@@ -318,11 +318,15 @@ class Mail_mimeDecode {
             $this->_error = 'Could not split header and body';
             return false;
         }
+        // standard header
+        $header = substr($input, 0, $pos);
+        
         //android fix
         if (($pos+(2*strlen($this->_crlf))) == strlen($input)) {
             $pos = strpos ($input, "\n\r") - 1;
+            // overwrite header
+            $header = substr($input, 0, $pos+1);
         }
-        $header = substr($input, 0, $pos);
         $body   = substr($input, $pos+(2*strlen($this->_crlf)));
 
         return array($header, $body);
@@ -341,8 +345,7 @@ class Mail_mimeDecode {
         if ($input !== '') {
             // Unfold the input
             //android fix
-
-            if (substr_count($input, "\r\n") == 0 && substr_count($input, "\n") > 0) {
+            if (substr_count(trim($input), "\r\n") == 0 && substr_count($input, "\n") > 0) {
                 $input  = preg_replace('/' . "\n(\t| )/", ' ', $input);
                 $headers = explode("\n", trim($input));
             }

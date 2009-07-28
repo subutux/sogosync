@@ -2081,10 +2081,17 @@ class BackendICS {
     }
 
     function Logoff() {
+    	global $cmd;
+        //do not update last sync time on ping and provision
+        if (isset($cmd) && $cmd != '' && $cmd != 'Ping' && $cmd != 'Provision' )
+            $this->setLastSyncTime();
+    	
         // publish free busy time after finishing the synchronization process
         // update if the calendar folder received incoming changes
         $storeprops = mapi_getprops($this->_defaultstore, array(PR_USER_ENTRYID));
         $root = mapi_msgstore_openentry($this->_defaultstore);
+        if (!$root) return true;
+
         $rootprops = mapi_getprops($root, array(PR_IPM_APPOINTMENT_ENTRYID));
         foreach($this->_importedFolders as $folderid) {
             $entryid = mapi_msgstore_entryidfromsourcekey($this->_defaultstore, hex2bin($folderid));
@@ -2096,10 +2103,6 @@ class BackendICS {
                 $pub->publishFB(time() - (7 * 24 * 60 * 60), 6 * 30 * 24 * 60 * 60); // publish from one week ago, 6 months ahead
             }
         }
-        global $cmd;
-        //do not update last sync time on ping and provision
-        if (isset($cmd) && $cmd != '' && $cmd != 'Ping' && $cmd != 'Provision' )
-            $this->setLastSyncTime();
 
         return true;
     }
@@ -2345,6 +2348,9 @@ class BackendICS {
     }
 
     function SendMail($rfc822, $forward = false, $reply = false, $parent = false) {
+        if (WBXML_DEBUG === true)
+            debugLog("SendMail: forward: $forward   reply: $reply   parent: $parent\n" . $rfc822);
+        
         $mimeParams = array('decode_headers' => false,
                             'decode_bodies' => true,
                             'include_bodies' => true,
@@ -2431,18 +2437,30 @@ class BackendICS {
 
         mapi_message_modifyrecipients($mapimessage, 0, $recips);
 
-        // Loop through subparts. We currently only support real single-level
-        // multiparts and partly multipart/related/mixed for attachments.
-        // The PDA currently only does this because you are adding
-        // an attachment and the type will be multipart/mixed or multipart/alternative.
+        // Loop through message subparts. 
         $body = "";
+        $body_html = "";
         if($message->ctype_primary == "multipart" && ($message->ctype_secondary == "mixed" || $message->ctype_secondary == "alternative")) {
-            foreach($message->parts as $part) {
-                //the last part of if (after !) is an android fix.
-                //it sends attachment as a plain text but content transport is base64 encoded.
-                if($part->ctype_primary == "text" && $part->ctype_secondary == "plain" && isset($part->body) && !(isset($part->headers['content-transfer-encoding']) && strpos($part->headers['content-transfer-encoding'], 'base64') !== false)) {// discard any other kind of text, like html
+        	$mparts = $message->parts;
+            for($i=0; $i<count($mparts); $i++) {
+            	$part = $mparts[$i];
+            	
+	        	// palm pre & iPhone send forwarded messages in another subpart which are also parsed
+	        	if($part->ctype_primary == "multipart" && ($part->ctype_secondary == "mixed" || $part->ctype_secondary == "alternative"  || $part->ctype_secondary == "related")) {
+	        		foreach($part->parts as $spart) 
+	        			$mparts[] = $spart;
+	        		continue;
+	        	}
+            	
+            	// standard body
+            	if($part->ctype_primary == "text" && $part->ctype_secondary == "plain" && isset($part->body) && (!isset($part->disposition) || $part->disposition != "attachment")) {
                         $body .= u2w($part->body); // assume only one text body
                 }
+                // html body
+                elseif($part->ctype_primary == "text" && $part->ctype_secondary == "html") {
+                    $body_html = u2w($part->body);
+                }
+                // TNEF
                 elseif($part->ctype_primary == "ms-tnef" || $part->ctype_secondary == "ms-tnef") {
                     $zptnef = new ZPush_tnef($this->_defaultstore);
                     $mapiprops = array();
@@ -2457,14 +2475,7 @@ class BackendICS {
                     }
                     else debugLog("TNEF: Mapi props array was empty");
                 }
-                // do deeper multipart parsing for the iPhone when forwarding mail
-                elseif($part->ctype_primary == "multipart" && ($part->ctype_secondary == "mixed" || $part->ctype_secondary == "related")) {
-                    if(is_array($part->parts))
-                        foreach($part->parts as $part2)
-                            if (isset($part2->disposition) && ($part2->disposition == "inline" || $part2->disposition == "attachment"))
-                                $this->_storeAttachment($mapimessage, $part2);
-                }
-
+                // iCalendar
                 elseif($part->ctype_primary == "text" && $part->ctype_secondary == "calendar") {
                     $zpical = new ZPush_ical($this->_defaultstore);
                     $mapiprops = array();
@@ -2474,6 +2485,7 @@ class BackendICS {
                     }
                     else debugLog("ICAL: Mapi props array was empty");
                 }
+				// any other type, store as attachment
                 else
                     $this->_storeAttachment($mapimessage, $part);
             }
@@ -2481,6 +2493,12 @@ class BackendICS {
             $body = u2w($message->body);
         }
 
+        // some devices only transmit a html body
+        if (strlen($body) == 0 && strlen($body_html)>0) {
+            debugLog("only html body sent, transformed into plain text");
+            $body = strip_tags($body_html);
+        }
+        
         if($forward)
             $orig = $forward;
         if($reply)
@@ -2507,32 +2525,53 @@ class BackendICS {
                     $fwbody .= $data;
                 }
 
-                if(strlen($body) > 0) {
-                    if($forward) {
-                        // During a forward, we have to add the forward header ourselves. This is because
-                        // normally the forwarded message is added as an attachment. However, we don't want this
-                        // because it would be rather complicated to copy over the entire original message due
-                        // to the lack of IMessage::CopyTo ..
+                $stream = mapi_openproperty($fwmessage, PR_HTML, IID_IStream, 0, 0);
+                $fwbody_html = "";
 
-                        $fwmessageprops = mapi_getprops($fwmessage, array(PR_SENT_REPRESENTING_NAME, PR_DISPLAY_TO, PR_DISPLAY_CC, PR_SUBJECT, PR_CLIENT_SUBMIT_TIME));
-
-                        $body .= "\r\n\r\n";
-                        $body .= "-----Original Message-----\r\n";
-                        if(isset($fwmessageprops[PR_SENT_REPRESENTING_NAME]))
-                            $body .= "From: " . $fwmessageprops[PR_SENT_REPRESENTING_NAME] . "\r\n";
-                        if(isset($fwmessageprops[PR_DISPLAY_TO]) && strlen($fwmessageprops[PR_DISPLAY_TO]) > 0)
-                            $body .= "To: " . $fwmessageprops[PR_DISPLAY_TO] . "\r\n";
-                        if(isset($fwmessageprops[PR_DISPLAY_CC]) && strlen($fwmessageprops[PR_DISPLAY_CC]) > 0)
-                            $body .= "Cc: " . $fwmessageprops[PR_DISPLAY_CC] . "\r\n";
-                        if(isset($fwmessageprops[PR_CLIENT_SUBMIT_TIME]))
-                            $body .= "Sent: " . strftime("%x %X", $fwmessageprops[PR_CLIENT_SUBMIT_TIME]) . "\r\n";
-                        if(isset($fwmessageprops[PR_SUBJECT]))
-                            $body .= "Subject: " . $fwmessageprops[PR_SUBJECT] . "\r\n";
-                        $body .= "\r\n";
-                    }
-                    $body .= $fwbody;
+                while(1) {
+                    $data = mapi_stream_read($stream, 1024);
+                    if(strlen($data) == 0)
+                        break;
+                    $fwbody_html .= $data;
                 }
-            } else {
+                                
+                if($forward) {
+                    // During a forward, we have to add the forward header ourselves. This is because
+                    // normally the forwarded message is added as an attachment. However, we don't want this
+                    // because it would be rather complicated to copy over the entire original message due
+                    // to the lack of IMessage::CopyTo ..
+
+                    $fwmessageprops = mapi_getprops($fwmessage, array(PR_SENT_REPRESENTING_NAME, PR_DISPLAY_TO, PR_DISPLAY_CC, PR_SUBJECT, PR_CLIENT_SUBMIT_TIME));
+
+                    $fwheader = "\r\n\r\n";
+                    $fwheader .= "-----Original Message-----\r\n";
+                    if(isset($fwmessageprops[PR_SENT_REPRESENTING_NAME]))
+                        $fwheader .= "From: " . $fwmessageprops[PR_SENT_REPRESENTING_NAME] . "\r\n";
+                    if(isset($fwmessageprops[PR_DISPLAY_TO]) && strlen($fwmessageprops[PR_DISPLAY_TO]) > 0)
+                        $fwheader .= "To: " . $fwmessageprops[PR_DISPLAY_TO] . "\r\n";
+                    if(isset($fwmessageprops[PR_DISPLAY_CC]) && strlen($fwmessageprops[PR_DISPLAY_CC]) > 0)
+                        $fwheader .= "Cc: " . $fwmessageprops[PR_DISPLAY_CC] . "\r\n";
+                    if(isset($fwmessageprops[PR_CLIENT_SUBMIT_TIME]))
+                        $fwheader .= "Sent: " . strftime("%x %X", $fwmessageprops[PR_CLIENT_SUBMIT_TIME]) . "\r\n";
+                    if(isset($fwmessageprops[PR_SUBJECT]))
+                        $fwheader .= "Subject: " . $fwmessageprops[PR_SUBJECT] . "\r\n";
+                    $fwheader .= "\r\n";
+
+                    
+                    // add fwheader to body and body_html
+                    $body .= $fwheader;
+                    if (strlen($body_html) > 0)
+                        $body_html .= str_ireplace("\r\n", "<br>", $fwheader);
+                }
+                
+                if(strlen($body) > 0)
+                    $body .= $fwbody;
+                
+                if (strlen($body_html) > 0) 
+                      $body_html .= $fwbody_html;
+                
+            }
+            else {
                 debugLog("Unable to open item with id $orig for forward/reply");
             }
         }
@@ -2576,7 +2615,10 @@ class BackendICS {
         }
 
         mapi_setprops($mapimessage, array(PR_BODY => $body));
-
+        
+        if(strlen($body_html) > 0){
+            mapi_setprops($mapimessage, array(PR_HTML => $body_html));
+        }
         mapi_savechanges($mapimessage);
         mapi_message_submitmessage($mapimessage);
 
@@ -2767,22 +2809,21 @@ class BackendICS {
             $filename = $part->ctype_parameters["name"];
         else if(isset($part->d_parameters["name"]))
             $filename = $part->d_parameters["filename"];
-        else if (isset($part->d_parameters["filename"])) //sending appointment with nokia only filename is set
+        else if (isset($part->d_parameters["filename"])) // sending appointment with nokia & android only filename is set
             $filename = $part->d_parameters["filename"];
-        //Android just puts enconding and filename into content-transfer-encoding
-        //filename is something like filename="filename.extension (yes " is only once)
-        //meeting requests are sent the same way, there is text/calendar somewhere inside content-transfer-encoding
-        else if (isset($part->headers['content-transfer-encoding']) && strpos($part->headers['content-transfer-encoding'], 'base64')) {
-            $pos = strpos($part->headers['content-transfer-encoding'], "filename=");
-            $filename = ($pos !== false) ? substr($part->headers['content-transfer-encoding'], ($pos + 10)) : "untitled";
+        else
+            $filename = "untitled";
+            
+        // Android just doesn't send content-type, so mimeDecode doesn't performs base64 decoding
+        // on meeting requests text/calendar somewhere inside content-transfer-encoding
+        if (isset($part->headers['content-transfer-encoding']) && strpos($part->headers['content-transfer-encoding'], 'base64')) {
             if (strpos($part->headers['content-transfer-encoding'], 'text/calendar') !== false) {
                 $part->ctype_primary = 'text';
                 $part->ctype_secondary = 'calendar';
             }
-            $part->body = base64_decode($part->body);
+            if (!isset($part->headers['content-type']))
+                $part->body = base64_decode($part->body);
         }
-        else
-            $filename = "untitled";
 
         // Set filename and attachment type
         mapi_setprops($attach, array(PR_ATTACH_LONG_FILENAME => u2w($filename), PR_ATTACH_METHOD => ATTACH_BY_VALUE));
