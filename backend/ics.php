@@ -2458,7 +2458,7 @@ class BackendICS {
                 }
                 // html body
                 elseif($part->ctype_primary == "text" && $part->ctype_secondary == "html") {
-                    $body_html = u2w($part->body);
+                	$body_html .= u2w($part->body);
                 }
                 // TNEF
                 elseif($part->ctype_primary == "ms-tnef" || $part->ctype_secondary == "ms-tnef") {
