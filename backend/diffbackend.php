@@ -353,12 +353,19 @@ class ExportChangesDiff extends DiffState {
 
             //do nothing if it is a dummy folder
             if ($this->_folderid != SYNC_FOLDER_TYPE_DUMMY) {
-                // Get our lists - syncstate (old)  and msglist (new)
-                $msglist = $this->_backend->GetMessageList($this->_folderid, $cutoffdate);
-                if($msglist === false)
-                    return false;
 
-                $this->_changes = GetDiff($this->_syncstate, $msglist);
+                // on ping: check if backend supports alternative PING mechanism & use it
+                if ($folderid === false && $this->_flags == BACKEND_DISCARD_DATA && $this->_backend->AlterPing()) {
+                    $this->_changes = $this->_backend->AlterPingChanges($this->_folderid, $this->_syncstate);
+                }
+                else {
+                    // Get our lists - syncstate (old)  and msglist (new)
+                    $msglist = $this->_backend->GetMessageList($this->_folderid, $cutoffdate);
+                    if($msglist === false)
+                        return false;
+    
+                    $this->_changes = GetDiff($this->_syncstate, $msglist);
+                }
             }
 
             debugLog("Found " . count($this->_changes) . " message changes");
@@ -704,6 +711,14 @@ class BackendDiff {
      */
     function setDeviceRWStatus($user, $pass, $devid, $status) {
         return false;
+    }
+    
+    function AlterPing() {
+        return false;
+    }
+    
+    function AlterPingChanges($folderid, &$syncstate) {
+        return array();        
     }
 }
 ?>

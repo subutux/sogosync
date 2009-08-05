@@ -101,6 +101,29 @@ function w2ui($string) { return windows1252_to_utf8($string, "//TRANSLIT"); }
 function u2wi($string) { return utf8_to_windows1252($string, "//TRANSLIT"); }
 
 /**
+ * Truncate an UTF-8 encoded sting correctly
+ * 
+ * If it's not possible to truncate properly, an empty string is returned 
+ *
+ * @param string $string - the string
+ * @param string $length - position where string should be cut
+ * @return string truncated string
+ */ 
+function utf8_truncate($string, $length) {
+    if (strlen($string) <= $length) 
+        return $string;
+    
+    while($length >= 0) {
+        if ((ord($string[$length]) < 0x80) || (ord($string[$length]) >= 0xC0))
+            return substr($string, 0, $length);
+        
+        $length--;
+    }
+    return "";
+}
+
+
+/**
  * Build an address string from the components
  *
  * @param string $street - the street

@@ -306,7 +306,14 @@ class BackendIMAP extends BackendDiff {
 
         $messages = array();
         $this->imap_reopenFolder($folderid, true);
-        $overviews = @imap_fetch_overview($this->_mbox, "1:*");
+        
+        $sequence = "1:*";
+        if ($cutoffdate > 0) {
+            $search = @imap_search($this->_mbox, "SINCE ". date("d-M-Y", $cutoffdate));
+            if ($search !== false)
+                $sequence = implode(",", $search);
+        }
+        $overviews = @imap_fetch_overview($this->_mbox, $sequence);
 
         if (!$overviews) {
             debugLog("IMAP-GetMessageList: Failed to retrieve overview");
@@ -596,17 +603,17 @@ class BackendIMAP extends BackendDiff {
             $message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $mail, 'crlf' => "\n", 'charset' => 'utf-8'));
 
             $output = new SyncMail();
-
-            // decode body to truncate it
-            $body = utf8_to_windows1252($this->getBody($message));
+            
+            $body = $this->getBody($message);
+            // truncate body, if requested
             if(strlen($body) > $truncsize) {
-                $body = substr($body, 0, $truncsize);
+                $body = utf8_truncate($body, $truncsize);
                 $output->bodytruncated = 1;
             } else {
                 $body = $body;
                 $output->bodytruncated = 0;
             }
-            $body = str_replace("\n","\r\n", windows1252_to_utf8(str_replace("\r","",$body)));
+            $body = str_replace("\n","\r\n", str_replace("\r","",$body));
 
             $output->bodysize = strlen($body);
             $output->body = $body;
@@ -751,6 +758,40 @@ class BackendIMAP extends BackendDiff {
 
             return ($s1 && $s2 && $s3 && $s4);
         }
+    }
+
+    // new ping mechanism for the IMAP-Backend
+    function AlterPing() {
+        return true;
+    }
+    
+    // returns a changes array using imap_status
+    // if changes occurr default diff engine computes the actual changes  
+    function AlterPingChanges($folderid, &$syncstate) {
+        debugLog("AlterPingChanges on $folderid stat: ". $syncstate);
+        $this->imap_reopenFolder($folderid);
+        
+        // courier-imap only cleares the status cache after checking
+        @imap_check($this->_mbox);
+        
+        $status = imap_status($this->_mbox, $this->_server . str_replace(".", $this->_serverdelimiter, $folderid), SA_ALL);
+        if (!$status) {
+            debugLog("AlterPingChanges: could not stat folder $folderid : ". imap_last_error());
+            return false;  
+        }
+        else {
+            $newstate = "M:". $status->messages ."-R:". $status->recent ."-U:". $status->unseen; 
+
+            // message number is different - change occured
+            if ($syncstate != $newstate) {
+                $syncstate = $newstate;
+                debugLog("AlterPingChanges: Change FOUND!");
+                // build a dummy change
+                return array(array("type" => "fakeChange"));
+            }
+        } 
+
+        return array();  
     }
 
     // ----------------------------------------
