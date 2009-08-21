@@ -22,9 +22,11 @@ class ZPush_ical{
     function extractProps($ical, &$mapiprops) {
         //mapping between partstat in ical and MAPI Meeting Response classes as well as icons
         $aClassMap = array(
-            "ACCEPTED"    => array("class" => "IPM.Schedule.Meeting.Resp.Pos", "icon" => 0x405),
-            "DECLINED"    => array("class" => "IPM.Schedule.Meeting.Resp.Neg", "icon" => 0x406),
-            "TENTATIVE"    => array("class" => "IPM.Schedule.Meeting.Resp.Tent", "icon" => 0x407),
+            "ACCEPTED"          => array("class" => "IPM.Schedule.Meeting.Resp.Pos", "icon" => 0x405),
+            "DECLINED"          => array("class" => "IPM.Schedule.Meeting.Resp.Neg", "icon" => 0x406),
+            "TENTATIVE"         => array("class" => "IPM.Schedule.Meeting.Resp.Tent", "icon" => 0x407),
+            "NEEDS-ACTION"      => array("class" => "IPM.Schedule.Meeting.Request", "icon" => 0x404), //iphone
+            "REQ-PARTICIPANT"   => array("class" => "IPM.Schedule.Meeting.Request", "icon" => 0x404), //nokia
         );
 
         $aical = array_map("rtrim", preg_split("/[\n]/", $ical));
