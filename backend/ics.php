@@ -2106,7 +2106,30 @@ class BackendICS {
 
         return true;
     }
-
+    
+    /**
+     * Checks if the sent policykey matches the latest policykey on the server
+     *
+     * @param string $policykey
+     * @param string $devid
+     *
+     * @return status flag
+     */ 
+	function CheckPolicy($policykey, $devid) {
+	    global $user, $auth_pw;
+	
+	    $status = SYNC_PROVISION_STATUS_SUCCESS;
+	
+	    $user_policykey = $this->getPolicyKey($user, $auth_pw, $devid);
+	
+	    if ($user_policykey != $policykey) {
+	        $status = SYNC_PROVISION_STATUS_POLKEYMISM;
+	    }
+	
+	    if (!$policykey) $policykey = $user_policykey;
+	    return $status;
+	}
+	
     function generatePolicyKey() {
         return mt_rand(1000000000, 9999999999);
     }
@@ -2269,11 +2292,11 @@ class BackendICS {
                     mapi_setprops($this->_defaultstore, array(0x68891040=>$devicesprops[0x68891040]));
                 }
                 else {
-                    debugLog("No device found.");
+                    debugLog("setLastSyncTime: No device found.");
                 }
             }
             else {
-                debugLog("No devices found");
+                debugLog("setLastSyncTime: No devices found");
             }
         }
     }
@@ -2348,7 +2371,7 @@ class BackendICS {
     }
 
     function SendMail($rfc822, $forward = false, $reply = false, $parent = false) {
-        if (WBXML_DEBUG === true)
+        if (WBXML_DEBUG == true)
             debugLog("SendMail: forward: $forward   reply: $reply   parent: $parent\n" . $rfc822);
         
         $mimeParams = array('decode_headers' => false,

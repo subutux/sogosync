@@ -35,6 +35,9 @@
     //Max size of attachments to display inline. Default is 1MB
     define('MAX_EMBEDDED_SIZE', 1048576);
 
+    // Device Provisioning
+    define('PROVISIONING', true);
+    
     // The data providers that we are using (see configuration below)
     $BACKEND_PROVIDER = "BackendICS";
 

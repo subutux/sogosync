@@ -653,6 +653,29 @@ class BackendDiff {
     }
 
     /**
+     * Checks if the sent policykey matches the latest policykey on the server
+     *
+     * @param string $policykey
+     * @param string $devid
+     *
+     * @return status flag
+     */    
+    function CheckPolicy($policykey, $devid) {
+        global $user, $auth_pw;
+    
+        $status = SYNC_PROVISION_STATUS_SUCCESS;
+    
+        $user_policykey = $this->getPolicyKey($user, $auth_pw, $devid);
+    
+        if ($user_policykey != $policykey) {
+            $status = SYNC_PROVISION_STATUS_POLKEYMISM;
+        }
+    
+        if (!$policykey) $policykey = $user_policykey;
+        return $status;
+    }
+        
+    /**
      * Return a policy key for given user with a given device id.
      * If there is no combination user-deviceid available, a new key
      * should be generated.

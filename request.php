@@ -666,8 +666,10 @@ function HandleSync($backend, $protocolversion, $devid) {
                             break;
                         $n++;
 
-                        if($n >= $collection["maxitems"])
+                        if($n >= $collection["maxitems"]) {
+                        	debugLog("Exported maxItems of messages: ". $collection["maxitems"] . " - more available");
                             break;
+                        }
 
                     }
                     $encoder->endTag();
@@ -910,11 +912,13 @@ function HandlePing($backend, $devid) {
     // Wait for something to happen
     for($n=0;$n<$lifetime / $timeout; $n++ ) {
         //check the remote wipe status
-        $rwstatus = $backend->getDeviceRWStatus($user, $auth_pw, $devid);
-        if ($rwstatus == SYNC_PROVISION_RWSTATUS_PENDING || $rwstatus == SYNC_PROVISION_RWSTATUS_WIPED) {
-            //return 7 because it forces folder sync
-            $pingstatus = 7;
-            break;
+        if (PROVISIONING === true) {
+	        $rwstatus = $backend->getDeviceRWStatus($user, $auth_pw, $devid);
+	        if ($rwstatus == SYNC_PROVISION_RWSTATUS_PENDING || $rwstatus == SYNC_PROVISION_RWSTATUS_WIPED) {
+	            //return 7 because it forces folder sync
+	            $pingstatus = 7;
+	            break;
+	        }
         }
 
         if(count($collections) == 0) {
@@ -1247,20 +1251,6 @@ function HandleFolderUpdate($backend, $protocolversion) {
     return HandleFolderCreate($backend, $protocolversion);
 }
 
-function HandlePolicy($backend, $devid, $protocolversion) {
-    global $user, $auth_pw, $policykey;
-
-    $status = SYNC_PROVISION_STATUS_SUCCESS;
-
-    $user_policykey = $backend->getPolicyKey($user, $auth_pw, $devid);
-
-    if ($user_policykey != $policykey) {
-        $status = SYNC_PROVISION_STATUS_POLKEYMISM;
-    }
-
-    if (!$policykey) $policykey = $user_policykey;
-    return $status;
-}
 
 function HandleProvision($backend, $devid, $protocolversion) {
     global $user, $auth_pw, $policykey;
@@ -1522,19 +1512,6 @@ function HandleSearch($backend, $devid, $protocolversion) {
 }
 
 function HandleRequest($backend, $cmd, $devid, $protocolversion) {
-
-    $status = HandlePolicy($backend, $devid, $protocolversion);
-    if ($cmd != 'Ping' && $cmd != 'Provision' ) {
-        if ($status != SYNC_PROVISION_STATUS_SUCCESS) {
-            header("HTTP/1.1 449 Retry after sending a PROVISION command");
-            header("MS-Server-ActiveSync: 6.5.7638.1");
-            header("MS-ASProtocolVersions: 1.0,2.0,2.1,2.5");
-            header("MS-ASProtocolCommands: Sync,SendMail,SmartForward,SmartReply,GetAttachment,GetHierarchy,CreateCollection,DeleteCollection,MoveCollection,FolderSync,FolderCreate,FolderDelete,FolderUpdate,MoveItems,GetItemEstimate,MeetingResponse,Provision,ResolveRecipients,ValidateCert,Search,Ping");
-            header("Cache-Control: private");
-            return 1;
-        }
-    }
-
     switch($cmd) {
         case 'Sync':
             $status = HandleSync($backend, $protocolversion, $devid);
@@ -1591,7 +1568,7 @@ function HandleRequest($backend, $cmd, $devid, $protocolversion) {
             $status = HandlePing($backend, $devid, $protocolversion);
             break;
         case 'Provision':
-            $status = HandleProvision($backend, $devid, $protocolversion);
+            $status = (PROVISIONING === true) ? HandleProvision($backend, $devid, $protocolversion) : false;
             break;
         case 'Search':
             $status = HandleSearch($backend, $devid, $protocolversion);

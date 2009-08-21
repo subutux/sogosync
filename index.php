@@ -40,6 +40,8 @@ if(!isset($_SERVER['PHP_AUTH_PW'])) {
     header("HTTP/1.1 401 Unauthorized");
     print("Access denied. Please send authorisation information");
     debugLog("Access denied: no password sent.");
+	debugLog("end");
+	debugLog("--------");
     return;
 }
 
@@ -127,6 +129,8 @@ if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false  && !$policykey)
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     print("Access denied. Username or password incorrect.");
     debugLog("Access denied: backend logon failed.");
+    debugLog("end");
+    debugLog("--------");
     return;
 }
 
@@ -137,6 +141,22 @@ if($backend->Setup($user, $devid, $protocolversion) == false) {
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     print("Access denied or user '$user' unknown.");
     debugLog("Access denied: backend setup failed.");
+    debugLog("end");
+    debugLog("--------");
+    return;
+}
+
+// check policy header 
+if (PROVISIONING === true && $_SERVER["REQUEST_METHOD"] != 'OPTIONS' && $cmd != 'Ping' && $cmd != 'Provision' && 
+    $backend->CheckPolicy($policykey, $devid) != SYNC_PROVISION_STATUS_SUCCESS) {
+    header("HTTP/1.1 449 Retry after sending a PROVISION command");
+    header("MS-Server-ActiveSync: 6.5.7638.1");
+    header("MS-ASProtocolVersions: 1.0,2.0,2.1,2.5");
+    header("MS-ASProtocolCommands: Sync,SendMail,SmartForward,SmartReply,GetAttachment,GetHierarchy,CreateCollection,DeleteCollection,MoveCollection,FolderSync,FolderCreate,FolderDelete,FolderUpdate,MoveItems,GetItemEstimate,MeetingResponse,Provision,ResolveRecipients,ValidateCert,Search,Ping");
+    header("Cache-Control: private");
+    debugLog("POST cmd $cmd denied: Retry after sending a PROVISION command");
+    debugLog("end");
+    debugLog("--------");
     return;
 }
 
