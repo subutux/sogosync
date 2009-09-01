@@ -1717,14 +1717,18 @@ class PHPHierarchyImportProxy {
     
         // try to find a correct type if not one of the default folders
         if ($folder->type == SYNC_FOLDER_TYPE_OTHER && isset($folderprops[PR_CONTAINER_CLASS])) {
-            if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Task")
-                $folder->type = SYNC_FOLDER_TYPE_TASK;
+            if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Note")
+                $folder->type = SYNC_FOLDER_TYPE_USER_MAIL;   
+        	if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Task")
+                $folder->type = SYNC_FOLDER_TYPE_USER_TASK;
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Appointment")
-                $folder->type = SYNC_FOLDER_TYPE_APPOINTMENT;
+                $folder->type = SYNC_FOLDER_TYPE_USER_APPOINTMENT;
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Contact")
-                $folder->type = SYNC_FOLDER_TYPE_CONTACT;
+                $folder->type = SYNC_FOLDER_TYPE_USER_CONTACT;
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.StickyNote")
-                $folder->type = SYNC_FOLDER_TYPE_NOTE;                        
+                $folder->type = SYNC_FOLDER_TYPE_USER_NOTE;   
+            if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Journal")
+                $folder->type = SYNC_FOLDER_TYPE_USER_JOURNAL;   
         }
 
         return $folder;
