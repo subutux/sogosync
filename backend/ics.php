@@ -2507,6 +2507,13 @@ class BackendICS {
                     $zpical = new ZPush_ical($this->_defaultstore);
                     $mapiprops = array();
                     $zpical->extractProps($part->body, $mapiprops);
+
+                    // iPhone sends a second ICS which we ignore if we can
+                    if (!isset($mapiprops[PR_MESSAGE_CLASS]) && strlen(trim($body)) == 0) {
+                    	debugLog("Secondary iPhone response is being ignored!! Mail dropped!");
+                    	return true;
+                    }
+                        
                     if (is_array($mapiprops) && !empty($mapiprops)) {
                         mapi_setprops($mapimessage, $mapiprops);
                     }

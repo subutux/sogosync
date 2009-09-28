@@ -105,7 +105,9 @@ class ZPush_ical{
                                         }
                                     }
                                 }
-                                if (isset($partstat) && isset($aClassMap[$partstat])) {
+                                if (isset($partstat) && isset($aClassMap[$partstat]) &&
+                                 
+                                   (!isset($mapiprops[PR_MESSAGE_CLASS]) || $mapiprops[PR_MESSAGE_CLASS] == "IPM.Schedule.Meeting.Request")) {
                                     $mapiprops[PR_MESSAGE_CLASS] = $aClassMap[$partstat]['class'];
                                     $mapiprops[PR_ICON_INDEX] = $aClassMap[$partstat]['icon'];
                                 }
