@@ -655,12 +655,17 @@ class ImportContentsChangesICS extends MAPIMapping {
 
         $this->_setPropsInMAPI($mapimessage, $appointment, $this->_appointmentmapping);
 
-        // Set commonstart/commonend to start/end and remindertime to start and duration
+        //sensitivity is not enough to mark an appointment as private, so we use another mapi tag
+        if (isset($appointment->sensitivity) && $appointment->sensitivity == 0) $private = false;
+        else  $private = true;
+
+        // Set commonstart/commonend to start/end and remindertime to start, duration and private
         mapi_setprops($mapimessage, array(
             $this->_getPropIDFromString("PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8516") =>  $appointment->starttime,
             $this->_getPropIDFromString("PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8517") =>  $appointment->endtime,
             $this->_getPropIDFromString("PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8502") =>  $appointment->starttime,
-            $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8213") =>     $duration
+            $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8213") =>     $duration,
+            $this->_getPropIDFromString("PT_BOOLEAN:{00062008-0000-0000-C000-000000000046}:0x8506") =>  $private,
             ));
 
         // Set named prop 8510, unknown property, but enables deleting a single occurrence of a recurring
@@ -1714,11 +1719,11 @@ class PHPHierarchyImportProxy {
             $folder->parentid = bin2hex($folderprops[PR_PARENT_SOURCE_KEY]);
         $folder->displayname = w2u($folderprops[PR_DISPLAY_NAME]);
         $folder->type = $this->_getFolderType($folderprops[PR_ENTRYID]);
-    
+
         // try to find a correct type if not one of the default folders
         if ($folder->type == SYNC_FOLDER_TYPE_OTHER && isset($folderprops[PR_CONTAINER_CLASS])) {
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Note")
-                $folder->type = SYNC_FOLDER_TYPE_USER_MAIL;   
+                $folder->type = SYNC_FOLDER_TYPE_USER_MAIL;
         	if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Task")
                 $folder->type = SYNC_FOLDER_TYPE_USER_TASK;
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Appointment")
@@ -1726,9 +1731,9 @@ class PHPHierarchyImportProxy {
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Contact")
                 $folder->type = SYNC_FOLDER_TYPE_USER_CONTACT;
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.StickyNote")
-                $folder->type = SYNC_FOLDER_TYPE_USER_NOTE;   
+                $folder->type = SYNC_FOLDER_TYPE_USER_NOTE;
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Journal")
-                $folder->type = SYNC_FOLDER_TYPE_USER_JOURNAL;   
+                $folder->type = SYNC_FOLDER_TYPE_USER_JOURNAL;
         }
 
         return $folder;
@@ -2089,7 +2094,7 @@ class BackendICS {
         //do not update last sync time on ping and provision
         if (isset($cmd) && $cmd != '' && $cmd != 'Ping' && $cmd != 'Provision' )
             $this->setLastSyncTime();
-    	
+
         // publish free busy time after finishing the synchronization process
         // update if the calendar folder received incoming changes
         $storeprops = mapi_getprops($this->_defaultstore, array(PR_USER_ENTRYID));
@@ -2110,7 +2115,7 @@ class BackendICS {
 
         return true;
     }
-    
+
     /**
      * Checks if the sent policykey matches the latest policykey on the server
      *
@@ -2118,22 +2123,22 @@ class BackendICS {
      * @param string $devid
      *
      * @return status flag
-     */ 
+     */
 	function CheckPolicy($policykey, $devid) {
 	    global $user, $auth_pw;
-	
+
 	    $status = SYNC_PROVISION_STATUS_SUCCESS;
-	
+
 	    $user_policykey = $this->getPolicyKey($user, $auth_pw, $devid);
-	
+
 	    if ($user_policykey != $policykey) {
 	        $status = SYNC_PROVISION_STATUS_POLKEYMISM;
 	    }
-	
+
 	    if (!$policykey) $policykey = $user_policykey;
 	    return $status;
 	}
-	
+
     function generatePolicyKey() {
         return mt_rand(1000000000, 9999999999);
     }
@@ -2377,7 +2382,7 @@ class BackendICS {
     function SendMail($rfc822, $forward = false, $reply = false, $parent = false) {
         if (WBXML_DEBUG == true)
             debugLog("SendMail: forward: $forward   reply: $reply   parent: $parent\n" . $rfc822);
-        
+
         $mimeParams = array('decode_headers' => false,
                             'decode_bodies' => true,
                             'include_bodies' => true,
@@ -2464,21 +2469,21 @@ class BackendICS {
 
         mapi_message_modifyrecipients($mapimessage, 0, $recips);
 
-        // Loop through message subparts. 
+        // Loop through message subparts.
         $body = "";
         $body_html = "";
         if($message->ctype_primary == "multipart" && ($message->ctype_secondary == "mixed" || $message->ctype_secondary == "alternative")) {
         	$mparts = $message->parts;
             for($i=0; $i<count($mparts); $i++) {
             	$part = $mparts[$i];
-            	
+
 	        	// palm pre & iPhone send forwarded messages in another subpart which are also parsed
 	        	if($part->ctype_primary == "multipart" && ($part->ctype_secondary == "mixed" || $part->ctype_secondary == "alternative"  || $part->ctype_secondary == "related")) {
-	        		foreach($part->parts as $spart) 
+	        		foreach($part->parts as $spart)
 	        			$mparts[] = $spart;
 	        		continue;
 	        	}
-            	
+
             	// standard body
             	if($part->ctype_primary == "text" && $part->ctype_secondary == "plain" && isset($part->body) && (!isset($part->disposition) || $part->disposition != "attachment")) {
                         $body .= u2w($part->body); // assume only one text body
@@ -2513,7 +2518,7 @@ class BackendICS {
                     	debugLog("Secondary iPhone response is being ignored!! Mail dropped!");
                     	return true;
                     }
-                        
+
                     if (is_array($mapiprops) && !empty($mapiprops)) {
                         mapi_setprops($mapimessage, $mapiprops);
                     }
@@ -2532,7 +2537,7 @@ class BackendICS {
             debugLog("only html body sent, transformed into plain text");
             $body = strip_tags($body_html);
         }
-        
+
         if($forward)
             $orig = $forward;
         if($reply)
@@ -2568,7 +2573,7 @@ class BackendICS {
                         break;
                     $fwbody_html .= $data;
                 }
-                                
+
                 if($forward) {
                     // During a forward, we have to add the forward header ourselves. This is because
                     // normally the forwarded message is added as an attachment. However, we don't want this
@@ -2591,19 +2596,19 @@ class BackendICS {
                         $fwheader .= "Subject: " . $fwmessageprops[PR_SUBJECT] . "\r\n";
                     $fwheader .= "\r\n";
 
-                    
+
                     // add fwheader to body and body_html
                     $body .= $fwheader;
                     if (strlen($body_html) > 0)
                         $body_html .= str_ireplace("\r\n", "<br>", $fwheader);
                 }
-                
+
                 if(strlen($body) > 0)
                     $body .= $fwbody;
-                
-                if (strlen($body_html) > 0) 
+
+                if (strlen($body_html) > 0)
                       $body_html .= $fwbody_html;
-                
+
             }
             else {
                 debugLog("Unable to open item with id $orig for forward/reply");
@@ -2649,7 +2654,7 @@ class BackendICS {
         }
 
         mapi_setprops($mapimessage, array(PR_BODY => $body));
-        
+
         if(strlen($body_html) > 0){
             mapi_setprops($mapimessage, array(PR_HTML => $body_html));
         }
@@ -2847,7 +2852,7 @@ class BackendICS {
             $filename = $part->d_parameters["filename"];
         else
             $filename = "untitled";
-            
+
         // Android just doesn't send content-type, so mimeDecode doesn't performs base64 decoding
         // on meeting requests text/calendar somewhere inside content-transfer-encoding
         if (isset($part->headers['content-transfer-encoding']) && strpos($part->headers['content-transfer-encoding'], 'base64')) {
