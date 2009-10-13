@@ -1087,7 +1087,7 @@ class ImportHierarchyChangesICS  {
     }
 
     function ImportFolderDeletion($id, $parent) {
-        return mapi_importhierarchychanges_importfolderdeletion ( array ($id) );
+        return mapi_importhierarchychanges_importfolderdeletion ($this->importer, 0, array (PR_SOURCE_KEY => hex2bin($id)) );
     }
 
     function GetState() {

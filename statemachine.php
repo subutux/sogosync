@@ -50,7 +50,7 @@ class StateMachine {
             return "";
 
         // Check if synckey is allowed
-        if(!preg_match('/^\{([0-9A-Za-z-]+)\}([0-9]+)$/', $synckey, $matches)) {
+        if(!preg_match('/^s{0,1}\{([0-9A-Za-z-]+)\}([0-9]+)$/', $synckey, $matches)) {
             return false;
         }
 
@@ -64,7 +64,7 @@ class StateMachine {
             return false;
 
         while($entry = readdir($dir)) {
-            if(preg_match('/^\{([0-9A-Za-z-]+)\}([0-9]+)$/', $entry, $matches)) {
+            if(preg_match('/^s{0,1}\{([0-9A-Za-z-]+)\}([0-9]+)$/', $entry, $matches)) {
                 if($matches[1] == $guid && $matches[2] < $n) {
                     unlink(BASE_PATH . STATE_DIR . "/$entry");
                 }
@@ -85,7 +85,7 @@ class StateMachine {
         if(!isset($synckey) || $synckey == "0") {
             return "{" . $this->uuid() . "}" . "1";
         } else {
-            if(preg_match('/^\{([a-fA-F0-9-]+)\}([0-9]+)$/', $synckey, $matches)) {
+            if(preg_match('/^s{0,1}\{([a-fA-F0-9-]+)\}([0-9]+)$/', $synckey, $matches)) {
                 $n = $matches[2];
                 $n++;
                 return "{" . $matches[1] . "}" . $n;
@@ -96,7 +96,7 @@ class StateMachine {
     // Writes the sync state to a new synckey
     function setSyncState($synckey, $syncstate) {
         // Check if synckey is allowed
-        if(!preg_match('/^\{[0-9A-Za-z-]+\}[0-9]+$/', $synckey)) {
+        if(!preg_match('/^s{0,1}\{[0-9A-Za-z-]+\}[0-9]+$/', $synckey)) {
             return false;
         }
 
