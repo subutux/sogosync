@@ -106,11 +106,18 @@ class ZPush_ical{
                                     }
                                 }
                                 if (isset($partstat) && isset($aClassMap[$partstat]) &&
-                                 
+
                                    (!isset($mapiprops[PR_MESSAGE_CLASS]) || $mapiprops[PR_MESSAGE_CLASS] == "IPM.Schedule.Meeting.Request")) {
                                     $mapiprops[PR_MESSAGE_CLASS] = $aClassMap[$partstat]['class'];
                                     $mapiprops[PR_ICON_INDEX] = $aClassMap[$partstat]['icon'];
                                 }
+                                // START ADDED dw2412 to support meeting requests on HTC Android Mail App
+                                elseif (isset($role) && isset($aClassMap[$role]) &&
+                                   (!isset($mapiprops[PR_MESSAGE_CLASS]) || $mapiprops[PR_MESSAGE_CLASS] == "IPM.Schedule.Meeting.Request")) {
+                                    $mapiprops[PR_MESSAGE_CLASS] = $aClassMap[$role]['class'];
+                                    $mapiprops[PR_ICON_INDEX] = $aClassMap[$role]['icon'];
+                                }
+                                // START ADDED dw2412 to support meeting requests on HTC Android Mail App
                                 $data         = str_replace ("MAILTO:", "", $data);
                                 $attendee[] = array ('name' => stripslashes($cn), 'email' => stripslashes($data));
                                 break;
