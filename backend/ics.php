@@ -1455,9 +1455,11 @@ class PHPContentsImportProxy extends MAPIMapping {
 
         // Override 'body' for truncation
         $body = mapi_openproperty($mapimessage, PR_BODY);
-        if(strlen($body) > $truncsize) {
+        $bodysize = strlen($body);
+        if($bodysize > $truncsize) {
             $body = substr($body, 0, $truncsize);
             $message->bodytruncated = 1;
+            $message->bodysize = $bodysize;
         } else {
             $message->bodytruncated = 0;
         }
@@ -1724,7 +1726,7 @@ class PHPHierarchyImportProxy {
         if ($folder->type == SYNC_FOLDER_TYPE_OTHER && isset($folderprops[PR_CONTAINER_CLASS])) {
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Note")
                 $folder->type = SYNC_FOLDER_TYPE_USER_MAIL;
-        	if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Task")
+            if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Task")
                 $folder->type = SYNC_FOLDER_TYPE_USER_TASK;
             if ($folderprops[PR_CONTAINER_CLASS] == "IPF.Appointment")
                 $folder->type = SYNC_FOLDER_TYPE_USER_APPOINTMENT;
@@ -2090,7 +2092,7 @@ class BackendICS {
     }
 
     function Logoff() {
-    	global $cmd;
+        global $cmd;
         //do not update last sync time on ping and provision
         if (isset($cmd) && $cmd != '' && $cmd != 'Ping' && $cmd != 'Provision' )
             $this->setLastSyncTime();
@@ -2124,20 +2126,20 @@ class BackendICS {
      *
      * @return status flag
      */
-	function CheckPolicy($policykey, $devid) {
-	    global $user, $auth_pw;
+    function CheckPolicy($policykey, $devid) {
+        global $user, $auth_pw;
 
-	    $status = SYNC_PROVISION_STATUS_SUCCESS;
+        $status = SYNC_PROVISION_STATUS_SUCCESS;
 
-	    $user_policykey = $this->getPolicyKey($user, $auth_pw, $devid);
+        $user_policykey = $this->getPolicyKey($user, $auth_pw, $devid);
 
-	    if ($user_policykey != $policykey) {
-	        $status = SYNC_PROVISION_STATUS_POLKEYMISM;
-	    }
+        if ($user_policykey != $policykey) {
+            $status = SYNC_PROVISION_STATUS_POLKEYMISM;
+        }
 
-	    if (!$policykey) $policykey = $user_policykey;
-	    return $status;
-	}
+        if (!$policykey) $policykey = $user_policykey;
+        return $status;
+    }
 
     function generatePolicyKey() {
         return mt_rand(1000000000, 9999999999);
@@ -2473,24 +2475,24 @@ class BackendICS {
         $body = "";
         $body_html = "";
         if($message->ctype_primary == "multipart" && ($message->ctype_secondary == "mixed" || $message->ctype_secondary == "alternative")) {
-        	$mparts = $message->parts;
+            $mparts = $message->parts;
             for($i=0; $i<count($mparts); $i++) {
-            	$part = $mparts[$i];
+                $part = $mparts[$i];
 
-	        	// palm pre & iPhone send forwarded messages in another subpart which are also parsed
-	        	if($part->ctype_primary == "multipart" && ($part->ctype_secondary == "mixed" || $part->ctype_secondary == "alternative"  || $part->ctype_secondary == "related")) {
-	        		foreach($part->parts as $spart)
-	        			$mparts[] = $spart;
-	        		continue;
-	        	}
+                // palm pre & iPhone send forwarded messages in another subpart which are also parsed
+                if($part->ctype_primary == "multipart" && ($part->ctype_secondary == "mixed" || $part->ctype_secondary == "alternative"  || $part->ctype_secondary == "related")) {
+                    foreach($part->parts as $spart)
+                        $mparts[] = $spart;
+                    continue;
+                }
 
-            	// standard body
-            	if($part->ctype_primary == "text" && $part->ctype_secondary == "plain" && isset($part->body) && (!isset($part->disposition) || $part->disposition != "attachment")) {
+                // standard body
+                if($part->ctype_primary == "text" && $part->ctype_secondary == "plain" && isset($part->body) && (!isset($part->disposition) || $part->disposition != "attachment")) {
                         $body .= u2w($part->body); // assume only one text body
                 }
                 // html body
                 elseif($part->ctype_primary == "text" && $part->ctype_secondary == "html") {
-                	$body_html .= u2w($part->body);
+                    $body_html .= u2w($part->body);
                 }
                 // TNEF
                 elseif($part->ctype_primary == "ms-tnef" || $part->ctype_secondary == "ms-tnef") {
@@ -2515,8 +2517,8 @@ class BackendICS {
 
                     // iPhone sends a second ICS which we ignore if we can
                     if (!isset($mapiprops[PR_MESSAGE_CLASS]) && strlen(trim($body)) == 0) {
-                    	debugLog("Secondary iPhone response is being ignored!! Mail dropped!");
-                    	return true;
+                        debugLog("Secondary iPhone response is being ignored!! Mail dropped!");
+                        return true;
                     }
 
                     if (is_array($mapiprops) && !empty($mapiprops)) {
@@ -2524,7 +2526,7 @@ class BackendICS {
                     }
                     else debugLog("ICAL: Mapi props array was empty");
                 }
-				// any other type, store as attachment
+                // any other type, store as attachment
                 else
                     $this->_storeAttachment($mapimessage, $part);
             }
