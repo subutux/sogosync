@@ -241,7 +241,7 @@ function HandleFolderSync($backend, $protocolversion) {
                     // remove folder from the folderflags array
                     if (($sid = array_search($serverid, $seenfolders)) !== false) {
                         unset($seenfolders[$sid]);
-                        $seenfolders = array_values($seenfolders);    
+                        $seenfolders = array_values($seenfolders);
                     }
                     break;
             }
@@ -302,7 +302,7 @@ function HandleFolderSync($backend, $protocolversion) {
                 	else {
                         $encoder->startTag(SYNC_FOLDERHIERARCHY_ADD);
                         $seenfolders[] = $folder->serverid;
-                    }                  
+                    }
                     $folder->encode($encoder);
                     $encoder->endTag();
                 }
@@ -319,8 +319,8 @@ function HandleFolderSync($backend, $protocolversion) {
                     // remove folder from the folderflags array
                     if (($sid = array_search($folder, $seenfolders)) !== false) {
                         unset($seenfolders[$sid]);
-                        $seenfolders = array_values($seenfolders);    
-                    }                 
+                        $seenfolders = array_values($seenfolders);
+                    }
                 }
             }
         }
@@ -1120,14 +1120,14 @@ function HandleFolderCreate($backend, $protocolversion) {
 	        if(!$decoder->getElementEndTag())
 	            return false;
 	    }
-	
+
 	    // Displayname
 	    if(!$decoder->getElementStartTag(SYNC_FOLDERHIERARCHY_DISPLAYNAME))
 	        return false;
 	    $displayname = $decoder->getElementContent();
 	    if(!$decoder->getElementEndTag())
 	        return false;
-	
+
 	    // Type
 	    $type = false;
 	    if($decoder->getElementStartTag(SYNC_FOLDERHIERARCHY_TYPE)) {
@@ -1148,7 +1148,7 @@ function HandleFolderCreate($backend, $protocolversion) {
     // additional information about already seen folders
     $seenfolders = unserialize($statemachine->getSyncState("s".$synckey));
     if (!$seenfolders) $seenfolders = array();
-    
+
     // Configure importer with last state
     $importer = $backend->GetHierarchyImporter();
     $importer->Config($syncstate);
@@ -1161,12 +1161,12 @@ function HandleFolderCreate($backend, $protocolversion) {
     	// delete folder
     	$deletedstat = $importer->ImportFolderDeletion($serverid, 0);
     }
-                   
+
     $encoder->startWBXML();
     if ($create) {
     	// add folder id to the seen folders
         $seenfolders[] = $serverid;
-        
+
         $encoder->startTag(SYNC_FOLDERHIERARCHY_FOLDERCREATE);
         {
             {
@@ -1218,20 +1218,20 @@ function HandleFolderCreate($backend, $protocolversion) {
             }
             $encoder->endTag();
         }
-        
+
         // remove folder from the folderflags array
         if (($sid = array_search($serverid, $seenfolders)) !== false) {
             unset($seenfolders[$sid]);
             $seenfolders = array_values($seenfolders);
-            debugLog("deleted from seenfolders: ". $serverid);    
+            debugLog("deleted from seenfolders: ". $serverid);
         }
-    }   
+    }
 
     $encoder->endTag();
     // Save the sync state for the next time
     $statemachine->setSyncState($newsynckey, $importer->GetState());
     $statemachine->setSyncState("s".$newsynckey, serialize($seenfolders));
-    
+
     return true;
 }
 
@@ -1474,6 +1474,8 @@ function HandleSearch($backend, $devid, $protocolversion) {
     global $zpushdtd;
     global $input, $output;
 
+    $searchrange = '0';
+
     $decoder = new WBXMLDecoder($input, $zpushdtd);
     $encoder = new WBXMLEncoder($output, $zpushdtd);
 
@@ -1523,7 +1525,7 @@ function HandleSearch($backend, $devid, $protocolversion) {
         return false;
     }
     //get search results from backend
-    $rows = $backend->getSearchResults($searchquery);
+    $rows = $backend->getSearchResults($searchquery, $searchrange);
 
     $encoder->startWBXML();
 
@@ -1541,9 +1543,8 @@ function HandleSearch($backend, $devid, $protocolversion) {
                 $encoder->endTag();
 
                 if (is_array($rows) && !empty($rows)) {
-                    $searchtotal = count($rows);
-                    $searchrange = '0';
-                    if ($searchtotal) $searchrange .= "-".($searchtotal - 1);
+                    $searchrange = $rows['range'];
+                    unset($rows['range']);
                     foreach ($rows as $u) {
                         $encoder->startTag(SYNC_SEARCH_RESULT);
                             $encoder->startTag(SYNC_SEARCH_PROPERTIES);
@@ -1552,8 +1553,24 @@ function HandleSearch($backend, $devid, $protocolversion) {
                                 $encoder->content($u["fullname"]);
                                 $encoder->endTag();
 
+                                $encoder->startTag(SYNC_GAL_PHONE);
+                                $encoder->content($u["businessphone"]);
+                                $encoder->endTag();
+
                                 $encoder->startTag(SYNC_GAL_ALIAS);
                                 $encoder->content($u["username"]);
+                                $encoder->endTag();
+
+                                //it's not possible not get first and last name of an user
+                                //from the gab and user functions, so we just set fullname
+                                //to lastname and leave firstname empty because nokia needs
+                                //first and lastname in order to display the search result
+                                $encoder->startTag(SYNC_GAL_FIRSTNAME);
+                                $encoder->content("");
+                                $encoder->endTag();
+
+                                $encoder->startTag(SYNC_GAL_LASTNAME);
+                                $encoder->content($u["fullname"]);
                                 $encoder->endTag();
 
                                 $encoder->startTag(SYNC_GAL_EMAILADDRESS);
@@ -1568,7 +1585,7 @@ function HandleSearch($backend, $devid, $protocolversion) {
                     $encoder->endTag();
 
                     $encoder->startTag(SYNC_SEARCH_TOTAL);
-                    $encoder->content($searchtotal);
+                    $encoder->content(count($rows));
                     $encoder->endTag();
                 }
 

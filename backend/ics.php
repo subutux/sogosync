@@ -2314,7 +2314,7 @@ class BackendICS {
         }
     }
 
-    function getSearchResults($searchquery){
+    function getSearchResults($searchquery, $searchrange){
         // only return users from who the displayName or the username starts with $name
         //TODO: use PR_ANR for this restriction instead of PR_DISPLAY_NAME and PR_ACCOUNT
         $addrbook = mapi_openaddressbook($this->_session);
@@ -2323,23 +2323,35 @@ class BackendICS {
 
         $table = mapi_folder_getcontentstable($ab_dir);
         $restriction = $this->_getSearchRestriction(u2w($searchquery));
-
         mapi_table_restrict($table, $restriction);
         mapi_table_sort($table, array(PR_DISPLAY_NAME => TABLE_SORT_ASCEND));
+
+        //range for the search results, default symbian range end is 50, wm 99,
+        //so we'll use that of nokia
+        $rangestart = 0;
+        $rangeend = 50;
+
+        if ($searchrange != '0') {
+            $pos = strpos($searchrange, '-');
+            $rangestart = substr($searchrange, 0, $pos);
+            $rangeend = substr($searchrange, ($pos + 1));
+        }
         $items = array();
-        for ($i = 0; $i < mapi_table_getrowcount($table); $i++) {
-            $user_data = mapi_table_queryrows($table, array(PR_ACCOUNT, PR_DISPLAY_NAME, PR_SMTP_ADDRESS), $i, 1);
-            $item = array();
-            $item["username"] = w2u($user_data[0][PR_ACCOUNT]);
-            $item["fullname"] = w2u($user_data[0][PR_DISPLAY_NAME]);
-            $item["emailaddress"] = w2u($user_data[0][PR_SMTP_ADDRESS]);
-            $item["nameid"] = $searchquery;
-            if (strlen(trim($item["fullname"])) == 0) $item["fullname"] = $item["username"];
 
-            //do not return users without email
-            if (strlen(trim($item["emailaddress"])) == 0) continue;
+        $querycnt = mapi_table_getrowcount($table);
+        //do not return more results as requested in range
+        $querylimit = (($rangeend + 1) < $querycnt) ? ($rangeend + 1) : $querycnt;
+        $items['range'] = $rangestart.'-'.($querylimit - 1);
 
-            array_push($items, $item);
+        $abentries = mapi_table_queryrows($table, array(PR_ACCOUNT, PR_DISPLAY_NAME, PR_SMTP_ADDRESS, PR_BUSINESS_TELEPHONE_NUMBER), $rangestart, $querylimit);
+
+        for ($i = 0; $i < $querylimit; $i++) {
+            $items[$i]["username"] = w2u($abentries[$i][PR_ACCOUNT]);
+            $items[$i]["fullname"] = w2u($abentries[$i][PR_DISPLAY_NAME]);
+            if (strlen(trim($items[$i]["fullname"])) == 0) $items[$i]["fullname"] = $items[$i]["username"];
+            $items[$i]["emailaddress"] = w2u($abentries[$i][PR_SMTP_ADDRESS]);
+            $items[$i]["nameid"] = $searchquery;
+            $items[$i]["businessphone"] = w2u($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]);
         }
         return $items;
     }
