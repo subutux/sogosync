@@ -1881,7 +1881,7 @@ class ExportChangesICS  {
                 debugLog("Exporter configured successfully. " . $changes . " changes ready to sync.");
         }
         else
-            debugLog("Exporter could not be configured: result: " . mapi_last_hresult());
+            debugLog("Exporter could not be configured: result: " . sprintf("%X", mapi_last_hresult()));
 
         return $ret;
     }
@@ -2812,7 +2812,6 @@ class BackendICS {
 
         if ($result == NOERROR){
             $rows = mapi_table_queryallrows($storestables, array(PR_ENTRYID, PR_DEFAULT_STORE, PR_MDB_PROVIDER));
-            $result = mapi_last_hresult();
 
             foreach($rows as $row) {
                 if(isset($row[PR_DEFAULT_STORE]) && $row[PR_DEFAULT_STORE] == true) {
