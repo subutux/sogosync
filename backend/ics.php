@@ -293,7 +293,8 @@ class MAPIMapping {
                     if($mapiprop == PR_MESSAGE_FLAGS)
                         $message->$asprop = $prop[$mapiprop] & 1; // only look at 'read' flag
                     else if($mapiprop == PR_RTF_COMPRESSED)
-                        $message->$asprop = base64_encode($prop[$mapiprop]); // send value base64 encoded
+                        //do not send rtf to the mobile
+                        continue;
                     else if(is_array($prop[$mapiprop]))
                         $message->$asprop = array_map("w2u", $prop[$mapiprop]);
                     else {
