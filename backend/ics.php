@@ -1193,10 +1193,6 @@ class PHPContentsImportProxy extends MAPIMapping {
 
         $this->_getPropsFromMAPI($message, $mapimessage, $this->_contactmapping);
 
-        if(!isset($message->lastname) || strlen($message->lastname) == 0) {
-            $message->lastname = $message->fileas;
-        }
-
         //check the picture
         $haspic = $this->_getPropIDFromString("PT_BOOLEAN:{00062004-0000-0000-C000-000000000046}:0x8015");
         $messageprops = mapi_getprops($mapimessage, array( $haspic ));
