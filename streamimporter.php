@@ -14,16 +14,27 @@
 // We don't support caching changes for messages
 class ImportContentsChangesStream {
     var $_encoder;
+    var $_type;
+    var $_seenObjects;
     
     function ImportContentsChangesStream(&$encoder, $type) {
         $this->_encoder = &$encoder;
         $this->_type = $type;
+        $this->_seenObjects = array();
     }
     
     function ImportMessageChange($id, $message) {
         if(strtolower(get_class($message)) != $this->_type)
             return true; // ignore other types
 
+        // prevent sending the same object twice in one request
+        if (in_array($id, $this->_seenObjects)) {
+        	debugLog("Object $id discarted! Object already sent in this request.");
+        	return true;
+        } 
+        
+        $this->_seenObjects[] = $id;
+            
         if ($message->flags === false || $message->flags === SYNC_NEWMESSAGE)           
             $this->_encoder->startTag(SYNC_ADD);
         else
