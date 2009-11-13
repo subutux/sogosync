@@ -148,7 +148,10 @@ if($backend->Setup($user, $devid, $protocolversion) == false) {
 
 // check policy header 
 if (PROVISIONING === true && $_SERVER["REQUEST_METHOD"] != 'OPTIONS' && $cmd != 'Ping' && $cmd != 'Provision' && 
-    $backend->CheckPolicy($policykey, $devid) != SYNC_PROVISION_STATUS_SUCCESS) {
+    $backend->CheckPolicy($policykey, $devid) != SYNC_PROVISION_STATUS_SUCCESS &&
+    (LOOSE_PROVISIONING === false ||
+    (LOOSE_PROVISIONING === true && isset($requestheaders["X-MS-PolicyKey"])))) {    	
+    	
     header("HTTP/1.1 449 Retry after sending a PROVISION command");
     header("MS-Server-ActiveSync: 6.5.7638.1");
     header("MS-ASProtocolVersions: 1.0,2.0,2.1,2.5");

@@ -38,6 +38,12 @@
     // Device Provisioning
     define('PROVISIONING', true);
     
+    // This option allows the 'loose enforcement' of the provisioning policies for older 
+    // devices which don't support provisioning (like WM 5 and HTC Android Mail) - dw2412 contribution
+    // false (default) - Enforce provisioning for all devices
+    // true - allow older devices, but enforce policies on devices which support it  
+    define('LOOSE_PROVISIONING', false); 
+    
     // The data providers that we are using (see configuration below)
     $BACKEND_PROVIDER = "BackendICS";
 
