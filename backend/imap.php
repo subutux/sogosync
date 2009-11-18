@@ -306,7 +306,7 @@ class BackendIMAP extends BackendDiff {
 
         $messages = array();
         $this->imap_reopenFolder($folderid, true);
-        
+
         $sequence = "1:*";
         if ($cutoffdate > 0) {
             $search = @imap_search($this->_mbox, "SINCE ". date("d-M-Y", $cutoffdate));
@@ -589,7 +589,7 @@ class BackendIMAP extends BackendDiff {
      * Tasks folder will not do anything. The SyncXXX objects should be filled with as much information as possible,
      * but at least the subject, body, to, from, etc.
      */
-    function GetMessage($folderid, $id, $truncsize) {
+    function GetMessage($folderid, $id, $truncsize, $mimesupport = 0) {
         debugLog("IMAP-GetMessage: (fid: '$folderid'  id: '$id'  truncsize: $truncsize)");
 
         // Get flags, etc
@@ -603,7 +603,7 @@ class BackendIMAP extends BackendDiff {
             $message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $mail, 'crlf' => "\n", 'charset' => 'utf-8'));
 
             $output = new SyncMail();
-            
+
             $body = $this->getBody($message);
             // truncate body, if requested
             if(strlen($body) > $truncsize) {
@@ -764,23 +764,23 @@ class BackendIMAP extends BackendDiff {
     function AlterPing() {
         return true;
     }
-    
+
     // returns a changes array using imap_status
-    // if changes occurr default diff engine computes the actual changes  
+    // if changes occurr default diff engine computes the actual changes
     function AlterPingChanges($folderid, &$syncstate) {
         debugLog("AlterPingChanges on $folderid stat: ". $syncstate);
         $this->imap_reopenFolder($folderid);
-        
+
         // courier-imap only cleares the status cache after checking
         @imap_check($this->_mbox);
-        
+
         $status = imap_status($this->_mbox, $this->_server . str_replace(".", $this->_serverdelimiter, $folderid), SA_ALL);
         if (!$status) {
             debugLog("AlterPingChanges: could not stat folder $folderid : ". imap_last_error());
-            return false;  
+            return false;
         }
         else {
-            $newstate = "M:". $status->messages ."-R:". $status->recent ."-U:". $status->unseen; 
+            $newstate = "M:". $status->messages ."-R:". $status->recent ."-U:". $status->unseen;
 
             // message number is different - change occured
             if ($syncstate != $newstate) {
@@ -789,9 +789,9 @@ class BackendIMAP extends BackendDiff {
                 // build a dummy change
                 return array(array("type" => "fakeChange"));
             }
-        } 
+        }
 
-        return array();  
+        return array();
     }
 
     // ----------------------------------------

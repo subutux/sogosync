@@ -272,7 +272,7 @@ class BackendMaildir extends BackendDiff {
      *
      * Bodysize should always be the original body size.
      */
-    function GetMessage($folderid, $id, $truncsize) {
+    function GetMessage($folderid, $id, $truncsize, $mimesupport = 0) {
         if($folderid != 'root')
             return false;
 
