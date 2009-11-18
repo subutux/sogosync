@@ -2348,7 +2348,8 @@ class BackendICS {
             if (strlen(trim($items[$i]["fullname"])) == 0) $items[$i]["fullname"] = $items[$i]["username"];
             $items[$i]["emailaddress"] = w2u($abentries[$i][PR_SMTP_ADDRESS]);
             $items[$i]["nameid"] = $searchquery;
-            $items[$i]["businessphone"] = w2u($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]);
+            //check if an user has a business phone or it might produce warnings in the log
+            $items[$i]["businessphone"] = isset($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]) ? w2u($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]) : "";
         }
         return $items;
     }
