@@ -959,11 +959,12 @@ class ImportContentsChangesICS extends MAPIMapping {
             if ($picsize < MAX_EMBEDDED_SIZE) {
                 //set the has picture property to true
                 $haspic = $this->_getPropIDFromString("PT_BOOLEAN:{00062004-0000-0000-C000-000000000046}:0x8015");
+
+                $props[$haspic] = false;
+
                 //check if contact has already got a picture. delete it first in that case
-                $props[$haspic] = true;
-
+                //delete it also if it was removed on a mobile
                 $picprops = mapi_getprops($mapimessage, array($haspic));
-
                 if (isset($picprops[$haspic]) && $picprops[$haspic]) {
                     debugLog("Contact already has a picture. Delete it");
 
@@ -977,24 +978,27 @@ class ImportContentsChangesICS extends MAPIMapping {
                     }
                 }
 
-                $pic = mapi_message_createattach($mapimessage);
+                //only set picture if there's data in the request
+                if ($picbinary !== false && $picsize > 0) {
+                    $props[$haspic] = true;
+                    $pic = mapi_message_createattach($mapimessage);
+                    // Set properties of the attachment
+                    $picprops = array(
+                        PR_ATTACH_LONG_FILENAME_A => "ContactPicture.jpg",
+                        PR_DISPLAY_NAME => "ContactPicture.jpg",
+                        0x7FFF000B => true,
+                        PR_ATTACHMENT_HIDDEN => false,
+                        PR_ATTACHMENT_FLAGS => 1,
+                        PR_ATTACH_METHOD => ATTACH_BY_VALUE,
+                        PR_ATTACH_EXTENSION_A => ".jpg",
+                        PR_ATTACH_NUM => 1,
+                        PR_ATTACH_SIZE => $picsize,
+                        PR_ATTACH_DATA_BIN => $picbinary,
+                    );
 
-                // Set properties of the attachment
-                $picprops = array(
-                    PR_ATTACH_LONG_FILENAME_A => "ContactPicture.jpg",
-                    PR_DISPLAY_NAME => "ContactPicture.jpg",
-                    0x7FFF000B => true,
-                    PR_ATTACHMENT_HIDDEN => false,
-                    PR_ATTACHMENT_FLAGS => 1,
-                    PR_ATTACH_METHOD => ATTACH_BY_VALUE,
-                    PR_ATTACH_EXTENSION_A => ".jpg",
-                    PR_ATTACH_NUM => 1,
-                    PR_ATTACH_SIZE => $picsize,
-                    PR_ATTACH_DATA_BIN => $picbinary,
-                );
-
-                mapi_setprops($pic, $picprops);
-                mapi_savechanges($pic);
+                    mapi_setprops($pic, $picprops);
+                    mapi_savechanges($pic);
+                }
             }
         }
 
