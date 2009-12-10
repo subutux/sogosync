@@ -454,7 +454,12 @@ class ZPush_tnef{
                     }
                     //we have to convert the filetime to an unixtime timestamp
                     $filetime = unpack("V2v", $mapiprops[$propTag]);
-                    $filetime = hexdec(sprintf("%08x%08x",$filetime['v2'], $filetime['v1']));
+                    //php on 64-bit systems converts unsigned values differently than on 32 bit systems
+                    //we need this "fix" in order to get the same values on both types of systems
+                    $filetime['v2'] = substr(sprintf("%08x",$filetime['v2']), -8);
+                    $filetime['v1'] = substr(sprintf("%08x",$filetime['v1']), -8);
+
+                    $filetime = hexdec($filetime['v2'].$filetime['v1']);
                     $filetime = ($filetime - 116444736000000000) / 10000000;
                     $mapiprops[$propTag] = $filetime;
                     // we have to set the start and end times separately because the standard PR_START_DATE and PR_END_DATE aren't enough
