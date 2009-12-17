@@ -883,7 +883,9 @@ class BackendIMAP extends BackendDiff {
 
     // adds a message as seen to a specified folder (used for saving sent mails)
     function addSentMessage($folderid, $header, $body) {
-        return @imap_append($this->_mbox,$this->_server . $folderid, $header . "\n\n" . $body ,"\\Seen");
+        $header_body = str_replace("\n", "\r\n", str_replace("\r", "", $header . "\n\n" . $body));
+
+        return @imap_append($this->_mbox, $this->_server . $folderid, $header_body, "\\Seen");
     }
 
 
