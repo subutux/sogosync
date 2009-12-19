@@ -1646,6 +1646,7 @@ class PHPContentsImportProxy extends MAPIMapping {
                 return 1024;
             case SYNC_TRUNCATION_5K:
                 return 5*1024;
+            case SYNC_TRUNCATION_SEVEN:
             case SYNC_TRUNCATION_ALL:
                 return 1024*1024; // We'll limit to 1MB anyway
             default:
