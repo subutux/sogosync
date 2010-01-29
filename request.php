@@ -199,9 +199,17 @@ function HandleFolderSync($backend, $protocolversion) {
     $syncstate = $statemachine->getSyncState($synckey);
 
     // additional information about already seen folders
-    $seenfolders = unserialize($statemachine->getSyncState("s".$synckey));
-    if (!$seenfolders) $seenfolders = array();
-
+    $sfolderstate = $statemachine->getSyncState("s".$synckey);
+    
+    if (!$sfolderstate) {
+        $seenfolders = array();
+        if ($sfolderstate === false)
+            debugLog("Error: SeenFolderState for state 's". $synckey ."' not found. Reinitializing...");
+    }
+    else {
+    	$seenfolders = unserialize($sfolderstate);
+    }
+        
     // We will be saving the sync state under 'newsynckey'
     $newsynckey = $statemachine->getNewSyncKey($synckey);
 

@@ -46,7 +46,7 @@ class StateMachine {
     // state machine will tidy up these files.
     function getSyncState($synckey) {
         // No sync state for sync key '0'
-        if($synckey == "0")
+        if($synckey == "0" || $synckey == "s0")
             return "";
 
         // Check if synckey is allowed
