@@ -591,7 +591,7 @@ class ImportContentsChangesICS extends MAPIMapping {
 
         if (function_exists("mapi_importcontentschanges_updatestate")) {
         	debugLog("using mapi_importcontentschanges_updatestate");
-	        if(mapi_importcontentschanges_updatestate($this->exporter, $this->statestream) != true) {
+	        if(mapi_importcontentschanges_updatestate($this->importer, $this->statestream) != true) {
 	            debugLog("Unable to update state: " . sprintf("%X", mapi_last_hresult()));
 	            return false;
 	        }
