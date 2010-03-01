@@ -863,8 +863,13 @@ class ImportContentsChangesICS extends MAPIMapping {
         $this->_setPropsInMAPI($mapimessage, $contact, $this->_contactmapping);
 
         // Set display name and subject to a combined value of firstname and lastname
-        $cname = "".u2w($contact->firstname . " " . $contact->lastname);
-
+        $cname = (isset($contact->prefix))?u2w($contact->prefix)." ":"";
+        $cname .= u2w($contact->firstname);
+        $cname .= (isset($contact->middlename))?" ". u2w($contact->middlename):"";
+        $cname .= " ". u2w($contact->lastname);
+        $cname .= (isset($contact->suffix))?" ". u2w($contact->suffix):"";
+        $cname = trim($cname);
+         
         //set contact specific mapi properties
         $props = array();
         $nremails = array();
