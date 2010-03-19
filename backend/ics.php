@@ -1620,13 +1620,13 @@ class PHPContentsImportProxy extends MAPIMapping {
             $name = isset($row[PR_DISPLAY_NAME]) ? $row[PR_DISPLAY_NAME] : "";
 
             if($name == "" || $name == $address)
-                $fulladdr = $address;
+                $fulladdr = w2u($address);
             else {
                 if (substr($name, 0, 1) != '"' && substr($name, -1) != '"') {
-                    $fulladdr = "\"" . w2u($name) ."\" <" . $address . ">";
+                    $fulladdr = "\"" . w2u($name) ."\" <" . w2u($address) . ">";
                 }
                 else {
-                    $fulladdr = w2u($name) ."<" . $address . ">";
+                    $fulladdr = w2u($name) ."<" . w2u($address) . ">";
                 }
             }
 
