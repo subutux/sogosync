@@ -185,7 +185,7 @@ class Streamer {
                         if($this->$map[STREAMER_VAR] != 0) // don't output 1-1-1970
                             $encoder->content($this->formatDate($this->$map[STREAMER_VAR], $map[STREAMER_TYPE]));
                     } else if(isset($map[STREAMER_TYPE]) && $map[STREAMER_TYPE] == STREAMER_TYPE_HEX) {
-                        $encoder->content(bin2hex($this->$map[STREAMER_VAR]));
+                        $encoder->content(strtoupper(bin2hex($this->$map[STREAMER_VAR])));
                     } else if(isset($map[STREAMER_TYPE]) && $map[STREAMER_TYPE] == STREAMER_TYPE_MAPI_STREAM) {
                         $encoder->content($this->$map[STREAMER_VAR]);
                     } else {
