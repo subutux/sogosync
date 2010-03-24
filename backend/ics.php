@@ -2560,7 +2560,7 @@ class BackendICS {
                     $zpical->extractProps($part->body, $mapiprops);
 
                     // iPhone sends a second ICS which we ignore if we can
-                    if ((!isset($mapiprops[PR_MESSAGE_CLASS]) && strlen(trim($body)) == 0) || $zpical->couldBeIgnored()) {
+                    if (!isset($mapiprops[PR_MESSAGE_CLASS]) && strlen(trim($body)) == 0) {
                         debugLog("Secondary iPhone response is being ignored!! Mail dropped!");
                         return true;
                     }
