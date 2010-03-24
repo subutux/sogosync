@@ -2484,12 +2484,13 @@ class BackendICS {
 
         $toaddr = $ccaddr = $bccaddr = array();
 
+        $Mail_RFC822 = new Mail_RFC822();
         if(isset($message->headers["to"]))
-            $toaddr = Mail_RFC822::parseAddressList($message->headers["to"]);
+            $toaddr = $Mail_RFC822->parseAddressList($message->headers["to"]);
         if(isset($message->headers["cc"]))
-            $ccaddr = Mail_RFC822::parseAddressList($message->headers["cc"]);
+            $ccaddr = $Mail_RFC822->parseAddressList($message->headers["cc"]);
         if(isset($message->headers["bcc"]))
-            $bccaddr = Mail_RFC822::parseAddressList($message->headers["bcc"]);
+            $bccaddr = $Mail_RFC822->parseAddressList($message->headers["bcc"]);
 
         // Add recipients
         $recips = array();
