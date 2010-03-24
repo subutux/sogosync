@@ -2559,15 +2559,19 @@ class BackendICS {
                     $zpical->extractProps($part->body, $mapiprops);
 
                     // iPhone sends a second ICS which we ignore if we can
-                    if (!isset($mapiprops[PR_MESSAGE_CLASS]) && strlen(trim($body)) == 0) {
+                    if ((!isset($mapiprops[PR_MESSAGE_CLASS]) && strlen(trim($body)) == 0) || $zpical->couldBeIgnored()) {
                         debugLog("Secondary iPhone response is being ignored!! Mail dropped!");
                         return true;
                     }
 
-                    if (is_array($mapiprops) && !empty($mapiprops)) {
+                    if (!checkMapiExtVersion("6.30") && is_array($mapiprops) && !empty($mapiprops)) {
                         mapi_setprops($mapimessage, $mapiprops);
                     }
-                    else debugLog("ICAL: Mapi props array was empty");
+                    else {
+                        // store ics as attachment
+                        $this->_storeAttachment($mapimessage, $part);
+                        debugLog("Sending ICS file as attachment");
+                    }
                 }
                 // any other type, store as attachment
                 else
