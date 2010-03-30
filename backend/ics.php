@@ -841,7 +841,7 @@ class ImportContentsChangesICS extends MAPIMapping {
             foreach($appointment->attendees as $attendee) {
                 $recip = array();
                 $recip[PR_DISPLAY_NAME] = u2w($attendee->name);
-                $recip[PR_EMAIL_ADDRESS] = $attendee->email;
+                $recip[PR_EMAIL_ADDRESS] = u2w($attendee->email);
                 $recip[PR_ADDRTYPE] = "SMTP";
                 $recip[PR_RECIPIENT_TYPE] = MAPI_TO;
                 $recip[PR_ENTRYID] = mapi_createoneoff($recip[PR_DISPLAY_NAME], $recip[PR_ADDRTYPE], $recip[PR_EMAIL_ADDRESS]);
@@ -1427,7 +1427,7 @@ class PHPContentsImportProxy extends MAPIMapping {
         $messageprops = mapi_getprops($mapimessage, array($meetingstatustag, PR_SENT_REPRESENTING_ENTRYID, PR_SENT_REPRESENTING_NAME));
 
         if(isset($messageprops[$meetingstatustag]) && $messageprops[$meetingstatustag] > 0 && isset($messageprops[PR_SENT_REPRESENTING_ENTRYID]) && isset($messageprops[PR_SENT_REPRESENTING_NAME])) {
-            $message->organizeremail = $this->_getSMTPAddressFromEntryID($messageprops[PR_SENT_REPRESENTING_ENTRYID]);
+            $message->organizeremail = w2u($this->_getSMTPAddressFromEntryID($messageprops[PR_SENT_REPRESENTING_ENTRYID]));
             $message->organizername = w2u($messageprops[PR_SENT_REPRESENTING_NAME]);
         }
 
@@ -1443,16 +1443,16 @@ class PHPContentsImportProxy extends MAPIMapping {
             $attendee->name = w2u($row[PR_DISPLAY_NAME]);
             //smtp address is always a proper email address
             if(isset($row[PR_SMTP_ADDRESS]))
-                $attendee->email = $row[PR_SMTP_ADDRESS];
+                $attendee->email = w2u($row[PR_SMTP_ADDRESS]);
             elseif (isset($row[PR_ADDRTYPE]) && isset($row[PR_EMAIL_ADDRESS])) {
                 //if address type is SMTP, it's also a proper email address
-                if (PR_ADDRTYPE == "SMTP")
-                    $attendee->email = $row[PR_EMAIL_ADDRESS];
+                if ($row[PR_ADDRTYPE] == "SMTP")
+                    $attendee->email = w2u($row[PR_EMAIL_ADDRESS]);
                 //if address type is ZARAFA, the PR_EMAIL_ADDRESS contains username
-                elseif (PR_ADDRTYPE == "ZARAFA") {
+                elseif ($row[PR_ADDRTYPE] == "ZARAFA") {
                     $userinfo = mapi_zarafa_getuser_by_name($this->_store, $row[PR_EMAIL_ADDRESS]);
                     if (is_array($userinfo) && isset($userinfo["emailaddress"]))
-                        $attendee->email = $userinfo["emailaddress"];
+                        $attendee->email = w2u($userinfo["emailaddress"]);
                 }
             }
             // Some attendees have no email or name (eg resources), and if you
