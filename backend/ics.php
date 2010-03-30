@@ -2788,8 +2788,8 @@ class BackendICS {
 
     function MeetingResponse($requestid, $folderid, $response, &$calendarid) {
         // Use standard meeting response code to process meeting request
-        $entryid = mapi_msgstore_entryidfromsourcekey($this->_defaultstore, hex2bin($folderid), hex2bin($requestid));
-        $mapimessage = mapi_msgstore_openentry($this->_defaultstore, $entryid);
+        $reqentryid = mapi_msgstore_entryidfromsourcekey($this->_defaultstore, hex2bin($folderid), hex2bin($requestid));
+        $mapimessage = mapi_msgstore_openentry($this->_defaultstore, $reqentryid);
 
         if(!$mapimessage) {
             debugLog("Unable to open request message for response");
@@ -2813,10 +2813,10 @@ class BackendICS {
         switch($response) {
             case 1:     // accept
             default:
-                $entryid = $meetingrequest->doAccept(false, false, $meetingrequest->isInCalendar());
+                $entryid = $meetingrequest->doAccept(false, false, false, false, false, false, true); // last true is the $userAction
                 break;
             case 2:        // tentative
-                $meetingrequest->doAccept(true, false, $meetingrequest->isInCalendar());
+                $entryid = $meetingrequest->doAccept(true, false, false, false, false, false, true); // last true is the $userAction
                 break;
             case 3:        // decline
                 $meetingrequest->doDecline(false);
@@ -2828,9 +2828,13 @@ class BackendICS {
         // We have to return the ID of the new calendar item, so do that here
         $newitem = mapi_msgstore_openentry($this->_defaultstore, $entryid);
         $newprops = mapi_getprops($newitem, array(PR_SOURCE_KEY));
-
         $calendarid = bin2hex($newprops[PR_SOURCE_KEY]);
-
+        
+        // delete meeting request from Inbox
+        $folderentryid = mapi_msgstore_entryidfromsourcekey($this->_defaultstore, hex2bin($folderid));
+        $folder = mapi_msgstore_openentry($this->_defaultstore, $folderentryid);
+        mapi_folder_deletemessages($folder, array($reqentryid), 0);
+        
         return true;
     }
 
