@@ -388,7 +388,7 @@ class Mail_mimeDecode {
             $input = trim(substr($input, $pos+1));
 
             if (strlen($input) > 0) {
-                preg_match_all('/(([[:alnum:]-]+)=("([^"]*)"|([^ ;]*))\s?;?)+/i', $input, $matches);
+                preg_match_all('/(([[:alnum:]-\*]+)=("([^"]*)"|([^ ;]*))\s?;?)+/i', $input, $matches);
 
                 for ($i = 0; $i < count($matches[2]); $i++) {
                     $value = $matches[4][$i] ? $matches[4][$i] : $matches[5][$i];

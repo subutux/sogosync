@@ -2896,6 +2896,7 @@ class BackendICS {
         // attachment
         $attach = mapi_message_createattach($mapimessage);
 
+        $filename = "";
         // Filename is present in both Content-Type: name=.. and in Content-Disposition: filename=
         if(isset($part->ctype_parameters["name"]))
             $filename = $part->ctype_parameters["name"];
@@ -2903,6 +2904,12 @@ class BackendICS {
             $filename = $part->d_parameters["filename"];
         else if (isset($part->d_parameters["filename"])) // sending appointment with nokia & android only filename is set
             $filename = $part->d_parameters["filename"];
+        // filenames with more than 63 chars as splitted several strings
+        else if (isset($part->d_parameters["filename*0"])) {
+        	for ($i=0; $i< count($part->d_parameters); $i++) 
+        	   if (isset($part->d_parameters["filename*".$i]))
+        	       $filename .= $part->d_parameters["filename*".$i];
+        }
         else
             $filename = "untitled";
 
