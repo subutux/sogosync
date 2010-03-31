@@ -14,14 +14,8 @@
 class ZPush_ical{
     function ZPush_ical($store){
         $this->_store = $store;
-        $this->_hasAttendeeCN = false;
-        $this->_class = false;
     }
 
-    function couldBeIgnored() {
-        return (!$this->_hasAttendeeCN && $this->_class != "DECLINED");
-    }
-    
     /*
     * Function reads calendar part and puts mapi properties into an array.
     */
@@ -104,8 +98,8 @@ class ZPush_ical{
                                     $prop_pos     = strpos($field, '=');
                                     if ($prop_pos !== false) {
                                         switch (substr($field, 0, $prop_pos)) {
-                                            case 'PARTSTAT'    : $partstat = substr($field, $prop_pos+1); $this->_class = $partstat; break;
-                                            case 'CN'        : $cn = substr($field, $prop_pos+1); $this->_hasAttendeeCN = true; break;
+                                            case 'PARTSTAT'    : $partstat = substr($field, $prop_pos+1); break;
+                                            case 'CN'        : $cn = substr($field, $prop_pos+1); break;
                                             case 'ROLE'        : $role = substr($field, $prop_pos+1); break;
                                             case 'RSVP'        : $rsvp = substr($field, $prop_pos+1); break;
                                         }
