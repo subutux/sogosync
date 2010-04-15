@@ -212,7 +212,8 @@ function HandleFolderSync($backend, $protocolversion) {
         
     // We will be saving the sync state under 'newsynckey'
     $newsynckey = $statemachine->getNewSyncKey($synckey);
-
+    $changes = false;
+    
     if($decoder->getElementStartTag(SYNC_FOLDERHIERARCHY_CHANGES)) {
         // Ignore <Count> if present
         if($decoder->getElementStartTag(SYNC_FOLDERHIERARCHY_COUNT)) {
@@ -243,9 +244,11 @@ function HandleFolderSync($backend, $protocolversion) {
                     $serverid = $importer->ImportFolderChange($folder);
                     // add folder to the serverflags
                     $seenfolders[] = $serverid;
+                    $changes = true;
                     break;
                 case SYNC_REMOVE:
                     $serverid = $importer->ImportFolderDeletion($folder);
+                    $changes = true;
                     // remove folder from the folderflags array
                     if (($sid = array_search($serverid, $seenfolders)) !== false) {
                         unset($seenfolders[$sid]);
@@ -292,7 +295,8 @@ function HandleFolderSync($backend, $protocolversion) {
         $encoder->endTag();
 
         $encoder->startTag(SYNC_FOLDERHIERARCHY_SYNCKEY);
-        $encoder->content($newsynckey);
+        // only send new synckey if changes were processed or there are outgoing changes
+        $encoder->content((($changes || $importer->count > 0)?$newsynckey:$synckey));
         $encoder->endTag();
 
         $encoder->startTag(SYNC_FOLDERHIERARCHY_CHANGES);
@@ -604,8 +608,20 @@ function HandleSync($backend, $protocolversion, $devid) {
         $encoder->startTag(SYNC_FOLDERS);
         {
             foreach($collections as $collection) {
-                // Get a new sync key to output to the client if any changes have been requested or have been sent
-                if (isset($collection["importedchanges"]) || isset($collection["getchanges"]) || $collection["synckey"] == "0")
+            	// initialize exporter to get changecount
+            	$changecount = 0;
+            	if(isset($collection["getchanges"])) {
+                    // Use the state from the importer, as changes may have already happened
+                    $exporter = $backend->GetExporter($collection["collectionid"]);
+
+                    $filtertype = isset($collection["filtertype"]) ? $collection["filtertype"] : false;
+                    $exporter->Config($importer, $collection["class"], $filtertype, $collection["syncstate"], 0, $collection["truncation"]);
+
+                    $changecount = $exporter->GetChangeCount();
+            	}
+            	
+                // Get a new sync key to output to the client if any changes have been requested or will be send
+                if (isset($collection["importedchanges"]) || $changecount > 0 || $collection["synckey"] == "0")
                     $collection["newsynckey"] = $statemachine->getNewSyncKey($collection["synckey"]);
 
                 $encoder->startTag(SYNC_FOLDER);
@@ -672,13 +688,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                 }
 
                 if(isset($collection["getchanges"])) {
-                    // Use the state from the importer, as changes may have already happened
-                    $exporter = $backend->GetExporter($collection["collectionid"]);
-
-                    $filtertype = isset($collection["filtertype"]) ? $collection["filtertype"] : false;
-                    $exporter->Config($importer, $collection["class"], $filtertype, $collection["syncstate"], 0, $collection["truncation"]);
-
-                    $changecount = $exporter->GetChangeCount();
+                    // exporter already intialized
 
                     if($changecount > $collection["maxitems"]) {
                         $encoder->startTag(SYNC_MOREAVAILABLE, false, true);
