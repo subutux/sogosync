@@ -30,8 +30,10 @@ class ImportHierarchyChangesMem extends ImportHierarchyChanges {
     var $changed;
     var $deleted;
     var $count;
+    var $foldercache;
     
-    function ImportHierarchyChangesMem() {
+    function ImportHierarchyChangesMem($foldercache) {
+    	$this->foldercache = $foldercache;
         $this->changed = array();
         $this->deleted = array();
         $this->count = 0;
@@ -40,10 +42,21 @@ class ImportHierarchyChangesMem extends ImportHierarchyChanges {
     }
     
     function ImportFolderChange($folder) {
+    	// The HierarchyExporter exports all kinds of changes.
+    	// Frequently these changes are not relevant for the mobiles, 
+    	// as something changes but the relevant displayname and parentid 
+    	// stay the same. These changes will be dropped and not sent
+    	if (array_key_exists($folder->serverid, $this->foldercache) &&
+    	    $this->foldercache[$folder->serverid]->displayname == $folder->displayname &&
+            $this->foldercache[$folder->serverid]->parentid == $folder->parentid &&
+            $this->foldercache[$folder->serverid]->type == $folder->type
+           ) {
+            debugLog("Change for folder '".$folder->displayname."' will not be sent as modification is not relevant");  	
+            return true;
+    	}
+   	
         array_push($this->changed, $folder);
-        
         $this->count++;
-
         return true;
     }
 
