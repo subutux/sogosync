@@ -1512,10 +1512,10 @@ class PHPContentsImportProxy extends MAPIMapping {
             $fromname = "";
 
         if($fromname)
-            $from = "\"" . w2u($fromname) . "\" <" . $fromaddr . ">";
+            $from = "\"" . w2u($fromname) . "\" <" . w2u($fromaddr) . ">";
         else
             //START CHANGED dw2412 HTC shows "error" if sender name is unknown
-            $from = "\"" . $fromaddr . "\" <" . $fromaddr . ">";
+            $from = "\"" . w2u($fromaddr) . "\" <" . w2u($fromaddr) . ">";
             //END CHANGED dw2412 HTC shows "error" if sender name is unknown
 
         $message->from = $from;
