@@ -675,6 +675,11 @@ class ImportContentsChangesICS extends MAPIMapping {
 
         $this->_setPropsInMAPI($mapimessage, $appointment, $this->_appointmentmapping);
 
+        //we also have to set the responsestatus and not only meetingstatus, so we use another mapi tag
+        if (isset($appointment->meetingstatus)) 
+            mapi_setprops($mapimessage, array(
+                $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8218") =>  $appointment->meetingstatus));
+
         //sensitivity is not enough to mark an appointment as private, so we use another mapi tag
         if (isset($appointment->sensitivity) && $appointment->sensitivity == 0) $private = false;
         else  $private = true;
