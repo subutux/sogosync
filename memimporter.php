@@ -57,6 +57,8 @@ class ImportHierarchyChangesMem extends ImportHierarchyChanges {
    	
         array_push($this->changed, $folder);
         $this->count++;
+        // temporarily add/update the folder to the cache so changes are not sent twice
+        $this->foldercache[$folder->serverid] = $folder;
         return true;
     }
 
