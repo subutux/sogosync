@@ -1926,7 +1926,7 @@ class ExportChangesICS  {
     }
 
     function GetState() {
-        if(!isset($this->statestream))
+        if(!isset($this->statestream) || $this->exporter === false)
             return false;
 
         if(mapi_exportchanges_updatestate($this->exporter, $this->statestream) != true) {
@@ -1948,12 +1948,18 @@ class ExportChangesICS  {
         return $state;
     }
 
-    function GetChangeCount() {
-        return mapi_exportchanges_getchangecount($this->exporter);
+     function GetChangeCount() {
+        if ($this->exporter)
+            return mapi_exportchanges_getchangecount($this->exporter);
+        else
+            return 0;
     }
 
     function Synchronize() {
-        return mapi_exportchanges_synchronize($this->exporter);
+        if ($this->exporter) {
+            return mapi_exportchanges_synchronize($this->exporter);
+        }else
+           return false;
     }
 
     // ----------------------------------------------------------------------------------------------
