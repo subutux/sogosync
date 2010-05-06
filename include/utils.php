@@ -172,4 +172,43 @@ function checkMapiExtVersion($version = "") {
         
     return true;
 }
+
+/**
+ * Parses and returns an ecoded vCal-Uid from an 
+ * OL compatible GlobalObjectID
+ *
+ * @param string $olUid - an OL compatible GlobalObjectID
+ * @return string the vCal-Uid if available in the olUid, else the original olUid
+ */
+function getICalUidFromOLUid($olUid){
+    $icalUid = $olUid;
+    if(($pos = stripos($olUid,"vCal-Uid"))) {
+    	$length = unpack("V", substr($olUid, $pos-4,4));
+    	$icalUid = hex2bin(substr($olUid, $pos+12, $length[1] -14));
+    }
+    return $icalUid;
+}
+
+/**
+ * Checks the given UID if it is an OL compatible GlobalObjectID
+ * If not, the given UID is encoded inside the GlobalObjectID
+ *
+ * @param string $icalUid - an appointment uid
+ * @return string an OL compatible GlobalObjectID
+ *
+ */
+function getOLUidFromICalUid($icalUid) {
+	if (strlen($icalUid) <= 32) {
+		$hexIcalUid = bin2hex($icalUid);
+		$len = 13 + strlen($hexIcalUid);
+		$OLUid = pack("V", $len);
+		$OLUid .= "vCal-Uid";
+		$OLUid .= pack("V", 1);
+		$OLUid .= strtoupper($hexIcalUid);
+		return hex2bin("040000008200E00074C5B7101A82E0080000000000000000000000000000000000000000". bin2hex($OLUid). "00");
+	}
+	else
+	   return $icalUid;
+} 
+
 ?>

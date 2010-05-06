@@ -671,6 +671,10 @@ class ImportContentsChangesICS extends MAPIMapping {
             $localend = $localstart + 24 * 60 * 60;
         }
 
+        // is the transmitted UID OL compatible?
+        // if not, encapsulate the transmitted uid
+        $appointment->uid = getOLUidFromICalUid($appointment->uid);
+        
         mapi_setprops($mapimessage, array(PR_MESSAGE_CLASS => "IPM.Appointment"));
 
         $this->_setPropsInMAPI($mapimessage, $appointment, $this->_appointmentmapping);
@@ -1287,7 +1291,9 @@ class PHPContentsImportProxy extends MAPIMapping {
 
         if(!isset($message->uid))
             $message->uid = $messageprops[PR_SOURCE_KEY];
-
+        else 
+            $message->uid = getICalUidFromOLUid($message->uid);
+            
         $isrecurringtag = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x8223");
         $recurringstate = $this->_getPropIDFromString("PT_BINARY:{00062002-0000-0000-C000-000000000046}:0x8216");
         $timezonetag = $this->_getPropIDFromString("PT_BINARY:{00062002-0000-0000-C000-000000000046}:0x8233");
