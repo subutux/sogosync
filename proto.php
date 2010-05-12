@@ -288,7 +288,7 @@ class SyncAppointment extends Streamer {
                       SYNC_POOMCAL_DTSTAMP => array (STREAMER_VAR => "dtstamp", STREAMER_TYPE => STREAMER_TYPE_DATE),
                       SYNC_POOMCAL_STARTTIME => array (STREAMER_VAR => "starttime", STREAMER_TYPE => STREAMER_TYPE_DATE),
                       SYNC_POOMCAL_SUBJECT => array (STREAMER_VAR => "subject"),
-                      SYNC_POOMCAL_UID => array (STREAMER_VAR => "uid", STREAMER_TYPE => STREAMER_TYPE_HEX),
+                      SYNC_POOMCAL_UID => array (STREAMER_VAR => "uid"),
                       SYNC_POOMCAL_ORGANIZERNAME => array (STREAMER_VAR => "organizername"),
                       SYNC_POOMCAL_ORGANIZEREMAIL => array (STREAMER_VAR => "organizeremail"),
                       SYNC_POOMCAL_LOCATION => array (STREAMER_VAR => "location"),
