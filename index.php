@@ -124,7 +124,7 @@ while($entry = readdir($backend_dir)) {
 // Initialize our backend
 $backend = new $BACKEND_PROVIDER();
 
-if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false  && !$policykey) {
+if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false) {
     header("HTTP/1.1 401 Unauthorized");
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     print("Access denied. Username or password incorrect.");

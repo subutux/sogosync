@@ -2116,6 +2116,7 @@ class BackendICS {
 
         if($this->_session === false) {
             debugLog("logon failed for user $user");
+            $this->_defaultstore = false;
             return false;
         }
 
@@ -2249,8 +2250,13 @@ class BackendICS {
 
 
     function getPolicyKey ($user, $pass, $devid) {
+        if($this->_session === false) {
+            debugLog("logon failed for user $user");
+            return false;
+        }
+            	
         //user is logged in or can login, get the policy key and device id
-        if ($this->_defaultstore !== false || $this->Logon($user, "", $pass)) {
+        if ($this->_defaultstore !== false) {
             $devicesprops = mapi_getprops($this->_defaultstore, array(0x6880101E, 0x6881101E));
             if (isset($devicesprops[0x6881101E]) && is_array($devicesprops[0x6881101E])) {
                 $ak = array_search($devid, $devicesprops[0x6881101E]);
@@ -2288,7 +2294,7 @@ class BackendICS {
         $defaultstore = $this->_openDefaultMessageStore($this->_session);
 
         //user is logged in or can login, get the remote wipe status
-        if ($defaultstore !== false || $this->Logon($user, "", $pass)) {
+        if ($defaultstore !== false) {
             $devicesprops = mapi_getprops($defaultstore, array(0x68841003, 0x6881101E));
             if (isset($devicesprops[0x6881101E]) && is_array($devicesprops[0x6881101E])) {
                 $ak = array_search($devid, $devicesprops[0x6881101E]);
@@ -2318,7 +2324,7 @@ class BackendICS {
         $defaultstore = $this->_openDefaultMessageStore($this->_session);
 
         //user is logged in or can login, get the remote wipe status
-        if ($defaultstore !== false || $this->Logon($user, "", $pass)) {
+        if ($defaultstore !== false) {
             $devicesprops = mapi_getprops($defaultstore, array(0x68841003, 0x6881101E, 0x6887101E));
             if (isset($devicesprops[0x6881101E]) && is_array($devicesprops[0x6881101E])) {
                 $ak = array_search($devid, $devicesprops[0x6881101E]);
