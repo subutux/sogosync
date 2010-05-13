@@ -20,7 +20,9 @@ function _saveFolderData($devid, $folders) {
     $unique_folders = array ();
 
     foreach ($folders as $folder) {    
-
+        if (!isset($folder->type))
+            continue;
+    	
         // don't save folder-ids for emails
         if ($folder->type == SYNC_FOLDER_TYPE_INBOX)
             continue;

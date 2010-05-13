@@ -2444,7 +2444,7 @@ class BackendICS {
             $mapifolder = mapi_msgstore_openentry($this->_defaultstore, $row[PR_ENTRYID]);
             $folder = $himp->_getFolder($mapifolder);
 
-            if ($folder->parentid != $rootfoldersourcekey)
+            if (isset($folder->parentid) && $folder->parentid != $rootfoldersourcekey)
                 $folders[] = $folder;
         }
 
