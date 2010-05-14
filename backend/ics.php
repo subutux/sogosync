@@ -2210,6 +2210,7 @@ class BackendICS {
                 if ($ak !== false) {
                     //update policykey
                     $devicesprops[0x6880101E][$ak] = $policykey;
+                    $devicesprops[0x6883101E][] = $useragent;                    
                 }
                 else {
                     //Unknown device. Store its information.
