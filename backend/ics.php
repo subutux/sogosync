@@ -1554,15 +1554,12 @@ class PHPContentsImportProxy extends MAPIMapping {
                 $message->meetingrequest->globalobjid = base64_encode($props[$goidtag]);
 
             // Set Timezone
-	        if(isset($props[$timezonetag])) {
+	        if(isset($props[$timezonetag]))
 	            $tz = $this->_getTZFromMAPIBlob($props[$timezonetag]);
-	            debugLog("timezone from MR");
-	        }
-	        else {
+	        else
 	            $tz = $this->_getGMTTZ();
-	            debugLog("timezuone GMT");
-	        }	            
-            $message->meetingrequest->timezone = base64_encode($this->_getSyncBlobFromTZ($tz));
+
+	        $message->meetingrequest->timezone = base64_encode($this->_getSyncBlobFromTZ($tz));
 
 	        // send basedate if available
             if(isset($props[$recReplTime]))
