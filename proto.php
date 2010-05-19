@@ -67,13 +67,13 @@ class SyncMeetingRequest extends Streamer {
                                 SYNC_POOMMAIL_INSTANCETYPE => array (STREAMER_VAR => "instancetype"),
                                 SYNC_POOMMAIL_LOCATION => array (STREAMER_VAR => "location"),
                                 SYNC_POOMMAIL_ORGANIZER => array (STREAMER_VAR => "organizer"),
+                                SYNC_POOMMAIL_RECURRENCEID => array (STREAMER_VAR => "recurrenceid", STREAMER_TYPE => STREAMER_TYPE_DATE_DASHES),
                                 SYNC_POOMMAIL_REMINDER => array (STREAMER_VAR => "reminder"),
                                 SYNC_POOMMAIL_RESPONSEREQUESTED => array (STREAMER_VAR => "responserequested"),
+                                SYNC_POOMMAIL_RECURRENCES => array (STREAMER_VAR => "recurrences", STREAMER_TYPE => "SyncMeetingRequestRecurrence", STREAMER_ARRAY => SYNC_POOMMAIL_RECURRENCE),
                                 SYNC_POOMMAIL_SENSITIVITY => array (STREAMER_VAR => "sensitivity"),
                                 SYNC_POOMMAIL_BUSYSTATUS => array (STREAMER_VAR => "busystatus"),
                                 SYNC_POOMMAIL_TIMEZONE => array (STREAMER_VAR => "timezone"),
-//                                SYNC_POOMMAIL_RECURRENCES => array (STREAMER_VAR => "recurrences", STREAMER_TYPE => "SyncRecurrence", STREAMER_ARRAY => SYNC_POOMMAIL_RECURRENCE),
-//                                SYNC_POOMMAIL_RECURRENCEID => array (STREAMER_VAR => "recurrenceid"),
                                 SYNC_POOMMAIL_GLOBALOBJID => array (STREAMER_VAR => "globalobjid"),
                               );
 
@@ -334,6 +334,33 @@ class SyncRecurrence extends Streamer {
                       SYNC_POOMCAL_DAYOFMONTH => array (STREAMER_VAR => "dayofmonth"),
                       SYNC_POOMCAL_WEEKOFMONTH => array (STREAMER_VAR => "weekofmonth"),
                       SYNC_POOMCAL_MONTHOFYEAR => array (STREAMER_VAR => "monthofyear")
+        );
+
+        parent::Streamer($mapping);
+    }
+}
+
+// Exactly the same as SyncRecurrence, but then with SYNC_POOMMAIL_*
+class SyncMeetingRequestRecurrence extends Streamer {
+    var $type;
+    var $until;
+    var $occurrences;
+    var $interval;
+    var $dayofweek;
+    var $dayofmonth;
+    var $weekofmonth;
+    var $monthofyear;
+
+    function SyncMeetingRequestRecurrence() {
+        $mapping = array (
+                      SYNC_POOMMAIL_TYPE => array (STREAMER_VAR => "type"),
+                      SYNC_POOMMAIL_UNTIL => array (STREAMER_VAR => "until", STREAMER_TYPE => STREAMER_TYPE_DATE),
+                      SYNC_POOMMAIL_OCCURRENCES => array (STREAMER_VAR => "occurrences"),
+                      SYNC_POOMMAIL_INTERVAL => array (STREAMER_VAR => "interval"),
+                      SYNC_POOMMAIL_DAYOFWEEK => array (STREAMER_VAR => "dayofweek"),
+                      SYNC_POOMMAIL_DAYOFMONTH => array (STREAMER_VAR => "dayofmonth"),
+                      SYNC_POOMMAIL_WEEKOFMONTH => array (STREAMER_VAR => "weekofmonth"),
+                      SYNC_POOMMAIL_MONTHOFYEAR => array (STREAMER_VAR => "monthofyear")
         );
 
         parent::Streamer($mapping);
