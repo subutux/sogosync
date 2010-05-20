@@ -212,4 +212,28 @@ function getOLUidFromICalUid($icalUid) {
 	   return hex2bin($icalUid);
 } 
 
+/**
+ * Extracts the basedate of the GlobalObjectID and the RecurStartTime 
+ *
+ * @param string $goid - OL compatible GlobalObjectID
+ * @param long $recurStartTime - RecurStartTime 
+ * @return long basedate 
+ *
+ */
+function extractBaseDate($goid, $recurStartTime) {
+    $hexbase = substr(bin2hex($goid), 32, 8);
+    $day = hexdec(substr($hexbase, 6, 2));
+    $month = hexdec(substr($hexbase, 4, 2));
+    $year = hexdec(substr($hexbase, 0, 4));
+
+    if ($day && $month && $year) {
+		$h = $recurStartTime >> 12;
+		$m = ($recurStartTime - $h * 4096) >> 6;
+		$s = $recurStartTime - $h * 4096 - $m * 64;
+
+        return gmmktime($h, $m, $s, $month, $day, $year);
+    }
+    else
+        return false;
+}
 ?>

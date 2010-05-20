@@ -1546,24 +1546,38 @@ class PHPContentsImportProxy extends MAPIMapping {
             $isrecurringtag = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x8223");
             $recurringstate = $this->_getPropIDFromString("PT_BINARY:{00062002-0000-0000-C000-000000000046}:0x8216");
             $appSeqNr = $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8201");
+            $lidIsException = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0xA");
+            $recurStartTime = $this->_getPropIDFromString("PT_LONG:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0xE");
             
-            $props = mapi_getprops($mapimessage, array($goidtag, $timezonetag, $recReplTime, $isrecurringtag, $recurringstate, $appSeqNr));
+            $props = mapi_getprops($mapimessage, array($goidtag, $timezonetag, $recReplTime, $isrecurringtag, $recurringstate, $appSeqNr, $lidIsException, $recurStartTime));
 
             // Get the GOID
             if(isset($props[$goidtag]))
                 $message->meetingrequest->globalobjid = base64_encode($props[$goidtag]);
 
             // Set Timezone
-	        if(isset($props[$timezonetag]))
-	            $tz = $this->_getTZFromMAPIBlob($props[$timezonetag]);
-	        else
-	            $tz = $this->_getGMTTZ();
+			if(isset($props[$timezonetag]))
+			    $tz = $this->_getTZFromMAPIBlob($props[$timezonetag]);
+			else
+			    $tz = $this->_getGMTTZ();
 
 	        $message->meetingrequest->timezone = base64_encode($this->_getSyncBlobFromTZ($tz));
 
-	        // send basedate if available
-            if(isset($props[$recReplTime]))
-                $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($props[$recReplTime], $this->_getGMTTZ());            
+            // send basedate if exception
+            if(isset($props[$recReplTime]) || (isset($props[$lidIsException]) && $props[$lidIsException] == true)) {
+            	if (false && isset($props[$recReplTime])){
+            	   $basedate = $props[$recReplTime];
+            	   $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $this->_getGMTTZ());  
+            	}
+            	else {
+            	   if (!isset($props[$goidtag]) || !isset($props[$recurStartTime]) || !isset($props[$timezonetag]))
+            	       debugLog("Missing property to set correct basedate for exception");
+            	   else {
+            	       $basedate = extractBaseDate($props[$goidtag], $props[$recurStartTime]);
+            	       $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $tz);
+            	   }  
+            	}
+            }
 	            
             // Organizer is the sender
             $message->meetingrequest->organizer = $message->from;
@@ -1588,7 +1602,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             $message->meetingrequest->instancetype = 0;
             if (isset($props[$isrecurringtag]) && $props[$isrecurringtag] == 1)
                 $message->meetingrequest->instancetype = 1;
-            else if ((!isset($props[$isrecurringtag]) || $props[$isrecurringtag] == 0 )&& isset($props[$recReplTime])) 
+            else if ((!isset($props[$isrecurringtag]) || $props[$isrecurringtag] == 0 )&& isset($message->meetingrequest->recurrenceid)) 
                 if (isset($props[$appSeqNr]) && $props[$appSeqNr] == 0 )
                     $message->meetingrequest->instancetype = 2;
                 else
