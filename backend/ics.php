@@ -1565,7 +1565,7 @@ class PHPContentsImportProxy extends MAPIMapping {
 
             // send basedate if exception
             if(isset($props[$recReplTime]) || (isset($props[$lidIsException]) && $props[$lidIsException] == true)) {
-            	if (false && isset($props[$recReplTime])){
+            	if (isset($props[$recReplTime])){
             	   $basedate = $props[$recReplTime];
             	   $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $this->_getGMTTZ());  
             	}
