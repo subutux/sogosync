@@ -168,7 +168,7 @@ class MAPIMapping {
     var $_meetingrequestmapping = array (
                             "responserequested" => PR_RESPONSE_REQUESTED,
                             // timezone
-                            "alldayevent" => "PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x825",
+                            "alldayevent" => "PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x8215",
                             "busystatus" => "PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8205",
                             "rtf" => PR_RTF_COMPRESSED,
                             "dtstamp" => PR_LAST_MODIFICATION_TIME,
@@ -2902,10 +2902,12 @@ class BackendICS {
         // F/B will be updated on logoff
 
         // We have to return the ID of the new calendar item, so do that here
-        $newitem = mapi_msgstore_openentry($this->_defaultstore, $entryid);
-        $newprops = mapi_getprops($newitem, array(PR_SOURCE_KEY));
-        $calendarid = bin2hex($newprops[PR_SOURCE_KEY]);
-        
+        if (isset($entryid)) { 
+            $newitem = mapi_msgstore_openentry($this->_defaultstore, $entryid);
+            $newprops = mapi_getprops($newitem, array(PR_SOURCE_KEY));
+            $calendarid = bin2hex($newprops[PR_SOURCE_KEY]);
+        }
+ 
         // on recurring items, the MeetingRequest class responds with a wrong entryid
         if ($requestid == $calendarid) {
             debugLog("returned calender id is the same as the requestid - re-searching");
