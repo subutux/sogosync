@@ -1885,7 +1885,7 @@ class ExportChangesICS  {
         $folder = mapi_msgstore_openentry($this->_store, $entryid);
         if(!$folder) {
             $this->exporter = false;
-            debugLog("ExportChangesICS->Constructor: can not open folder");
+            debugLog("ExportChangesICS->Constructor: can not open folder:".bin2hex($folderid));
             return;
         }
 
@@ -2258,7 +2258,7 @@ class BackendICS {
                 if ($ak !== false) {
                     //update policykey
                     $devicesprops[0x6880101E][$ak] = $policykey;
-                    $devicesprops[0x6883101E][] = $useragent;                    
+                    $devicesprops[0x6883101E][$ak] = $useragent;
                 }
                 else {
                     //Unknown device. Store its information.
