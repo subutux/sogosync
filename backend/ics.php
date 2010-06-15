@@ -2507,10 +2507,9 @@ class BackendICS {
         $mimeParams = array('decode_headers' => false,
                             'decode_bodies' => true,
                             'include_bodies' => true,
-                            'input' => $rfc822,
-                            'crlf' => "\r\n",
-                            'charset' => 'utf-8');
-        $mimeObject = new Mail_mimeDecode($mimeParams['input'], $mimeParams['crlf']);
+					        'charset' => 'utf-8');
+        
+        $mimeObject = new Mail_mimeDecode($rfc822);
         $message = $mimeObject->decode($mimeParams);
 
         // Open the outbox and create the message there

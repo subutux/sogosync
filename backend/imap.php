@@ -91,18 +91,19 @@ class BackendIMAP extends BackendDiff {
      * the new message as any other new message in a folder.
      */
     function SendMail($rfc822, $forward = false, $reply = false, $parent = false) {
-        debugLog("IMAP-SendMail: " . $rfc822 . "for: $forward   reply: $reply   parent: $parent" );
+        debugLog("IMAP-SendMail: for: $forward   reply: $reply   parent: $parent  RFC822:  \n". $rfc822 );
 
         $mobj = new Mail_mimeDecode($rfc822);
-        $message = $mobj->decode(array('decode_headers' => false, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $rfc822, 'crlf' => "\n", 'charset' => 'utf-8'));
+        $message = $mobj->decode(array('decode_headers' => false, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => 'utf-8'));
 
+        $Mail_RFC822 = new Mail_RFC822();
         $toaddr = $ccaddr = $bccaddr = "";
         if(isset($message->headers["to"]))
-            $toaddr = $this->parseAddr(Mail_RFC822::parseAddressList($message->headers["to"]));
+            $toaddr = $this->parseAddr($Mail_RFC822->parseAddressList($message->headers["to"]));
         if(isset($message->headers["cc"]))
-            $ccaddr = $this->parseAddr(Mail_RFC822::parseAddressList($message->headers["cc"]));
+            $ccaddr = $this->parseAddr($Mail_RFC822->parseAddressList($message->headers["cc"]));
         if(isset($message->headers["bcc"]))
-            $bccaddr = $this->parseAddr(Mail_RFC822::parseAddressList($message->headers["bcc"]));
+            $bccaddr = $this->parseAddr($Mail_RFC822->parseAddressList($message->headers["bcc"]));
 
         // save some headers when forwarding mails (content type & transfer-encoding)
         $headers = "";
@@ -201,10 +202,10 @@ class BackendIMAP extends BackendDiff {
         if (isset($reply) && isset($parent) &&  $reply && $parent) {
             $this->imap_reopenFolder($parent);
             // receive entire mail (header + body) to decode body correctly
-            $origmail = @imap_fetchheader($this->_mbox, $reply, FT_PREFETCHTEXT | FT_UID) . @imap_body($this->_mbox, $reply, FT_PEEK | FT_UID);
+            $origmail = @imap_fetchheader($this->_mbox, $reply, FT_UID) . @imap_body($this->_mbox, $reply, FT_PEEK | FT_UID);
             $mobj2 = new Mail_mimeDecode($origmail);
             // receive only body
-            $body .= $this->getBody($mobj2->decode(array('decode_headers' => false, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $origmail, 'crlf' => "\n", 'charset' => 'utf-8')));
+            $body .= $this->getBody($mobj2->decode(array('decode_headers' => false, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => 'utf-8')));
             // unset mimedecoder & origmail - free memory
             unset($mobj2);
             unset($origmail);
@@ -219,7 +220,7 @@ class BackendIMAP extends BackendDiff {
         if (isset($forward) && isset($parent) && $forward && $parent) {
             $this->imap_reopenFolder($parent);
             // receive entire mail (header + body)
-            $origmail = @imap_fetchheader($this->_mbox, $forward, FT_PREFETCHTEXT | FT_UID) . @imap_body($this->_mbox, $forward, FT_PEEK | FT_UID);
+            $origmail = @imap_fetchheader($this->_mbox, $forward, FT_UID) . @imap_body($this->_mbox, $forward, FT_PEEK | FT_UID);
 
             // build a new mime message, forward entire old mail as file
             list($aheader, $body) = $this->mail_attach("forwarded_message.eml",strlen($origmail),$origmail, $body, $forward_h_ct, $forward_h_cte);
@@ -526,10 +527,10 @@ class BackendIMAP extends BackendDiff {
         list($folderid, $id, $part) = explode(":", $attname);
 
         $this->imap_reopenFolder($folderid);
-        $mail = @imap_fetchheader($this->_mbox, $id, FT_PREFETCHTEXT | FT_UID) . @imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
+        $mail = @imap_fetchheader($this->_mbox, $id, FT_UID) . @imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
 
         $mobj = new Mail_mimeDecode($mail);
-        $message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $mail, 'crlf' => "\n", 'charset' => 'utf-8'));
+        $message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => 'utf-8'));
 
         if (isset($message->parts[$part]->body))
             print $message->parts[$part]->body;
@@ -597,10 +598,10 @@ class BackendIMAP extends BackendDiff {
 
         if ($stat) {
             $this->imap_reopenFolder($folderid);
-            $mail = @imap_fetchheader($this->_mbox, $id, FT_PREFETCHTEXT | FT_UID) . @imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
+            $mail = @imap_fetchheader($this->_mbox, $id, FT_UID) . @imap_body($this->_mbox, $id, FT_PEEK | FT_UID);
 
             $mobj = new Mail_mimeDecode($mail);
-            $message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $mail, 'crlf' => "\n", 'charset' => 'utf-8'));
+            $message = $mobj->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => 'utf-8'));
 
             $output = new SyncMail();
 
