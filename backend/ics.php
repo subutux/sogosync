@@ -2528,7 +2528,7 @@ class BackendICS {
         $mapimessage = mapi_folder_createmessage($outbox);
 
         mapi_setprops($mapimessage, array(
-            PR_SUBJECT => u2w($mimeObject->_decodeHeader($message->headers["subject"])),
+            PR_SUBJECT => u2w($mimeObject->_decodeHeader(isset($message->headers["subject"])?$message->headers["subject"]:"")),
             PR_SENTMAIL_ENTRYID => $storeprops[PR_IPM_SENTMAIL_ENTRYID],
             PR_MESSAGE_CLASS => "IPM.Note",
             PR_MESSAGE_DELIVERY_TIME => time()
