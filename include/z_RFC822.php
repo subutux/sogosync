@@ -183,8 +183,8 @@ class Mail_RFC822 {
 
         while ($this->address = $this->_splitAddresses($this->address));
         if ($this->address === false || isset($this->error)) {
-            require_once 'PEAR.php';
-            return PEAR::raiseError($this->error);
+            //require_once 'PEAR.php';
+            return $this->raiseError($this->error);
         }
 
         // Validate each address individually.  If we encounter an invalid
@@ -193,8 +193,8 @@ class Mail_RFC822 {
             $valid = $this->_validateAddress($address);
 
             if ($valid === false || isset($this->error)) {
-                require_once 'PEAR.php';
-                return PEAR::raiseError($this->error);
+                //require_once 'PEAR.php';
+                return $this->raiseError($this->error);
             }
 
             if (!$this->nestGroups) {
@@ -921,5 +921,16 @@ class Mail_RFC822 {
             return false;
         }
     }
-
+    /**
+     * Z-Push helper for error logging
+     * removing PEAR dependency
+     *
+     * @param  string  debug message
+     * @return boolean always false as there was an error
+     * @access private
+     */   
+    function raiseError($message) {
+        debugLog("z_RFC822 error: ". $message);
+        return false;
+    }   
 }
