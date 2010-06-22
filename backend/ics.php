@@ -504,6 +504,15 @@ class ImportContentsChangesICS extends MAPIMapping {
         $this->statestream = $stream;
 
         mapi_importcontentschanges_config($this->importer, $stream, $flags);
+        $this->_flags = $flags;
+
+        // configure an exporter so we can detect conflicts
+        $exporter = new ExportChangesICS($this->_session, $this->_store, $this->_folderid);
+        $memImporter = new ImportContentsChangesMem();
+        $exporter->Config(&$memImporter, false, false, $state, 0, 0);
+        while(is_array($exporter->Synchronize()));
+        $this->_memChanges = $memImporter;
+        
     }
 
     function ImportMessageChange($id, $message) {
@@ -516,8 +525,23 @@ class ImportContentsChangesICS extends MAPIMapping {
         $props[PR_PARENT_SOURCE_KEY] = $parentsourcekey;
 
         // set the PR_SOURCE_KEY if available or mark it as new message
-        if($id)
+        if($id) {
             $props[PR_SOURCE_KEY] = $sourcekey;
+
+            // check for conflicts
+            if($this->_memChanges->isChanged($id)) {
+                if ($this->_flags == SYNC_CONFLICT_OVERWRITE_PIM) {
+                    debugLog("Conflict detected. Data from PIM will be dropped! Server overwrites PIM.");
+                    return false;
+                }
+                else
+                   debugLog("Conflict detected. Data from Server will be dropped! PIM overwrites server.");
+            }
+            if($this->_memChanges->isDeleted($id)) {
+                debugLog("Conflict detected. Data from PIM will be dropped! Object was deleted on server.");
+                return false;
+            }            
+        }
         else
             $flags = SYNC_NEW_MESSAGE;
 
@@ -536,6 +560,10 @@ class ImportContentsChangesICS extends MAPIMapping {
 
     // Import a deletion. This may conflict if the local object has been modified.
     function ImportMessageDeletion($objid) {
+        // check for conflicts
+        if($this->_memChanges->isChanged($objid)) {
+           debugLog("Conflict detected. Data from Server will be dropped! PIM deleted object.");
+        }
         // do a 'soft' delete so people can un-delete if necessary
         mapi_importcontentschanges_importmessagedeletion($this->importer, 1, array(hex2bin($objid)));
     }

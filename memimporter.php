@@ -12,16 +12,36 @@
 ************************************************/
 
 class ImportContentsChangesMem extends ImportContentsChanges {
+    var $_changes;
+    var $_deletions;
+
     function ImportContentsChangesMem() {
+        $this->_changes = array();
+        $this->_deletions = array();
     }
     
-    function ImportMessageChange($message) { return true; }
+    function ImportMessageChange($id, $message) {
+        $this->_changes[] = $id; 
+        return true;
+    }
 
-    function ImportMessageDeletion($message) { return true; }
+    function ImportMessageDeletion($id) { 
+        $this->_deletions[] = $id;
+        return true;
+    }
     
     function ImportMessageReadFlag($message) { return true; }
 
     function ImportMessageMove($message) { return true; }
+
+    function isChanged($id) {
+        return in_array($id, $this->_changes);
+    }
+    
+    function isDeleted($id) {
+        return in_array($id, $this->_deletions);
+    }
+
 };
 
 // This simply collects all changes so that they can be retrieved later, for

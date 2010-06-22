@@ -470,9 +470,9 @@ function HandleSync($backend, $protocolversion, $devid) {
             $collection["collectionid"] = _getFolderID($devid, $collection["class"]);
         }
 
-        // compatibility mode - set default conflict behavior if no conflict resolution algorithm is set (OVERWRITE_PIM)
+        // set default conflict behavior from config if the device doesn't send a conflict resolution parameter
         if (!isset($collection["conflict"])) {
-            $collection["conflict"] = 1;
+            $collection["conflict"] = SYNC_CONFLICT_DEFAULT;
         }
 
         // Get our sync state for this collection
