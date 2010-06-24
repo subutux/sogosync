@@ -26,12 +26,14 @@
     Linienstr. 141, 10115 Berlin, Germany, email:ftf@fsfeurope.org.
     */                                                                    
     //define('KOLABBACKEND_VERSION', 'SVN developpment 20100307');
-    define('KOLABBACKEND_VERSION', '20100522');   
+    define('KOLABBACKEND_VERSION', '0.6');   
     include_once('diffbackend.php');
 
     // The is an improved version of mimeDecode from PEAR that correctly
     // handles charsets and charset conversion
     include_once('mimeDecode.php');
+    include_once('z_RTF.php');
+    include_once('z_RFC822.php');
     include_once('Horde/Kolab/Kolab_Zpush/lib/kolabActivesyncData.php');
     require_once 'Horde/Kolab/Format.php';
 
@@ -51,6 +53,7 @@
         private $_KolabHomeServer;
         private $_cn;
         private $_email;
+        private $sentFolder="";
         /* Called to logon a user. These are the three authentication strings that you must
         * specify in ActiveSync on the PDA. Normally you would do some kind of password
         * check here. Alternatively, you could ignore the password here and have Apache
@@ -192,7 +195,7 @@
         }
         function SendMail($rfc822, $forward = false, $reply = false, $parent = false) {
             debugLog("IMAP-SendMail: " . $rfc822 . "for: $forward   reply: $reply   parent: $parent" );
-
+            //
             $mobj = new Mail_mimeDecode($rfc822);
             $message = $mobj->decode(array('decode_headers' => false, 'decode_bodies' => true, 'include_bodies' => true, 'input' => $rfc822, 'crlf' => "\n", 'charset' => 'utf-8'));
 
@@ -250,20 +253,20 @@
                 }
 
                 // check if "from"-header is set
-                if ($k == "from" && ! trim($v) && IMAP_DEFAULTFROM) {
+                if ($k == "from"  ) {
                     $changedfrom = true;
-                    if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
-                    else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
-                    else $v = $this->_username . IMAP_DEFAULTFROM;
+                    if (! trim($v) )
+                    {
+                        $v = $this->_email;
+                    }
                 }
 
                 // check if "Return-Path"-header is set
                 if ($k == "return-path") {
                     $returnPathSet = true;
-                    if (! trim($v) && IMAP_DEFAULTFROM) {
-                        if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
-                        else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
-                        else $v = $this->_username . IMAP_DEFAULTFROM;
+                    if (! trim($v) ) {
+                        $v = $this->_email;
+
                     }
                 }
 
@@ -271,25 +274,21 @@
                 if ($headers) $headers .= "\n";
                 $headers .= ucfirst($k) . ": ". $v;
             }
-
+            
             // set "From" header if not set on the device
-            if(IMAP_DEFAULTFROM && !$changedfrom){
-                if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
-                else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
-                else $v = $this->_username . IMAP_DEFAULTFROM;
+            if( !$changedfrom){
+                $v = $this->_email;    
                 if ($headers) $headers .= "\n";
                 $headers .= 'From: '.$v;
             }
 
             // set "Return-Path" header if not set on the device
-            if(IMAP_DEFAULTFROM && !$returnPathSet){
-                if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
-                else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
-                else $v = $this->_username . IMAP_DEFAULTFROM;
+            if(!$returnPathSet){
+                $v = $this->_email;    
                 if ($headers) $headers .= "\n";
                 $headers .= 'Return-Path: '.$v;
             }
-
+             
             // if this is a multipart message with a boundary, we must use the original body
             if ($use_orgbody) {
                 list(,$body) = $mobj->_splitBodyHeader($rfc822);
@@ -330,40 +329,38 @@
                 // add boundary headers
                 $headers .= "\n" . $aheader;
             }
-
-            //advanced debugging
-            //debugLog("IMAP-SendMail: parsed message: ". print_r($message,1));
-            //debugLog("IMAP-SendMail: headers: $headers");
-            //debugLog("IMAP-SendMail: subject: {$message->headers["subject"]}");    
-            //debugLog("IMAP-SendMail: body: $body");    
-
+            $headers .="\n";
             $send =  @imap_mail ( $toaddr, $message->headers["subject"], $body, $headers, $ccaddr, $bccaddr);
-
+            $errors = imap_errors();
+                if (is_array($errors)) {
+                    foreach ($errors as $e)    debugLog("IMAP-errors: $e");            
+                }             
             // email sent?
             if (!$send) {
                 debugLog("The email could not be sent. Last-IMAP-error: ". imap_last_error());
             }
-
             // add message to the sent folder
             // build complete headers
             $cheaders  = "To: " . $toaddr. "\n";
-            $cheaders .= "Subject: " . $message->headers["subject"] . "\n";
-            $cheaders .= "Cc: " . $ccaddr . "\n";
             $cheaders .= $headers;
-
-            $asf = false;        
-            if ($this->_sentID) {
-                $asf = $this->addSentMessage($this->_sentID, $cheaders, $body);
+            $asf = false;  
+            //try to see if there are a folder with the annotation 
+            $sent=$this->readDefaultSentItemFolder();    
+            $body=str_replace("\n","\r\n",$body); 
+            $cheaders=str_replace(":  ",": ",$cheaders); 
+            $cheaders=str_replace("\n","\r\n",$cheaders); 
+            if ($sent) {
+                $asf = $this->addSentMessage($sent, $cheaders, $body);
             }
-            else if (IMAP_SENTFOLDER) {
-                $asf = $this->addSentMessage(IMAP_SENTFOLDER, $cheaders, $body);
-                debugLog("IMAP-SendMail: Outgoing mail saved in configured 'Sent' folder '".IMAP_SENTFOLDER."': ". (($asf)?"success":"failed"));
+            else if ($this->sentFolder) {
+                $asf = $this->addSentMessage($this->sentFolder, $cheaders, $body);
+                debugLog("IMAP-SendMail: Outgoing mail saved in configured 'Sent' folder '".$this->sentFolder."': ". (($asf)?"success":"failed"));
             }
             // No Sent folder set, try defaults
             else {
                 debugLog("IMAP-SendMail: No Sent mailbox set");
-                if($this->addSentMessage("INBOX.Sent", $cheaders, $body)) {
-                    debugLog("IMAP-SendMail: Outgoing mail saved in 'INBOX.Sent'");
+                if($this->addSentMessage("INBOX/Sent", $cheaders, $body)) {
+                    debugLog("IMAP-SendMail: Outgoing mail saved in 'INBOX/Sent'");
                     $asf = true;
                 }
                 else if ($this->addSentMessage("Sent", $cheaders, $body)) {
@@ -375,7 +372,10 @@
                     $asf = true;
                 }
             }
-
+            $errors = imap_errors();
+                if (is_array($errors)) {
+                    foreach ($errors as $e)    debugLog("IMAP-errors: $e");            
+                }             
             // unset mimedecoder - free memory
             unset($mobj);
             return ($send && $asf);
@@ -467,7 +467,7 @@
                     }
 
                     $this->imap_reopenFolder($folder);
-                    //DebugBreak("1@192.168.49.1:7869;d=1,p=0"); 
+                    
                     /*trying optimizing the reads*/
                     /*if ($this->isFolderModified($folder) == false )
                     {
@@ -543,7 +543,7 @@
                     //no we pur the last folder found as default;
                     $this->forceDefaultFolder($foldertype,$lastfolder); 
                 }
-                //DebugBreak("1@192.168.49.1:7869;d=1,p=0"); 
+ 
                 unset($checkId);
                 unset($overviews);
                 return $messages;
@@ -566,7 +566,6 @@
         */
         function GetMessageList($folderid, $cutoffdate) 
         {
-            //DebugBreak("1@192.168.49.1:7869;d=1,p=0"); 
             $messages = array();
             $checkId = array();
             if ($folderid == "VIRTUAL/calendar")
@@ -678,7 +677,7 @@
                 //clean the index before leave
                 $this->CacheIndexClean($messages) ;
                 //$this->Log("Get Message List : " . count($messages)) ;
-            }
+                }
 
             debugLog("MEM GetmessageList End:" . memory_get_usage())  ; 
             $this->CacheStoreMessageList($folderid,$messages);
@@ -705,7 +704,7 @@
         */
         function GetFolderList()
         { 
-            //DebugBreak("1@192.168.49.1:7869;d=1,p=0"); 
+ 
             if ( $this->foMode == true)
             {
                 return $this->GetFolderListFoMode();
@@ -720,8 +719,8 @@
             $folders = array();      
             $list = @imap_getmailboxes($this->_mbox, $this->_server, "*");
             //add the virtual folders for contacts calendars and tasks
-            //$virtual=array("VIRTUAL/calendar","VIRTUAL/contacts","VIRTUAL/tasks");   
-            $virtual=array("VIRTUAL/calendar","VIRTUAL/contacts");
+            $virtual=array("VIRTUAL/calendar","VIRTUAL/contacts","VIRTUAL/tasks");   
+            //$virtual=array("VIRTUAL/calendar","VIRTUAL/contacts");
             foreach ($virtual as $v)
             {
                 $box=array();
@@ -760,7 +759,7 @@
                     if (count($fhir) > 1) {
                         $box["mod"] = imap_utf7_encode(array_pop($fhir)); // mod is last part of path
                         $box["parent"] = imap_utf7_encode(implode("/", $fhir)); // parent is all previous parts of path
-                    }
+                        }
                     else {
                         $box["mod"] = imap_utf7_encode($box["id"]);
                         $box["parent"] = "0";
@@ -777,12 +776,6 @@
         private function GetFolderListFoMode() {
             $folders = array();      
             $list = @imap_getmailboxes($this->_mbox, $this->_server, "*");
-            $kuserfolder_contact= KOLAB_USERFOLDER_CONTACT;
-            $kuserfolder_diary= KOLAB_USERFOLDER_DIARY;   
-            $ksharedfolder_contact=KOLAB_SHAREDFOLDER_CONTACT;
-            $ksharedfolder_diary=KOLAB_SHAREDFOLDER_DIARY;
-            $kinboxfolder_contact=KOLAB_INBOXFOLDER_CONTACT;
-            $kinboxfolder_diary=KOLAB_INBOXFOLDER_DIARY;
             $this->hasDefaultEventFolder=false;
             $this->hasDefaultContactFolder=false;  
             $this->hasDefaultTaskFolder=false;  
@@ -821,11 +814,6 @@
                         $this->hasDefaultTaskFolder=true;
                         $defaultfolder = true;
                     }
-                    //for the moment escaping the task (N900 pb)
-                    if (substr($foldertype,0,4) == "task")
-                    {
-                        continue;
-                    }
                     // workspace of the folder;
                     if (substr( $box["id"],0,6) == "shared")
                     {
@@ -845,7 +833,7 @@
                     //selection of the folder depending to the setup
                     if (! $defaultfolder)
                     {
-                        //DebugBreak("1@192.168.49.1:7869;d=1,p=0");               
+                                       
                         //test annotation
                         $fa=$this->kolabReadFolderParam($box["id"]);
                         //for later use (in getMessage)
@@ -857,32 +845,6 @@
                             //not set to sync
                             continue;
                         }
-                        /*
-                        if ( $isUser && $kuserfolder_contact!= 1 && $foldertype == "contact")
-                        {
-                        continue;
-                        }
-                        if ( $isInbox && $kinboxfolder_contact!= 1 && $foldertype == "contact")
-                        {
-                        continue;
-                        }
-                        if ( $isShared && $ksharedfolder_contact != 1 && $foldertype == "contact")
-                        {
-                        continue;
-                        }
-                        if ( $isUser && $kuserfolder_diary!= 1 && $foldertype == "event")
-                        {
-                        continue;
-                        }
-                        if ( $isInbox && $kinboxfolder_diary!= 1 && $foldertype == "event")
-                        {
-                        continue;
-                        }
-                        if ( $isShared && $ksharedfolder_diary != 1 && $foldertype == "event")
-                        {
-                        continue;
-                        }
-                        */
                     }
                     $this->Log("NOTICE SyncFolderList Add folder ".$box["id"]);
                     //$box["id"] = imap_utf7_encode( $box["id"]);
@@ -906,7 +868,7 @@
                         if (count($fhir) > 1) {
                             $box["mod"] = imap_utf7_encode(array_pop($fhir)); // mod is last part of path
                             $box["parent"] = imap_utf7_encode(implode("/", $fhir)); // parent is all previous parts of path
-                        }
+                            }
                         else {
                             $box["mod"] = imap_utf7_encode($box["id"]);
                             $box["parent"] = "0";
@@ -964,6 +926,7 @@
             else if($lid == "inbox/sent") {
                 $folder->parentid = $fhir[0];
                 $folder->displayname = "Sent";
+                $this->sentFolder=$id;
                 $folder->type = SYNC_FOLDER_TYPE_SENTMAIL;
                 $this->_sentID = $id;
             }
@@ -1116,7 +1079,7 @@
                 // rename doesn't work properly with IMAP
                 // the activesync client doesn't support a 'changing ID'
                 //$csts = imap_renamemailbox($this->_mbox, $this->_server . imap_utf7_encode(str_replace(".", $this->_serverdelimiter, $oldid)), $newname);
-            }
+                }
             else {
                 $csts = @imap_createmailbox($this->_mbox, $newname);
             }
@@ -1161,12 +1124,11 @@
 
         function StatMessage($folderid, $id) {
             debugLog("IMAP-StatMessage: (fid: '$folderid'  id: '$id' )");    
-
             //search the imap id 
             if ( $this->kolabFolderType($folderid))
             {
                 //in case of synchor app or contacts we work with kolab_uid
-                //DebugBreak("1@192.168.49.1:7869;d=1,p=0");  
+                
                 if (substr($folderid,0,7) == "VIRTUAL")
                 {
                     //must find the right folder
@@ -1230,7 +1192,8 @@
         */
         function GetMessage($folderid, $id, $truncsize) {
             debugLog("KOLAB-GetMessage: (fid: '$folderid'  id: '$id'  truncsize: $truncsize)");
-            // Get flags, etc   
+            // Get flags, etc  
+  
             $stat = $this->StatMessage($folderid, $id);
             if ($stat) {  
                 if ( $this->kolabFolderType($folderid))
@@ -1274,7 +1237,7 @@
                     if ( $fa->showAlarm($this->_devid)) 
                     {   
                         $output=$this->KolabReadEvent($message,$id,false)   ;    //alarm must be shown
-                    }
+                        }
                     else
                     {
                         $output=$this->KolabReadEvent($message,$id,true)   ;  
@@ -1282,15 +1245,19 @@
                     $this->Log("Changed on Server A: $folderid/" .$id );
                     $this->Log("                  : " . u2w($output->subject));
                     $this->CacheCreateIndex($folderid,$id,$imap_id)   ;
+                    $this->CacheWriteSensitivity($id,$output->sensitivity);
                     return $output;
                 }
                 elseif ($this->kolabFolderType($folderid) == 3 )
-                {
-
+                {   
+                    
                     $output=$this->KolabReadTask($message,$id)   ;
                     $this->Log("Changed on Server T: $folderid /" .$id );
                     $this->Log("                  : " . u2w($output->subject));
                     $this->CacheCreateIndex($folderid,$id,$imap_id)   ;
+                    //rewrite completion
+                    $this->CacheWriteTaskCompleted($id,$output->completed);
+                    $this->CacheWriteSensitivity($id,$output->sensitivity);
                     return $output;
                 }
                 else
@@ -1425,12 +1392,13 @@
         * can only set them as 'read'.
         */
         function ChangeMessage($folderid, $id, $message) {
+   
             $modify=false; 
-            $this->Log("PDA Folder : " . $folderid .  "  object uid : " . bin2hex($message->uid));
+            $this->Log("PDA Folder : " . $folderid .  "  object uid : " . $id);
             if (substr($folderid,0,6) == "shared" && KOLAB_SHAREDFOLDERS_RO  ==1 )
             {
                 //shared folders are protected 
-                $this->Log("PDA Folder : READ ONLY Cancel " . $folderid .  "  object uid : " . bin2hex($message->uid));
+                $this->Log("PDA Folder : READ ONLY Cancel " . $folderid .  "  object uid : " . $id);
                 return false;
             }
             if ( $id != FALSE )
@@ -1501,6 +1469,12 @@
                 {
                     //cache the end date
                     $this->CacheWriteEndDate($folderid,$message) ;   
+
+                }
+                if ($this->kolabFolderType($folderid) == 3)
+                {
+                    $this->CacheWriteTaskCompleted($id,$message->completed);
+                    $this->CacheWriteSensitivity($id,$message->sensitivity);
                 }
                 $entry["mod"] = $folderid ."/".$id;
                 $entry["id"]=strtoupper($mail[0]);
@@ -1519,7 +1493,6 @@
         */
         function MoveMessage($folderid, $id, $newfolderid) {
             debugLog("IMAP-MoveMessage: (sfid: '$folderid'  id: '$id'  dfid: '$newfolderid' )");
-
             $this->imap_reopenFolder($folderid);
 
             // read message flags
@@ -1531,7 +1504,7 @@
             } 
             else {
                 // move message                    
-                $s1 = imap_mail_move($this->_mbox, $id, str_replace(".", $this->_serverdelimiter, $newfolderid), FT_UID);
+                $s1 = imap_mail_move($this->_mbox, $id, $newfolderid, FT_UID);
 
                 // delete message in from-folder
                 $s2 = imap_expunge($this->_mbox);
@@ -1600,7 +1573,7 @@
                 return $val->delimiter;
             }        
             return "."; // default "."
-        }
+            }
 
         // speed things up
         // remember what folder is currently open and only change if necessary
@@ -1676,7 +1649,7 @@
 
         private function KolabReadContact($message,$with_uid)
         {
-            //DebugBreak("1@192.168.49.1:7869;d=1,p=0"); //search the right attachment  
+               
             $contact=NULL;  
             $kolabXml=NULL;
             $images=array();
@@ -1692,7 +1665,7 @@
                         $ctype=explode(";",$type["content-type"] )  ;
                         if ($ctype[0] == " application/x-vnd.kolab.contact")
                         { 
-                              $kolabXml=$part->body;
+                            $kolabXml=$part->body;
                         }
                         if ($ctype[0] == " image/jpeg")
                         { 
@@ -1822,7 +1795,7 @@
                 $contact->assistantname=w2u($kcontact['assistant']);
                 $contact->department=w2u($kcontact['department']);
                 $contact->officelocation=w2u($kcontact{'office-location'});
-                 if (isset($kcontact['anniversary']))
+                if (isset($kcontact['anniversary']))
                 {
                     $contact->anniversary=$this->KolabDate2Unix($kcontact['anniversary']);
                 }
@@ -1903,8 +1876,7 @@
             'addr-other-region' => $message->othersstate,  
             'addr-other-country' => $message->othercountry,              
             'organization' => u2w($message->companyname) ,
-            'department' => u2w($message->department),
-            'body' =>u2w($message->body),  
+            'department' => u2w($message->department),  
             'spouse-name'=> u2w($message->spouse),
             'children' =>u2w($message->children),
             'nick-name'=> u2w($message->nickname),
@@ -1912,8 +1884,16 @@
             'department' => u2w($message->department) ,
             'office-location' => u2w($message->officelocation)
             );
+            if ($message->body != "")
+            {
+                $object['body']=u2w($message->body);
+            }
+            elseif ($message->rtf)
+            {
+                $object['body']=$this->rtf2text($message->rtf);
+            }
             //bithday
-             if (  isset($message->anniversary))
+            if (  isset($message->anniversary))
             {
                 $object['anniversary'] =substr($this->KolabDateUnix2Kolab($message->anniversary),0,10);
             }
@@ -1925,7 +1905,7 @@
             $children=$message->children;
             if ($children != NULL)
             {
-                  $object['children']=join(",",$children);
+                $object['children']=join(",",$children);
             }
             //picture 
             if ( is_null($message->picture) )
@@ -1987,20 +1967,6 @@
 
         private function KolabReadEvent($message,$id,$disableAlarm=false)
         {
-            $numMonth=array(
-            "january"   => 1,
-            "february"  => 2,
-            "march"     => 3,
-            "april"     => 4,
-            "may"       => 5,
-            "june"      => 6,
-            "july"      => 7,
-            "august"    => 8,
-            "september" => 9,
-            "october"   => 10,
-            "november"  => 11,
-            "december"  => 12
-            );
             $event=NULL; 
             //searching the righ attachment Kolab XML 
             if(isset($message->parts)) 
@@ -2048,7 +2014,10 @@
                             //bug #9 Alarm mus not be shown for all folders
                             if ($disableAlarm == false)
                             {
-                                $event->reminder=$kevent['alarm'];
+                                if ($kevent['alarm'] > 0)
+                                {
+                                    $event->reminder=$kevent['alarm'];
+                                }
                             }
                             else
                             {
@@ -2093,80 +2062,9 @@
                             //reccurence process
                             if (isset($kevent["recurrence"]))
                             {
-                                $event->recurrence = new SyncRecurrence; 
-                                $rec=$kevent["recurrence"];
-                                //cycle
-                                if ($rec["cycle"] == "daily")
-                                {
-                                    $event->recurrence->type =  0 ;
-                                }
-                                elseif($rec["cycle"] == "weekly")
-                                {
-                                    $event->recurrence->type =  1 ;
-                                    //dayofweek
-                                    //tableau jour 1=sunday 128 =saturday 
-                                    $nday=0;
-                                    $event->recurrence->dayofweek=$this->KolabDofW2pda($rec["day"]);
-                                }  
-                                elseif($rec["cycle"] == "monthly")  
-                                {
-
-                                    // sous type by day 
-                                    if ($rec["type"] == "daynumber")
-                                    {
-                                        $event->recurrence->type =  2 ;    
-                                        $event->recurrence->dayofmonth =   $rec["daynumber"] ;
-                                    } 
-                                    elseif ($rec["type"] == "weekday") 
-                                    {
-                                        $event->recurrence->type =  3 ;        
-                                        $event->recurrence->weekofmonth = $rec["daynumber"];
-                                        //day of week 
-                                        $event->recurrence->dayofweek=$this->KolabDofW2pda($rec["day"]); 
-                                    }       
-                                }
-                                // year
-                                elseif($rec["cycle"] == "yearly")   
-                                {
-                                    if ($rec["type"] == "monthday")
-                                    {
-
-                                        $event->recurrence->type =5   ;  
-                                        $event->recurrence->dayofmonth =   $rec["daynumber"] ;
-                                        $event->recurrence->monthofyear= $numMonth[$rec["month"]];
-                                    }
-                                    elseif ($rec["type"] == "weekday")
-                                    {
-                                        $event->recurrence->type =6   ;  
-                                        $event->recurrence->weekofmonth = $rec["daynumber"];
-                                        $event->recurrence->monthofyear= $numMonth[$rec["month"]];
-                                        $event->recurrence->dayofweek=$this->KolabDofW2pda($rec["day"]); 
-                                    }
-                                }
-                                //interval
-                                $event->recurrence->interval = $rec["interval"] ;
-                                //range
-                                if ($rec["range-type"] == "number")
-                                {
-                                    $event->recurrence->occurrences =$rec["range"];
-                                }  
-                                elseif ($rec["range-type"] == "date") 
-                                {
-                                    if ( strtolower($_GET["DeviceType"]) == "iphone")     
-                                    {
-                                        $event->recurrence->until =$rec["range"] + 93599;
-                                    }
-                                    else
-                                    {
-                                        $event->recurrence->until =$rec["range"];
-                                    }
-
-                                }    
-
-
+                                $event->reccurence=$this->kolabReadRecurrence($kevent);
                             }
                             return $event;
-
                         }
                         $n++;
                     }
@@ -2175,9 +2073,111 @@
             return ""     ;
 
         }
+        private function kolabReadRecurrence($kevent,$type=0)
+        {
+            $numMonth=array(
+            "january"   => 1,
+            "february"  => 2,
+            "march"     => 3,
+            "april"     => 4,
+            "may"       => 5,
+            "june"      => 6,
+            "july"      => 7,
+            "august"    => 8,
+            "september" => 9,
+            "october"   => 10,
+            "november"  => 11,
+            "december"  => 12
+            );
+            if (isset($kevent["recurrence"]))
+            {
+                if ($type == 0)
+                {
+                    $recurrence = new SyncRecurrence;
+                }
+                else
+                {
+                    $recurrence= new SyncTaskRecurrence;
+                } 
+                $rec=$kevent["recurrence"];
+                //cycle
+                if ($rec["cycle"] == "daily")
+                {
+                    $recurrence->type =  0 ;
+                }
+                elseif($rec["cycle"] == "weekly")
+                {
+                    $recurrence->type =  1 ;
+                    //dayofweek
+                    //tableau jour 1=sunday 128 =saturday 
+                    $nday=0;
+                    $recurrence->dayofweek=$this->KolabDofW2pda($rec["day"]);
+                }  
+                elseif($rec["cycle"] == "monthly")  
+                {
+
+                    // sous type by day 
+                    if ($rec["type"] == "daynumber")
+                    {
+                        $recurrence->type =  2 ;    
+                        $recurrence->dayofmonth =   $rec["daynumber"] ;
+                    } 
+                    elseif ($rec["type"] == "weekday") 
+                    {
+                        $recurrence->type =  3 ;        
+                        $recurrence->weekofmonth = $rec["daynumber"];
+                        //day of week 
+                        $recurrence->dayofweek=$this->KolabDofW2pda($rec["day"]); 
+                    }       
+                }
+                // year
+                elseif($rec["cycle"] == "yearly")   
+                {
+                    if ($rec["type"] == "monthday")
+                    {
+
+                        $recurrence->type =5   ;  
+                        $recurrence->dayofmonth =   $rec["daynumber"] ;
+                        $recurrence->monthofyear= $numMonth[$rec["month"]];
+                    }
+                    elseif ($rec["type"] == "weekday")
+                    {
+                        $recurrence->type =6   ;  
+                        $recurrence->weekofmonth = $rec["daynumber"];
+                        $recurrence->monthofyear= $numMonth[$rec["month"]];
+                        $recurrence->dayofweek=$this->KolabDofW2pda($rec["day"]); 
+                    }
+                }
+                //interval
+                $recurrence->interval = $rec["interval"] ;
+                //range
+                if ($rec["range-type"] == "number")
+                {
+                    $recurrence->occurrences =$rec["range"];
+                }  
+                elseif ($rec["range-type"] == "date") 
+                {
+                    if ( strtolower($_GET["DeviceType"]) == "iphone")     
+                    {
+                        $recurrence->until =$rec["range"] + 93599;
+                    }
+                    else
+                    {
+                        $recurrence->until =$rec["range"];
+                    }
+
+                }    
+
+                return $recurrence;
+            }
+            else
+            {
+                return NULL;
+            }
+        }
         private function KolabWriteEvent($message,$uid)
         {  
-            $month=array("dummy","january","february","march","april","may","june","july","august","september","october","november","december");  
+
 
             $attendee = array(
             'display-name'  => $this->_cn,
@@ -2195,9 +2195,16 @@
             'color-label' => "none"    ,
             'show-time-as' => "busy",
             'organizer' => $attendee,
-            'body' => u2w($message->body) ,
             'location' => u2w($message->location)
             );
+            if ($message->body != "")
+            {
+                $object['body']=u2w($message->body);
+            }
+            elseif ($message->rtf)
+            {
+                $object['body']=$this->rtf2text($message->rtf);
+            }
             if ($message->alldayevent == 1)
             {
                 $object['_is_all_day']=True;
@@ -2231,82 +2238,8 @@
             //recurence
             if(isset($message->recurrence)) 
             {
-                $rec=array();
-                switch($message->recurrence->type) 
-                {
-                    case 0:
-                    //repeat daily 
-                    $rec["cycle"] = "daily";
-                    break;
-                    case 1:
-                    //repeat weekly 
-                    $rec["cycle"] = "weekly";  
-                    $rec["day"] = $this->KolabPda2DofW($message->recurrence->dayofweek );
-                    break;
-                    case 2:
-                    //montly daynumber
-                    $rec["cycle"] = "monthly";
-                    $rec["type"] ="daynumber";
-                    $rec["daynumber"] =$message->recurrence->dayofmonth  ;
-                    break;
-                    case 3:
-                    //monthly day of week
-                    $rec["cycle"] = "monthly";
-                    $rec["type"] ="weekday";
-                    $rec["daynumber"] =$message->recurrence->weekofmonth  ;
-                    $rec["day"] = $this->KolabPda2DofW($message->recurrence->dayofweek ); 
-                    break;  
-                    case 5:
-                    //yearly 
-                    $rec["cycle"] = "yearly";
-                    $rec["type"] ="monthday";
-                    $rec["daynumber"] =$message->recurrence->dayofmonth  ;
-                    $rec["month"]=$month[$message->recurrence->monthofyear];
-                    break;  
-                    //   
-                    case 6:
-                    //yearly 
-                    $rec["cycle"] = "yearly";
-                    $rec["type"] ="weekday";
-                    $rec["daynumber"] =$message->recurrence->weekofmonth  ;
-                    $rec["month"]=$month[$message->recurrence->monthofyear];
-                    $rec["day"] = $this->KolabPda2DofW($message->recurrence->dayofweek ); 
-                    break;  
-                }
-                //interval
-                if (isset($message->recurrence->interval))
-                {
-                    $rec["interval"] = $message->recurrence->interval;
-                }
-                else
-                {
-                    $rec["interval"] = 1;
-                }
-                if (isset($message->recurrence->occurrences))
-                {
-                    //by ocurence
-                    $rec["range-type"] = "number";
-                    $rec["range"] =$message->recurrence->occurrences;
-                }
-                elseif (isset($message->recurrence->until))
-                {
-                    //by end date
-                    $rec["range-type"] = "date";
-                    if ( strtolower($_GET["DeviceType"]) == "iphone" || strtolower($_GET["DeviceType"]) == "ipod")
-                    {
-                        $rec["range"] =$message->recurrence->until  - 93599 ; 
-                    }
-                    else
-                    {
-                        $rec["range"] =$message->recurrence->until;
-                    }
-                } 
-                else
-                {
-                    $rec["range-type"] ="none";
-                }
-                $object["recurrence"]=$rec;   
-            } 
+                $object["recurrence"]=$this->kolabWriteReccurence($message->reccurence);
+            }
             $format = Horde_Kolab_Format::factory('XML', 'event');  
             $xml = $format->save($object);
             unset($format);
@@ -2328,12 +2261,279 @@
             return array($object['uid'],$h['date'],$header  .$mail[0]."\r\n" .$mail[1]);
 
         }
-        private function KolabReadTask($message,$id)
+        private function kolabWriteReccurence($reccurence)
         {
+            $month=array("dummy","january","february","march","april","may","june","july","august","september","october","november","december");
+            $rec=array();
+            switch($recurrence->type) 
+            {
+                case 0:
+                //repeat daily 
+                $rec["cycle"] = "daily";
+                break;
+                case 1:
+                //repeat weekly 
+                $rec["cycle"] = "weekly";  
+                $rec["day"] = $this->KolabPda2DofW($recurrence->dayofweek );
+                break;
+                case 2:
+                //montly daynumber
+                $rec["cycle"] = "monthly";
+                $rec["type"] ="daynumber";
+                $rec["daynumber"] =$recurrence->dayofmonth  ;
+                break;
+                case 3:
+                //monthly day of week
+                $rec["cycle"] = "monthly";
+                $rec["type"] ="weekday";
+                $rec["daynumber"] =$recurrence->weekofmonth  ;
+                $rec["day"] = $this->KolabPda2DofW($recurrence->dayofweek ); 
+                break;  
+                case 5:
+                //yearly 
+                $rec["cycle"] = "yearly";
+                $rec["type"] ="monthday";
+                $rec["daynumber"] =$recurrence->dayofmonth  ;
+                $rec["month"]=$month[$recurrence->monthofyear];
+                break;  
+                //   
+                case 6:
+                //yearly 
+                $rec["cycle"] = "yearly";
+                $rec["type"] ="weekday";
+                $rec["daynumber"] =$recurrence->weekofmonth  ;
+                $rec["month"]=$month[$recurrence->monthofyear];
+                $rec["day"] = $this->KolabPda2DofW($recurrence->dayofweek ); 
+                break;  
+            }
+            //interval
+            if (isset($recurrence->interval))
+            {
+                $rec["interval"] = $recurrence->interval;
+            }
+            else
+            {
+                $rec["interval"] = 1;
+            }
+            if (isset($recurrence->occurrences))
+            {
+                //by ocurence
+                $rec["range-type"] = "number";
+                $rec["range"] =$recurrence->occurrences;
+            }
+            elseif (isset($recurrence->until))
+            {
+                //by end date
+                $rec["range-type"] = "date";
+                if ( strtolower($_GET["DeviceType"]) == "iphone" || strtolower($_GET["DeviceType"]) == "ipod")
+                {
+                    $rec["range"] =$recurrence->until  - 93599 ; 
+                }
+                else
+                {
+                    $rec["range"] =$recurrence->until;
+                }
+            } 
+            else
+            {
+                $rec["range-type"] ="none";
+            }
+            return $rec;   
+        } 
+        private function KolabReadTask($message,$id,$disableAlarm=false,$with_uid=false)
+        {
+            $task=NULL; 
+            
+            if(isset($message->parts)) 
+            {
+                foreach($message->parts as $part) 
+                {
+                    if(isset($part->disposition) && ($part->disposition == "attachment" || $part->disposition == "inline")) 
+                    {
+                        $type=$part->headers;
+                        //kolab contact attachment ? 
+                        $ctype=explode(";",$type["content-type"] )  ;
+                        if ($ctype[0] == " application/x-vnd.kolab.task")
+                        {
+                            $format = Horde_Kolab_Format::factory('XML', 'task');  
+                            $body=$part->body;  
+                            $ktask=$format->load($body); 
+                            unset($format);
+                            if ($ktask instanceof PEAR_Error)
+                            {
+                                //parsing error 
+                                debugLog("ERROR ".$ktask->message);
+                                debugLog("Xml kolab :     $body")  ;
+                                $this->Log("ERROR ".$ktask->message);
+                                $this->Log("XML : $body")  ;
+                                unset ($ktask);  
+                                return "";
+                            }
+
+                            //mappage
+                            $task=new SyncTask();
+                            if ( $with_uid != 0)
+                            {
+                                $task->uid= hex2bin($ktask['uid']);
+                            }
+                            $task->subject=w2u($ktask['name']);
+                            if ($ktask['start'])
+                            {
+                                $offset=date('Z',$ktask['start']);
+                                $task->utcstartdate=$kstart['start'];
+                                $task->startdate=$ktask['start'] + $offset;
+                            }
+                            if($ktask['due'])
+                            {
+                                $offset=date('Z',$ktask['due']);
+                                $task->utcduedate=$ktask['due'];
+                                $task->duedate=$ktask['due'] + $offset;
+                            }    
+                            $task->complete=$ktask['completed'];
+                            if (isset($ktask['completed_date']))
+                            {
+                                $task->datecompleted=$ktask['completed_date'];
+                            }
+                            //categories
+                            if (isset($ktask['categories']))
+                            {
+                                $cat=split(',',w2u($ktask['categories']));
+                                $task->categories=$cat;
+                            }
+                            switch($ktask['priority'])
+                            {
+                                case 1: $task->importance= 2;
+                                break;
+                                case 2:
+                                case 3:
+                                case 4: $task->importance=1;
+                                break;
+                                case 5: $task->importance=0; 
+                            }
+                            switch(strtolower($ktask['sensitivity']))
+                            {
+                                case "public":
+                                $task->sensitivity=0;
+                                break;
+                                case "private":
+                                $task->sensitivity=2;
+                                break;
+                                case "confidential":
+                                $task->sensitivity=3; 
+                            }
+                            //bug #9 Alarm mus not be shown for all folders
+                            if ($disableAlarm == false)
+                            {
+                                if ($ktask['alarm'] > 0)
+                                {
+                                    $task->remindertime=$ktask["start"] +($ktask['alarm'] * 60);
+                                    $task->reminderset=1;
+                                }
+                            }
+                            else
+                            {
+                                $task->reminderset=NULL;
+                                $task->remindertime=NULL;
+                            }
+                            $task->body=w2u($ktask['body']);
+                            //timezone must be fixed
+                            $task->bodytruncated = 0;  
+                            //reccurence process
+                            if (isset($ktask["recurrence"]))
+                            {
+                                $task->reccurence=$this->kolabReadRecurrence($ktask,1);
+                            }
+                            return $task;
+                        }
+                        $n++;
+                    }
+                }
+            }
+            return ""     ;
 
         }
-        private function KolabWriteTask($message,$uid)
+        private function KolabWriteTask($message,$id)
         {
+            
+            if ( ! $id )
+            {
+                $uid=strtoupper(md5(uniqid(time())));
+            }
+            else 
+            {
+                $uid=$id;
+            }
+            $object = array(
+            'uid' => $uid,
+            'start' => $message->utcstartdate,
+            'due'   => $message->utcduedate,
+            'name'   => u2w($message->subject),
+            );
+            if (isset($message->rtf))
+            {
+                $object['body']=$this->rtf2text($message->rtf);                  
+            }
+            if ($message->reminderset == 1)
+            {
+                $object['alarm']=($message->remindertime - $message->utcstartdate) / 60; 
+            }
+            //categories
+            if (isset($message->categories))
+            {
+                $object['categories']=u2w(join(',',$message->categories));
+            }
+            switch($message->importance)
+            {
+                case 0: $object["priority"] = 5;
+                break;
+                case 1: $object["priority"] = 3;
+                break;      
+                case 2: $object["priority"] = 1;
+                break;                 
+            }
+            if ( $message->complete == 1)
+            {
+                $object['completed'] = 100;
+                $object['completed_date'] = $message->datecompleted;
+            }
+            else
+            {
+                $object['completed'] = 0;
+            }
+            switch($message->sensitivity)
+            {
+                case 1:
+                case 2: 
+                $object["sensitivity"] = "private";
+                break;
+                case 3:
+                $object["sensitivity"] = "confidential";
+            }
+
+            //recurence
+            if(isset($message->recurrence)) 
+            {
+                $object["recurrence"]=$this->kolabWriteReccurence($message->reccurence);
+            }
+            $format = Horde_Kolab_Format::factory('XML', 'task');  
+            $xml = $format->save($object);
+            unset($format);
+            // set the mail 
+            // attach the XML file 
+            $mail=$this->mail_attach("kolab.xml",0,$xml,"kolab message","text/plain", "plain","application/x-vnd.kolab.task"); 
+            //add header
+            $h["from"]=$this->_email;
+            $h["to"]=$this->_email; 
+            $h["X-Mailer"]="z-push-Kolab Backend";
+            $h["subject"]= $object["uid"];
+            $h["message-id"]= "<" . strtoupper(md5(uniqid(time()))) . ">";
+            $h["date"]=date(DATE_RFC2822);
+            foreach(array_keys($h) as $i)
+            {
+                $header= $header . $i . ": " . $h[$i] ."\r\n";
+            }
+            //return the mail formatted
+            return array($object['uid'],$h['date'],$header  .$mail[0]."\r\n" .$mail[1]);
 
         }
         //return the date for Kolab
@@ -2345,15 +2545,15 @@
         }
         private function KolabDate2Unix($kdate)
         {
-             if (! $kdate)
-             {
-                 return NULL;
-             }
-             else
-             {
+            if (! $kdate)
+            {
+                return NULL;
+            }
+            else
+            {
                 $tm= gmmktime(0, 0, 0, substr($kdate,5,2), substr($kdate,8,2), substr($kdate,0,4)); 
                 return $tm;
-             }
+            }
         }
         /*CacheCreateIndex : create an index to retrieve easly the uid-> id and the id->uid 
         */
@@ -2559,14 +2759,14 @@
 
                     //index
                     if ($kolab_uid){
-                        //DebugBreak("1@192.168.49.1:7869;d=1,p=0");   
+                        
                         $this->CacheCreateIndex($fid,$kolab_uid,$o->uid);
                         //index of the endDate too 
                         $this->CacheWriteEndDate($fid,$ev);
                         if ( $ev->sensitivity != 0)
                         {
                             //add in cache the sensitivity
-                            $this->CacheWriteSensitivity($kolab_uid);
+                            $this->CacheWriteSensitivity($kolab_uid,$ev->sensitivity);
                         }
                     }
                     else
@@ -2587,6 +2787,28 @@
                         return False;
                     }
                 }
+                if ($this->kolabFolderType($fid) == 3)
+                {
+                    $ev=$this->KolabReadTask($message,false,false,1) ;
+                    $kolab_uid=strtoupper(bin2hex($ev->uid));
+                    //index
+                    if ($kolab_uid){
+                        $this->CacheCreateIndex($fid,$kolab_uid,$o->uid);
+                        if ( $ev->sensitivity != 0)
+                        {
+                            //add in cache the sensitivity
+                            $this->CacheWriteSensitivity($kolab_uid,$ev->sensitivity);
+                        }
+                        if ( $ev->complete)
+                        {
+                            $this->CacheWriteTaskCompleted($kolab_uid,$ev->complete);
+                        }
+                    }
+                    else
+                    {
+                        return False;
+                    }
+                }
             }
             $m["id"] = $kolab_uid;
             //$m["mod"]=  $o->uid;
@@ -2596,7 +2818,7 @@
         }
         private function getImapFolderType($folder)
         {
-            //DebugBreak("1@192.168.49.1:7869;d=1,p=0");
+            
             if (function_exists("imap_getannotation"))
             {
                 $result = imap_getannotation($this->_mbox, $folder, "/vendor/kolab/folder-type", "value.shared");
@@ -2810,12 +3032,23 @@
                     $anno = $default[0];
                 } 
             }  
+            if ( $anno =="mail.sentitems")
+            {
+                $this->_cache->write("SENTFOLDER:",$foldera);
+            }
             if ( ! $this->_cache->write("FA:".$foldera,$anno))
             {
                 $this->Log("ERROR: ".KOLAB_INDEX."/".$this->_username);
             }
             $this->_cache->close();   
-            $this->Log("GetAnnotation $foldera : $anno") ;
+            $this->Log("Annotation $foldera : $anno") ;
+        }
+        private function readDefaultSentItemFolder()
+        {
+            $this->_cache->open(KOLAB_INDEX."/".$this->_username."_".$this->_devid); 
+            $sentf=$this->_cache->find("SENTFOLDER:");
+            $this->_cache->close();
+            return $sentf;
         }
         private function readFolderAnnotation($folder)
         {
@@ -2855,7 +3088,7 @@
         {   
             $uid=strtoupper(bin2hex($event->uid));
             $this->_cache->open(KOLAB_INDEX."/".$this->_username."_".$this->_devid); 
-            //DebugBreak("1@192.168.49.1:7869;d=1,p=0");  
+           
             $edate=-1;
             if ($event->recurrence)
             {
@@ -2900,7 +3133,7 @@
                 }     
 
                 //others stuffs
-            }
+                }
             else
             {
                 $edate=$event->endtime;
@@ -2918,6 +3151,19 @@
         {
             $this->_cache->open(KOLAB_INDEX."/".$this->_username."_".$this->_devid);    
             $s=$this->_cache->find("SENSITIVITY:" .$uid);
+            $this->_cache->close();
+            return $s;
+        }
+        private function CacheWriteTaskCompleted($uid,$completed)
+        {
+            $this->_cache->open(KOLAB_INDEX."/".$this->_username."_".$this->_devid);  
+            $this->_cache->write("TCOMPLETED:" .$uid,$completed);
+            $this->_cache->close();         
+        }
+        private function CacheReadTaskCompleted($uid)
+        {
+            $this->_cache->open(KOLAB_INDEX."/".$this->_username."_".$this->_devid);    
+            $s=$this->_cache->find("TCOMPLETED:" .$uid);
             $this->_cache->close();
             return $s;
         }
@@ -3056,7 +3302,17 @@
                 }
                 return 1;
             }
-        }   
+        }  
+        private function rtf2text($data)
+        {
+            $rtf_body = new rtf ();
+            $rtf_body->loadrtf(base64_decode($data));
+            $rtf_body->output("ascii");
+            $rtf_body->parse();
+            $r=$rtf_body->out;
+            unset($rtf_body);
+            return $r;
+        }     
     };  
     class userCache {
         private $_filename;
