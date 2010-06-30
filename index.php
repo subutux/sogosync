@@ -38,7 +38,7 @@ $output = fopen("php://output", "w+");
 if(!isset($_SERVER['PHP_AUTH_PW'])) {
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     header("HTTP/1.1 401 Unauthorized");
-    print("Access denied. Please send authorisation information");
+    printZPushLegal("Access denied. Please send authorisation information");
     debugLog("Access denied: no password sent.");
 	debugLog("end");
 	debugLog("--------");
@@ -127,7 +127,7 @@ $backend = new $BACKEND_PROVIDER();
 if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false) {
     header("HTTP/1.1 401 Unauthorized");
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
-    print("Access denied. Username or password incorrect.");
+    printZPushLegal("Access denied. Username or password incorrect.");
     debugLog("Access denied: backend logon failed.");
     debugLog("end");
     debugLog("--------");
@@ -139,7 +139,7 @@ if($backend->Logon($auth_user, $auth_domain, $auth_pw) == false) {
 if($backend->Setup($user, $devid, $protocolversion) == false) {
     header("HTTP/1.1 401 Unauthorized");
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
-    print("Access denied or user '$user' unknown.");
+    printZPushLegal("Access denied or user '$user' unknown.");
     debugLog("Access denied: backend setup failed.");
     debugLog("end");
     debugLog("--------");
@@ -147,7 +147,7 @@ if($backend->Setup($user, $devid, $protocolversion) == false) {
 }
 
 // check policy header 
-if (PROVISIONING === true && $_SERVER["REQUEST_METHOD"] != 'OPTIONS' && $cmd != 'Ping' && $cmd != 'Provision' && 
+if (PROVISIONING === true && $_SERVER["REQUEST_METHOD"] == 'POST' && $cmd != 'Ping' && $cmd != 'Provision' && 
     $backend->CheckPolicy($policykey, $devid) != SYNC_PROVISION_STATUS_SUCCESS &&
     (LOOSE_PROVISIONING === false ||
     (LOOSE_PROVISIONING === true && isset($requestheaders["X-MS-PolicyKey"])))) {    	
@@ -179,24 +179,12 @@ switch($_SERVER["REQUEST_METHOD"]) {
             // Request failed. Try to output some kind of error information. We can only do this if
             // output had not started yet. If it has started already, we can't show the user the error, and
             // the device will give its own (useless) error message.
-            if(!headers_sent()) {
-                header("Content-type: text/html");
-                print("<BODY>\n");
-                print("<h3>Error</h3><p>\n");
-                print("There was a problem processing the <i>$cmd</i> command from your PDA.\n");
-                print("<p>Here is the debug output:<p><pre>\n");
-                print(getDebugInfo());
-                print("</pre>\n");
-                print("</BODY>\n");
-            }
+            if(!headers_sent()) 
+            	printZPushLegal("Error rocessing command <i>$cmd</i> from your PDA.", "Here is the debug output:<br><pre>". getDebugInfo() . "</pre>");
         }
         break;
     case 'GET':
-        header("Content-type: text/html");
-        print("<BODY>\n");
-        print("<h3>GET not supported</h3><p>\n");
-        print("This is the z-push location and can only be accessed by Microsoft ActiveSync-capable devices.");
-        print("</BODY>\n");
+    	printZPushLegal("GET not supported", "This is the z-push location and can only be accessed by Microsoft ActiveSync-capable devices.");
         break;
 }
 
