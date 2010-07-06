@@ -12,8 +12,38 @@
 *
 * Created   :   01.10.2007
 *
-*  Zarafa Deutschland GmbH, www.zarafaserver.de
-* This file is distributed under GPL v2.
+* Copyright 2007 - 2010 Zarafa Deutschland GmbH
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License, version 3,
+* as published by the Free Software Foundation with the following additional
+* term according to sec. 7:
+*
+* According to sec. 7 of the GNU Affero General Public License, version 3,
+* the terms of the AGPL are supplemented with the following terms:
+*
+* "Zarafa" is a registered trademark of Zarafa B.V.
+* "Z-Push" is a registered trademark of Zarafa Deutschland GmbH
+* The licensing of the Program under the AGPL does not imply a trademark license.
+* Therefore any rights, title and interest in our trademarks remain entirely with us.
+*
+* However, if you propagate an unmodified version of the Program you are
+* allowed to use the term "Z-Push" to indicate that you distribute the Program.
+* Furthermore you may use our trademarks where it is necessary to indicate
+* the intended purpose of a product or service provided you use it in accordance
+* with honest practices in industrial or commercial matters.
+* If you want to propagate modified versions of the Program under the name "Z-Push",
+* you may only do so if you have a written permission by Zarafa Deutschland GmbH
+* (to acquire a permission please contact Zarafa at trademark@zarafa.com).
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
 * Consult LICENSE file for details
 ************************************************/
 
@@ -512,7 +542,7 @@ class ImportContentsChangesICS extends MAPIMapping {
         $exporter->Config(&$memImporter, false, false, $state, 0, 0);
         while(is_array($exporter->Synchronize()));
         $this->_memChanges = $memImporter;
-        
+
     }
 
     function ImportMessageChange($id, $message) {
@@ -540,7 +570,7 @@ class ImportContentsChangesICS extends MAPIMapping {
             if($this->_memChanges->isDeleted($id)) {
                 debugLog("Conflict detected. Data from PIM will be dropped! Object was deleted on server.");
                 return false;
-            }            
+            }
         }
         else
             $flags = SYNC_NEW_MESSAGE;
@@ -702,13 +732,13 @@ class ImportContentsChangesICS extends MAPIMapping {
         // is the transmitted UID OL compatible?
         // if not, encapsulate the transmitted uid
         $appointment->uid = getOLUidFromICalUid($appointment->uid);
-        
+
         mapi_setprops($mapimessage, array(PR_MESSAGE_CLASS => "IPM.Appointment"));
 
         $this->_setPropsInMAPI($mapimessage, $appointment, $this->_appointmentmapping);
 
         //we also have to set the responsestatus and not only meetingstatus, so we use another mapi tag
-        if (isset($appointment->meetingstatus)) 
+        if (isset($appointment->meetingstatus))
             mapi_setprops($mapimessage, array(
                 $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8218") =>  $appointment->meetingstatus));
 
@@ -907,7 +937,7 @@ class ImportContentsChangesICS extends MAPIMapping {
         $cname .= " ". u2w($contact->lastname);
         $cname .= (isset($contact->suffix))?" ". u2w($contact->suffix):"";
         $cname = trim($cname);
-         
+
         //set contact specific mapi properties
         $props = array();
         $nremails = array();
@@ -1320,7 +1350,7 @@ class PHPContentsImportProxy extends MAPIMapping {
 
         if(!isset($message->uid))
             $message->uid = bin2hex($messageprops[PR_SOURCE_KEY]);
-        else 
+        else
             $message->uid = getICalUidFromOLUid($message->uid);
 
         // Get organizer information if it is a meetingrequest
@@ -1330,8 +1360,8 @@ class PHPContentsImportProxy extends MAPIMapping {
         if(isset($messageprops[$meetingstatustag]) && $messageprops[$meetingstatustag] > 0 && isset($messageprops[PR_SENT_REPRESENTING_ENTRYID]) && isset($messageprops[PR_SENT_REPRESENTING_NAME])) {
             $message->organizeremail = w2u($this->_getSMTPAddressFromEntryID($messageprops[PR_SENT_REPRESENTING_ENTRYID]));
             $message->organizername = w2u($messageprops[PR_SENT_REPRESENTING_NAME]);
-        }            
-            
+        }
+
         $isrecurringtag = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x8223");
         $recurringstate = $this->_getPropIDFromString("PT_BINARY:{00062002-0000-0000-C000-000000000046}:0x8216");
         $timezonetag = $this->_getPropIDFromString("PT_BINARY:{00062002-0000-0000-C000-000000000046}:0x8233");
@@ -1343,9 +1373,9 @@ class PHPContentsImportProxy extends MAPIMapping {
             $tz = $this->_getTZFromMAPIBlob($recurprops[$timezonetag]);
         else
             $tz = $this->_getGMTTZ();
-        
+
         $message->timezone = base64_encode($this->_getSyncBlobFromTZ($tz));
-        
+
         if(isset($recurprops[$isrecurringtag]) && $recurprops[$isrecurringtag]) {
             // Process recurrence
             $message->recurrence = new SyncRecurrence();
@@ -1513,10 +1543,10 @@ class PHPContentsImportProxy extends MAPIMapping {
                 $syncMessage->exceptions = array();
 
             array_push($syncMessage->exceptions, $exception);
-        }         
+        }
     }
 
-    
+
     // Get an SyncEmail object
     function _getEmail($mapimessage, $truncsize, $mimesupport = 0) {
         $message = new SyncMail();
@@ -1576,7 +1606,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             $appSeqNr = $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8201");
             $lidIsException = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0xA");
             $recurStartTime = $this->_getPropIDFromString("PT_LONG:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0xE");
-            
+
             $props = mapi_getprops($mapimessage, array($goidtag, $timezonetag, $recReplTime, $isrecurringtag, $recurringstate, $appSeqNr, $lidIsException, $recurStartTime));
 
             // Get the GOID
@@ -1595,7 +1625,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             if(isset($props[$recReplTime]) || (isset($props[$lidIsException]) && $props[$lidIsException] == true)) {
             	if (isset($props[$recReplTime])){
             	   $basedate = $props[$recReplTime];
-            	   $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $this->_getGMTTZ());  
+            	   $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $this->_getGMTTZ());
             	}
             	else {
             	   if (!isset($props[$goidtag]) || !isset($props[$recurStartTime]) || !isset($props[$timezonetag]))
@@ -1603,10 +1633,10 @@ class PHPContentsImportProxy extends MAPIMapping {
             	   else {
             	       $basedate = extractBaseDate($props[$goidtag], $props[$recurStartTime]);
             	       $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $tz);
-            	   }  
+            	   }
             	}
             }
-	            
+
             // Organizer is the sender
             $message->meetingrequest->organizer = $message->from;
 
@@ -1625,12 +1655,12 @@ class PHPContentsImportProxy extends MAPIMapping {
             // Instancetype
             // 0 = single appointment
             // 1 = master recurring appointment
-            // 2 = single instance of recurring appointment 
+            // 2 = single instance of recurring appointment
             // 3 = exception of recurring appointment
             $message->meetingrequest->instancetype = 0;
             if (isset($props[$isrecurringtag]) && $props[$isrecurringtag] == 1)
                 $message->meetingrequest->instancetype = 1;
-            else if ((!isset($props[$isrecurringtag]) || $props[$isrecurringtag] == 0 )&& isset($message->meetingrequest->recurrenceid)) 
+            else if ((!isset($props[$isrecurringtag]) || $props[$isrecurringtag] == 0 )&& isset($message->meetingrequest->recurrenceid))
                 if (isset($props[$appSeqNr]) && $props[$appSeqNr] == 0 )
                     $message->meetingrequest->instancetype = 2;
                 else
@@ -1940,8 +1970,8 @@ class ExportChangesICS  {
             $mapiimporter = mapi_wrap_importcontentschanges($phpimportproxy);
             $exporterflags |= SYNC_NORMAL | SYNC_READ_STATE;
 
-            // Initial sync, we don't want deleted items. If the initial sync is chunked 
-            // we check the change ID of the syncstate (0 at initial sync) 
+            // Initial sync, we don't want deleted items. If the initial sync is chunked
+            // we check the change ID of the syncstate (0 at initial sync)
             // On subsequent syncs, we do want to receive delete events.
             if(strlen($syncstate) == 0 || bin2hex(substr($syncstate,4,4)) == "00000000") {
                 debugLog("synching inital data");
@@ -2331,7 +2361,7 @@ class BackendICS {
             debugLog("logon failed for user $user");
             return false;
         }
-            	
+
         //user is logged in or can login, get the policy key and device id
         if ($this->_defaultstore !== false) {
             $devicesprops = mapi_getprops($this->_defaultstore, array(0x6880101E, 0x6881101E));
@@ -2536,7 +2566,7 @@ class BackendICS {
                             'decode_bodies' => true,
                             'include_bodies' => true,
 					        'charset' => 'utf-8');
-        
+
         $mimeObject = new Mail_mimeDecode($rfc822);
         $message = $mimeObject->decode($mimeParams);
 
@@ -2929,12 +2959,12 @@ class BackendICS {
         // F/B will be updated on logoff
 
         // We have to return the ID of the new calendar item, so do that here
-        if (isset($entryid)) { 
+        if (isset($entryid)) {
             $newitem = mapi_msgstore_openentry($this->_defaultstore, $entryid);
             $newprops = mapi_getprops($newitem, array(PR_SOURCE_KEY));
             $calendarid = bin2hex($newprops[PR_SOURCE_KEY]);
         }
- 
+
         // on recurring items, the MeetingRequest class responds with a wrong entryid
         if ($requestid == $calendarid) {
             debugLog("returned calender id is the same as the requestid - re-searching");
@@ -2956,13 +2986,13 @@ class BackendICS {
                    debugLog("found other calendar entryid");
                 }
         }
-        
-        
+
+
         // delete meeting request from Inbox
         $folderentryid = mapi_msgstore_entryidfromsourcekey($this->_defaultstore, hex2bin($folderid));
         $folder = mapi_msgstore_openentry($this->_defaultstore, $folderentryid);
         mapi_folder_deletemessages($folder, array($reqentryid), 0);
-        
+
         return true;
     }
 
@@ -3034,7 +3064,7 @@ class BackendICS {
             $filename = $part->d_parameters["filename"];
         // filenames with more than 63 chars as splitted several strings
         else if (isset($part->d_parameters["filename*0"])) {
-        	for ($i=0; $i< count($part->d_parameters); $i++) 
+        	for ($i=0; $i< count($part->d_parameters); $i++)
         	   if (isset($part->d_parameters["filename*".$i]))
         	       $filename .= $part->d_parameters["filename*".$i];
         }

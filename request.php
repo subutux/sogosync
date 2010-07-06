@@ -13,8 +13,38 @@
 *
 * Created   :   01.10.2007
 *
-*  Zarafa Deutschland GmbH, www.zarafaserver.de
-* This file is distributed under GPL v2.
+* Copyright 2007 - 2010 Zarafa Deutschland GmbH
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License, version 3,
+* as published by the Free Software Foundation with the following additional
+* term according to sec. 7:
+*
+* According to sec. 7 of the GNU Affero General Public License, version 3,
+* the terms of the AGPL are supplemented with the following terms:
+*
+* "Zarafa" is a registered trademark of Zarafa B.V.
+* "Z-Push" is a registered trademark of Zarafa Deutschland GmbH
+* The licensing of the Program under the AGPL does not imply a trademark license.
+* Therefore any rights, title and interest in our trademarks remain entirely with us.
+*
+* However, if you propagate an unmodified version of the Program you are
+* allowed to use the term "Z-Push" to indicate that you distribute the Program.
+* Furthermore you may use our trademarks where it is necessary to indicate
+* the intended purpose of a product or service provided you use it in accordance
+* with honest practices in industrial or commercial matters.
+* If you want to propagate modified versions of the Program under the name "Z-Push",
+* you may only do so if you have a written permission by Zarafa Deutschland GmbH
+* (to acquire a permission please contact Zarafa at trademark@zarafa.com).
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
 * Consult LICENSE file for details
 ************************************************/
 
@@ -200,7 +230,7 @@ function HandleFolderSync($backend, $protocolversion) {
 
     // additional information about already seen folders
     $sfolderstate = $statemachine->getSyncState("s".$synckey);
-    
+
     if (!$sfolderstate) {
         $foldercache = array();
         if ($sfolderstate === false)
@@ -216,11 +246,11 @@ function HandleFolderSync($backend, $protocolversion) {
     		$foldercache = $tmp;
     	}
     }
-        
+
     // We will be saving the sync state under 'newsynckey'
     $newsynckey = $statemachine->getNewSyncKey($synckey);
     $changes = false;
-    
+
     if($decoder->getElementStartTag(SYNC_FOLDERHIERARCHY_CHANGES)) {
         // Ignore <Count> if present
         if($decoder->getElementStartTag(SYNC_FOLDERHIERARCHY_COUNT)) {
@@ -257,7 +287,7 @@ function HandleFolderSync($backend, $protocolversion) {
                     $serverid = $importer->ImportFolderDeletion($folder);
                     $changes = true;
                     // remove folder from the folderchache
-                    if (array_key_exists($serverid, $foldercache)) 
+                    if (array_key_exists($serverid, $foldercache))
                         unset($foldercache[$serverid]);
                     break;
             }
@@ -315,10 +345,10 @@ function HandleFolderSync($backend, $protocolversion) {
                 	// send a modify flag if the folder is already known on the device
                 	if (isset($folder->serverid) && array_key_exists($folder->serverid, $foldercache) !== false)
                         $encoder->startTag(SYNC_FOLDERHIERARCHY_UPDATE);
-                	else 
+                	else
                         $encoder->startTag(SYNC_FOLDERHIERARCHY_ADD);
                     $foldercache[$folder->serverid] = $folder;
-                    
+
                     $folder->encode($encoder);
                     $encoder->endTag();
                 }
@@ -333,7 +363,7 @@ function HandleFolderSync($backend, $protocolversion) {
                     $encoder->endTag();
 
                     // remove folder from the folderchache
-                    if (array_key_exists($folder, $foldercache)) 
+                    if (array_key_exists($folder, $foldercache))
                         unset($foldercache[$folder]);
                 }
             }
@@ -621,7 +651,7 @@ function HandleSync($backend, $protocolversion, $devid) {
 
                     $changecount = $exporter->GetChangeCount();
             	}
-            	
+
                 // Get a new sync key to output to the client if any changes have been requested or will be send
                 if (isset($collection["importedchanges"]) || $changecount > 0 || $collection["synckey"] == "0")
                     $collection["newsynckey"] = $statemachine->getNewSyncKey($collection["synckey"]);

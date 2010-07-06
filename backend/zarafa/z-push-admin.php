@@ -3,14 +3,44 @@
 /***********************************************
 * File      :   z-push-admin.php
 * Project   :   Z-Push
-* Descr     :   This is a small command line 
+* Descr     :   This is a small command line
 *               client to see and modify the
 *               wipe status of Zarafa users.
 *
 * Created   :   14.05.2010
 *
-* Zarafa Deutschland GmbH, www.zarafaserver.de
-* This file is distributed under GPL v2.
+* Copyright 2007 - 2010 Zarafa Deutschland GmbH
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License, version 3,
+* as published by the Free Software Foundation with the following additional
+* term according to sec. 7:
+*
+* According to sec. 7 of the GNU Affero General Public License, version 3,
+* the terms of the AGPL are supplemented with the following terms:
+*
+* "Zarafa" is a registered trademark of Zarafa B.V.
+* "Z-Push" is a registered trademark of Zarafa Deutschland GmbH
+* The licensing of the Program under the AGPL does not imply a trademark license.
+* Therefore any rights, title and interest in our trademarks remain entirely with us.
+*
+* However, if you propagate an unmodified version of the Program you are
+* allowed to use the term "Z-Push" to indicate that you distribute the Program.
+* Furthermore you may use our trademarks where it is necessary to indicate
+* the intended purpose of a product or service provided you use it in accordance
+* with honest practices in industrial or commercial matters.
+* If you want to propagate modified versions of the Program under the name "Z-Push",
+* you may only do so if you have a written permission by Zarafa Deutschland GmbH
+* (to acquire a permission please contact Zarafa at trademark@zarafa.com).
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
 * Consult LICENSE file for details
 ************************************************/
 
@@ -51,14 +81,14 @@ function zpa_handle() {
     $user = "SYSTEM";
     $pass = "";
 
-    if (isset($options['h'])) 
+    if (isset($options['h']))
         $mapi = $options['h'];
 
     if (isset($options['u']) && isset($options['p'])) {
         $user = $options['u'];
         $pass = $options['p'];
     }
-	
+
     $zarafaAdmin = zpa_zarafa_admin_setup($mapi, $user, $pass);
     if (isset($zarafaAdmin['adminStore']) && isset($options['l'])) {
         zpa_get_userlist($zarafaAdmin['adminStore']);
@@ -115,7 +145,7 @@ function zpa_get_userlist($adminStore) {
 }
 
 function _zpa_get_userlist_print($users, $company = null) {
-    if (isset($company)) 
+    if (isset($company))
         echo "User list for ". $company . "(". count($users) ."):\n";
 
     if (is_array($users) && !empty($users)) {

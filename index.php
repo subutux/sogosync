@@ -8,8 +8,38 @@
 *
 * Created   :   01.10.2007
 *
-*  Zarafa Deutschland GmbH, www.zarafaserver.de
-* This file is distributed under GPL v2.
+* Copyright 2007 - 2010 Zarafa Deutschland GmbH
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU Affero General Public License, version 3,
+* as published by the Free Software Foundation with the following additional
+* term according to sec. 7:
+*
+* According to sec. 7 of the GNU Affero General Public License, version 3,
+* the terms of the AGPL are supplemented with the following terms:
+*
+* "Zarafa" is a registered trademark of Zarafa B.V.
+* "Z-Push" is a registered trademark of Zarafa Deutschland GmbH
+* The licensing of the Program under the AGPL does not imply a trademark license.
+* Therefore any rights, title and interest in our trademarks remain entirely with us.
+*
+* However, if you propagate an unmodified version of the Program you are
+* allowed to use the term "Z-Push" to indicate that you distribute the Program.
+* Furthermore you may use our trademarks where it is necessary to indicate
+* the intended purpose of a product or service provided you use it in accordance
+* with honest practices in industrial or commercial matters.
+* If you want to propagate modified versions of the Program under the name "Z-Push",
+* you may only do so if you have a written permission by Zarafa Deutschland GmbH
+* (to acquire a permission please contact Zarafa at trademark@zarafa.com).
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU Affero General Public License for more details.
+*
+* You should have received a copy of the GNU Affero General Public License
+* along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*
 * Consult LICENSE file for details
 ************************************************/
 
@@ -146,12 +176,12 @@ if($backend->Setup($user, $devid, $protocolversion) == false) {
     return;
 }
 
-// check policy header 
-if (PROVISIONING === true && $_SERVER["REQUEST_METHOD"] == 'POST' && $cmd != 'Ping' && $cmd != 'Provision' && 
+// check policy header
+if (PROVISIONING === true && $_SERVER["REQUEST_METHOD"] == 'POST' && $cmd != 'Ping' && $cmd != 'Provision' &&
     $backend->CheckPolicy($policykey, $devid) != SYNC_PROVISION_STATUS_SUCCESS &&
     (LOOSE_PROVISIONING === false ||
-    (LOOSE_PROVISIONING === true && isset($requestheaders["X-MS-PolicyKey"])))) {    	
-    	
+    (LOOSE_PROVISIONING === true && isset($requestheaders["X-MS-PolicyKey"])))) {
+
     header("HTTP/1.1 449 Retry after sending a PROVISION command");
     header("MS-Server-ActiveSync: 6.5.7638.1");
     header("MS-ASProtocolVersions: 1.0,2.0,2.1,2.5");
@@ -179,7 +209,7 @@ switch($_SERVER["REQUEST_METHOD"]) {
             // Request failed. Try to output some kind of error information. We can only do this if
             // output had not started yet. If it has started already, we can't show the user the error, and
             // the device will give its own (useless) error message.
-            if(!headers_sent()) 
+            if(!headers_sent())
             	printZPushLegal("Error rocessing command <i>$cmd</i> from your PDA.", "Here is the debug output:<br><pre>". getDebugInfo() . "</pre>");
         }
         break;
