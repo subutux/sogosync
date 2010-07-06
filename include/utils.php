@@ -205,12 +205,15 @@ function checkMapiExtVersion($version = "") {
  * @return string the vCal-Uid if available in the olUid, else the original olUid as HEX
  */
 function getICalUidFromOLUid($olUid){
-    $icalUid = strtoupper(bin2hex($olUid));
-    if(($pos = stripos($olUid,"vCal-Uid"))) {
-    	$length = unpack("V", substr($olUid, $pos-4,4));
-    	$icalUid = substr($olUid, $pos+12, $length[1] -14);
+    //check if "vCal-Uid" is somewhere in outlookid case-insensitive
+    $icalUid = stristr($olUid, "vCal-Uid");
+    if ($icalUid !== false) {
+        //get the length of the ical id - go back 4 position from where "vCal-Uid" was found
+        $begin = unpack("V", substr($olUid, strlen($icalUid) * (-1) - 4, 4));
+        //remove "vCal-Uid" and packed "1" and use the ical id length
+        return substr($icalUid, 12, ($begin[1] - 13));
     }
-    return $icalUid;
+    return strtoupper(bin2hex($olUid));
 }
 
 /**
