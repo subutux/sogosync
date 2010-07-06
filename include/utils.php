@@ -96,16 +96,8 @@ function _getFolderID($devid, $class) {
  * Function which converts a hex entryid to a binary entryid.
  * @param string @data the hexadecimal string
  */
-function hex2bin($data)
-{
-    $len = strlen($data);
-    $newdata = "";
-
-    for($i = 0;$i < $len;$i += 2)
-    {
-        $newdata .= pack("C", hexdec(substr($data, $i, 2)));
-    }
-    return $newdata;
+function hex2bin($data) {
+    return pack("H*", $data);
 }
 
 function utf8_to_windows1252($string, $option = "")
