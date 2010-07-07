@@ -65,7 +65,7 @@ define('EXPORT_CONTENTS', 2);
 define('BACKEND_DISCARD_DATA', 1);
 
 class ImportContentsChanges {
-    function ImportMessageChange($message) {}
+    function ImportMessageChange($id, $message) {}
 
     function ImportMessageDeletion($message) {}
 
