@@ -4,15 +4,12 @@ Installing Z-Push
 Requirements
 ------------
 
-Z-Push runs on either PHP4 or PHP5 but requires the 'Mail' package from
-PEAR, so you may need to install the php-pear package on your system if it
-has not been preinstalled.
-NOTE: beginning with the version 1.2.2RC z-push includes RFC822.php file, so
-'Mail' package is no longer required.
+Z-Push runs on either PHP4 or PHP5. 
+Version prior to 1.2.2 require the 'Mail' package from PEAR.
+Newer versions don't have this dependency anymore.
 
-On some systems, this means you must install the 'php-pear' AND the
-'php-mail' packages, or the packages may even be called something completely
-different. In the end, you're looking for the package with RFC822.php in it.
+Additional informations can be found in the Zarafa Administrator Manual:
+http://doc.zarafa.com/trunk/Administrator_Manual/en-US/html/index.html
 
 
 How to install
@@ -28,9 +25,6 @@ For MAPI use with Zarafa, you needn't change any settings and should work
 as-is.
 
 Please also set your timezone in the config.php file.
-If you don't want to use the Zarafa backend, please move the backend/ics.php 
-file to another folder or delete it. Otherwise, errors regarding the 
-php-mapi extension will be displayed.
 
 Make sure that the 'state' directory is writeable for your webserver
 process, so either change the owner of the 'state' directory to the UID of
@@ -64,6 +58,28 @@ the root of z-push. If you don't set this up correctly, you will not be
 able to login correctly via z-push.
 
 After doing this, you should be able to synchronize from your PDA.
+
+
+Update to newer Z-Push versions
+-------------------------------
+
+Upgrading to a newer Z-Push version follows the same path as the initial 
+installation.
+
+When upgrading to a new minor version e.g. from Z-Push 1.4 to Z-Push 1.4.1, 
+the existing Z-Push directory can be overwritten when extracting the archive.
+When installing a new major version it is recommended to extract the tarball 
+to another directory and to copy the state from the existing installation.
+
+IMPORTANT: It is crucial to always keep the data of the state directory in 
+order to ensure data consistency on already synchronized mobiles.
+
+Without the state information mobile devices, which already have an ActiveSync 
+profile, will receive duplicate items or the synchronization will break completely.
+
+Please also observe the published release notes of the new Z-Push version.
+For some releases it is necessary to e.g. resynchronize the mobile.
+
 
 Setting up your PocketPC
 ------------------------
