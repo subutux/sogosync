@@ -505,6 +505,11 @@ function HandleSync($backend, $protocolversion, $devid) {
             $collection["conflict"] = SYNC_CONFLICT_DEFAULT;
         }
 
+        //compatibility mode - set maxitems if the client doesn't send it as it breaks some devices
+        if (!isset($collection["maxitems"])) {
+            $collection["maxitems"] = 100;
+        }
+
         // Get our sync state for this collection
         $collection["syncstate"] = $statemachine->getSyncState($collection["synckey"]);
         if($decoder->getElementStartTag(SYNC_PERFORM)) {
