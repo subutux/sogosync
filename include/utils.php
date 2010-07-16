@@ -181,7 +181,7 @@ function buildAddressString($street, $zip, $city, $state, $country) {
  */
 function checkMapiExtVersion($version = "") {
     // compare build number if requested
-    if (preg_match('/^\d+$/',$version) && strlen > 3) {
+    if (preg_match('/^\d+$/', $version) && strlen($version) > 3) {
         $vs = preg_split('/-/', phpversion("mapi"));
         return ($version <= $vs[1]);
     }
