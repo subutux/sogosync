@@ -1468,10 +1468,23 @@ function HandleProvision($backend, $devid, $protocolversion) {
     $encoder->StartWBXML();
 
     //set the new final policy key in the backend
-    if (!$phase2) {
-        $policykey = $backend->generatePolicyKey();
-        $backend->setPolicyKey($policykey, $devid);
+    // START ADDED dw2412 Android provisioning fix
+    //in case the send one does not match the one already in backend. If it matches, we
+    //just return the already defined key. (This helps at least the RoadSync 5.0 Client to sync)
+    if ($backend->CheckPolicy($policykey,$devid) == SYNC_PROVISION_STATUS_SUCCESS) {
+        debugLog("Policykey is OK! Will not generate a new one!");
     }
+    else {
+        if (!$phase2) {
+            $policykey = $backend->generatePolicyKey();
+            $backend->setPolicyKey($policykey, $devid);
+        }
+        else {
+            // just create a temporary key (i.e. iPhone OS4 Beta does not like policykey 0 in response)
+            $policykey = $backend->generatePolicyKey();
+        }
+    }
+    // END ADDED dw2412 Android provisioning fix
 
     $encoder->startTag(SYNC_PROVISION_PROVISION);
     {
