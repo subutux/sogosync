@@ -57,25 +57,25 @@ include_once("version.php");
 ini_set('max_execution_time', SCRIPT_TIMEOUT);
 set_time_limit(SCRIPT_TIMEOUT);
 
-debugLog("Start");
-debugLog("Z-Push version: $zpush_version");
-debugLog("Client IP: ". $_SERVER['REMOTE_ADDR']);
-
 $input = fopen("php://input", "r");
 $output = fopen("php://output", "w+");
 
 // The script must always be called with authorisation info
 if(!isset($_SERVER['PHP_AUTH_PW'])) {
+    debugLog("Start");
+    debugLog("Z-Push version: $zpush_version");
+    debugLog("Client IP: ". $_SERVER['REMOTE_ADDR']);
     header("WWW-Authenticate: Basic realm=\"ZPush\"");
     header("HTTP/1.1 401 Unauthorized");
     printZPushLegal("Access denied. Please send authorisation information");
     debugLog("Access denied: no password sent.");
-	debugLog("end");
-	debugLog("--------");
+    debugLog("end");
+    debugLog("--------");
     return;
 }
 
 // split username & domain if received as one
+global $auth_user;
 $pos = strrpos($_SERVER['PHP_AUTH_USER'], '\\');
 if($pos === false){
     $auth_user = $_SERVER['PHP_AUTH_USER'];
@@ -85,6 +85,10 @@ if($pos === false){
     $auth_user = substr($_SERVER['PHP_AUTH_USER'],$pos+1);
 }
 $auth_pw = $_SERVER['PHP_AUTH_PW'];
+
+debugLog("Start");
+debugLog("Z-Push version: $zpush_version");
+debugLog("Client IP: ". $_SERVER['REMOTE_ADDR']);
 
 $cmd = $user = $devid = $devtype = "";
 
@@ -210,11 +214,12 @@ switch($_SERVER["REQUEST_METHOD"]) {
             // output had not started yet. If it has started already, we can't show the user the error, and
             // the device will give its own (useless) error message.
             if(!headers_sent())
-            	printZPushLegal("Error rocessing command <i>$cmd</i> from your PDA.", "Here is the debug output:<br><pre>". getDebugInfo() . "</pre>");
+                printZPushLegal("Error rocessing command <i>$cmd</i> from your PDA.", "Here is the debug output:<br><pre>". getDebugInfo() . "</pre>");
         }
         break;
     case 'GET':
-    	printZPushLegal("GET not supported", "This is the z-push location and can only be accessed by Microsoft ActiveSync-capable devices.");
+        debugLog("GET request from agent: ". $useragent);
+        printZPushLegal("GET not supported", "This is the z-push location and can only be accessed by Microsoft ActiveSync-capable devices.");
         break;
 }
 
