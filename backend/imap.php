@@ -139,6 +139,7 @@ class BackendIMAP extends BackendDiff {
         $headers = "";
         $forward_h_ct = "";
         $forward_h_cte = "";
+        $envelopefrom = "";
 
         $use_orgbody = false;
 
@@ -148,6 +149,7 @@ class BackendIMAP extends BackendDiff {
         $returnPathSet = false;
         $body_base64 = false;
         $org_charset = "";
+        $org_boundary = false;
         foreach($message->headers as $k => $v) {
             if ($k == "subject" || $k == "to" || $k == "cc" || $k == "bcc")
                 continue;
@@ -178,6 +180,7 @@ class BackendIMAP extends BackendDiff {
             // if the message is a multipart message, then we should use the sent body
             if (!$forward && $k == "content-type" && preg_match("/multipart/i", $v)) {
                 $use_orgbody = true;
+                $org_boundary = $message->ctype_parameters["boundary"];
             }
 
             // check if "from"-header is set
@@ -186,6 +189,7 @@ class BackendIMAP extends BackendDiff {
                 if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
                 else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
                 else $v = $this->_username . IMAP_DEFAULTFROM;
+                $envelopefrom = "-f$v";
             }
 
             // check if "Return-Path"-header is set
@@ -210,6 +214,7 @@ class BackendIMAP extends BackendDiff {
             else $v = $this->_username . IMAP_DEFAULTFROM;
             if ($headers) $headers .= "\n";
             $headers .= 'From: '.$v;
+            $envelopefrom = "-f$v";
         }
 
         // set "Return-Path" header if not set on the device
@@ -242,8 +247,7 @@ class BackendIMAP extends BackendDiff {
         }
 
         // encode the body to base64 if it was sent originally in base64 by the pda
-        // the encoded body is included in the forward
-        if ($body_base64) $body = base64_encode($body);
+        if ($body_base64 && !isset($forward)) $body = base64_encode($body);
 
 
         // forward
@@ -252,14 +256,77 @@ class BackendIMAP extends BackendDiff {
             // receive entire mail (header + body)
             $origmail = @imap_fetchheader($this->_mbox, $forward, FT_UID) . @imap_body($this->_mbox, $forward, FT_PEEK | FT_UID);
 
-            // build a new mime message, forward entire old mail as file
-            list($aheader, $body) = $this->mail_attach("forwarded_message.eml",strlen($origmail),$origmail, $body, $forward_h_ct, $forward_h_cte);
+            if (!defined(IMAP_INLINE_FORWARD) || IMAP_INLINE_FORWARD === false) {
+                if ($body_base64) $body = base64_encode($body);
+                // build a new mime message, forward entire old mail as file
+                list($aheader, $body) = $this->mail_attach("forwarded_message.eml",strlen($origmail),$origmail, $body, $forward_h_ct, $forward_h_cte);
+            }
+            else {
+                $mobj2 = new Mail_mimeDecode($origmail);
+                $mess2 = $mobj2->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => 'utf-8'));
+
+                $body .= "\r\n\r\n";
+                $body .= "-----Original Message-----\r\n";
+                if(isset($mess2->headers['from']))
+                    $body .= "From: " . $mess2->headers['from'] . "\r\n";
+                if(isset($mess2->headers['to']) && strlen($mess2->headers['to']) > 0)
+                    $body .= "To: " . $mess2->headers['to'] . "\r\n";
+                if(isset($mess2->headers['cc']) && strlen($mess2->headers['cc']) > 0)
+                    $body .= "Cc: " . $mess2->headers['cc'] . "\r\n";
+                if(isset($mess2->headers['date']))
+                    $body .= "Sent: " . $mess2->headers['date'] . "\r\n";
+                if(isset($mess2->headers['subject']))
+                    $body .= "Subject: " . $mess2->headers['subject'] . "\r\n";
+                $body .= "\r\n";
+                $body .= $this->getBody($mess2);
+
+                if ($body_base64) $body = base64_encode($body);
+
+                if(isset($mess2->parts)) {
+                    $attached = false;
+
+                    if ($org_boundary) {
+                        $att_boundary = $org_boundary;
+                    }
+                    else {
+                        $att_boundary = strtoupper(md5(uniqid(time())));
+                        // add boundary headers
+                        $headers .= "\n" . "Content-Type: multipart/mixed; boundary=$att_boundary";
+                    }
+
+                    foreach($mess2->parts as $part) {
+                        if(isset($part->disposition) && ($part->disposition == "attachment" || $part->disposition == "inline")) {
+
+                            if(isset($part->d_parameters['filename']))
+                                $attname = $part->d_parameters['filename'];
+                            else if(isset($part->ctype_parameters['name']))
+                                $attname = $part->ctype_parameters['name'];
+                            else if(isset($part->headers['content-description']))
+                                $attname = $part->headers['content-description'];
+                            else $attname = "unknown attachment";
+
+                            //
+                            if ($use_orgbody || $attached) {
+                                $body .= $this->enc_attach_file($att_boundary, $attname, strlen($part->body),$part->body);
+                            }
+                            // first attachment
+                            else {
+                                $encmail = $body;
+                                $attached = true;
+                                $body = $this->enc_multipart($att_boundary, $body, $forward_h_ct, $forward_h_cte);
+                                $body .= $this->enc_attach_file($att_boundary, $attname, strlen($part->body),$part->body);
+                            }
+                        }
+                    }
+                    $body .= "--$att_boundary--\n\n";
+                }
+
+                unset($mobj2);
+            }
 
             // unset origmail - free memory
             unset($origmail);
 
-            // add boundary headers
-            $headers .= "\n" . $aheader;
         }
 
         //advanced debugging
@@ -268,7 +335,14 @@ class BackendIMAP extends BackendDiff {
         //debugLog("IMAP-SendMail: subject: {$message->headers["subject"]}");
         //debugLog("IMAP-SendMail: body: $body");
 
-        $send =  @imap_mail ( $toaddr, $message->headers["subject"], $body, $headers, $ccaddr, $bccaddr);
+        if (!defined(IMAP_USE_IMAPMAIL) || IMAP_USE_IMAPMAIL == true) {
+            $send =  @imap_mail ( $toaddr, $message->headers["subject"], $body, $headers, $ccaddr, $bccaddr);
+        }
+        else {
+            if (!empty($ccaddr))  $headers .= "\nCc: $ccaddr";
+            if (!empty($bccaddr)) $headers .= "\nBcc: $bccaddr";
+            $send =  @mail ( $toaddr, $message->headers["subject"], $body, $headers, $envelopefrom );
+        }
 
         // email sent?
         if (!$send) {
@@ -277,31 +351,35 @@ class BackendIMAP extends BackendDiff {
 
         // add message to the sent folder
         // build complete headers
-        $cheaders  = "To: " . $toaddr. "\n";
-        $cheaders .= "Subject: " . $message->headers["subject"] . "\n";
-        $cheaders .= "Cc: " . $ccaddr . "\n";
-        $cheaders .= $headers;
+        $headers .= "\nTo: $toaddr";
+        $headers .= "\nSubject: " . $message->headers["subject"];
+
+        if (!defined(IMAP_USE_IMAPMAIL) || IMAP_USE_IMAPMAIL == true) {
+            if (!empty($ccaddr))  $headers .= "\nCc: $ccaddr";
+            if (!empty($bccaddr)) $headers .= "\nBcc: $bccaddr";
+        }
+        //debugLog("IMAP-SendMail: complete headers: $headers");
 
         $asf = false;
         if ($this->_sentID) {
-            $asf = $this->addSentMessage($this->_sentID, $cheaders, $body);
+            $asf = $this->addSentMessage($this->_sentID, $headers, $body);
         }
         else if (IMAP_SENTFOLDER) {
-            $asf = $this->addSentMessage(IMAP_SENTFOLDER, $cheaders, $body);
+            $asf = $this->addSentMessage(IMAP_SENTFOLDER, $headers, $body);
             debugLog("IMAP-SendMail: Outgoing mail saved in configured 'Sent' folder '".IMAP_SENTFOLDER."': ". (($asf)?"success":"failed"));
         }
         // No Sent folder set, try defaults
         else {
             debugLog("IMAP-SendMail: No Sent mailbox set");
-            if($this->addSentMessage("INBOX.Sent", $cheaders, $body)) {
+            if($this->addSentMessage("INBOX.Sent", $headers, $body)) {
                 debugLog("IMAP-SendMail: Outgoing mail saved in 'INBOX.Sent'");
                 $asf = true;
             }
-            else if ($this->addSentMessage("Sent", $cheaders, $body)) {
+            else if ($this->addSentMessage("Sent", $headers, $body)) {
                 debugLog("IMAP-SendMail: Outgoing mail saved in 'Sent'");
                 $asf = true;
             }
-            else if ($this->addSentMessage("Sent Items", $cheaders, $body)) {
+            else if ($this->addSentMessage("Sent Items", $headers, $body)) {
                 debugLog("IMAP-SendMail: Outgoing mail saved in 'Sent Items'");
                 $asf = true;
             }
@@ -768,8 +846,16 @@ class BackendIMAP extends BackendDiff {
             return false;
         }
         else {
+            // get next UID for destination folder
+            // when moving a message we have to announce through ActiveSync the new messageID in the
+            // destination folder. This is a "guessing" mechanism as IMAP does not inform that value.
+            // when lots of simultaneous operations happen in the destination folder this could fail.
+            // in the worst case the moved message is displayed twice on the mobile.
+            $destStatus = imap_status($this->_mbox, $this->_server . str_replace(".", $this->_serverdelimiter, $newfolderid), SA_ALL);
+            $newid = $destStatus->uidnext;
+
             // move message
-            $s1 = imap_mail_move($this->_mbox, $id, str_replace(".", $this->_serverdelimiter, $newfolderid), FT_UID);
+            $s1 = imap_mail_move($this->_mbox, $id, str_replace(".", $this->_serverdelimiter, $newfolderid), CP_UID);
 
             // delete message in from-folder
             $s2 = imap_expunge($this->_mbox);
@@ -778,16 +864,17 @@ class BackendIMAP extends BackendDiff {
             $this->imap_reopenFolder($newfolderid);
 
             // remove all flags
-            $s3 = @imap_clearflag_full ($this->_mbox, $id, "\\Seen \\Answered \\Flagged \\Deleted \\Draft", FT_UID);
+            $s3 = @imap_clearflag_full ($this->_mbox, $newid, "\\Seen \\Answered \\Flagged \\Deleted \\Draft", FT_UID);
             $newflags = "";
             if ($overview[0]->seen) $newflags .= "\\Seen";
             if ($overview[0]->flagged) $newflags .= " \\Flagged";
             if ($overview[0]->answered) $newflags .= " \\Answered";
-            $s4 = @imap_setflag_full ($this->_mbox, $id, $newflags, FT_UID);
+            $s4 = @imap_setflag_full ($this->_mbox, $newid, $newflags, FT_UID);
 
-            debugLog("MoveMessage: (" . $folderid . "->" . $newfolderid . ") s-move: $s1   s-expunge: $s2    unset-Flags: $s3    set-Flags: $s4");
+            debugLog("MoveMessage: (" . $folderid . "->" . $newfolderid . ":". $newid. ") s-move: $s1   s-expunge: $s2    unset-Flags: $s3    set-Flags: $s4");
 
-            return ($s1 && $s2 && $s3 && $s4);
+            // return the new id "as string""
+            return $newid . "";
         }
     }
 
@@ -888,28 +975,37 @@ class BackendIMAP extends BackendDiff {
 
     // build a multipart email, embedding body and one file (for attachments)
     function mail_attach($filenm,$filesize,$file_cont,$body, $body_ct, $body_cte) {
-
         $boundary = strtoupper(md5(uniqid(time())));
-
         $mail_header = "Content-Type: multipart/mixed; boundary=$boundary\n";
 
         // build main body with the sumitted type & encoding from the pda
-        $mail_body  = "This is a multi-part message in MIME format\n\n";
+        $mail_body  = $this->enc_multipart($boundary, $body, $body_ct, $body_cte);
+        $mail_body .= $this->enc_attach_file($boundary, $filenm, $filesize, $file_cont);
+
+        $mail_body .= "--$boundary--\n\n";
+
+        return array($mail_header, $mail_body);
+    }
+
+    function enc_multipart($boundary, $body, $body_ct, $body_cte) {
+        $mail_body = "This is a multi-part message in MIME format\n\n";
         $mail_body .= "--$boundary\n";
         $mail_body .= "Content-Type:$body_ct\n";
-        $mail_body .= "Content-Transfer-Encoding:$body_cte\n\n";
+        $mail_body .= "Content-Transfer-Encoding: $body_cte\n\n";
         $mail_body .= "$body\n\n";
 
-        $mail_body .= "--$boundary\n";
+        return $mail_body;
+    }
+
+    function enc_attach_file($boundary, $filenm, $filesize, $file_cont) {
+        $mail_body = "--$boundary\n";
         $mail_body .= "Content-Type: text/plain; name=\"$filenm\"\n";
         $mail_body .= "Content-Transfer-Encoding: base64\n";
         $mail_body .= "Content-Disposition: attachment; filename=\"$filenm\"\n";
         $mail_body .= "Content-Description: $filenm\n\n";
         $mail_body .= base64_encode($file_cont) . "\n\n";
 
-        $mail_body .= "--$boundary--\n\n";
-
-        return array($mail_header, $mail_body);
+        return $mail_body;
     }
 
     // adds a message as seen to a specified folder (used for saving sent mails)

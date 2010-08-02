@@ -295,7 +295,7 @@ class ImportContentsChangesDiff extends DiffState {
     }
 
     function ImportMessageMove($id, $newfolder) {
-        return true;
+        return $this->_backend->MoveMessage($this->_folderid, $id, $newfolder);
     }
 };
 

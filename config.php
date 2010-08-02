@@ -110,6 +110,10 @@
     define('IMAP_DEFAULTFROM', '');
     // copy outgoing mail to this folder. If not set z-push will try the default folders
     define('IMAP_SENTFOLDER', '');
+    // forward messages inline (default off - as attachment)
+    define('IMAP_INLINE_FORWARD', false);
+    // use imap_mail() to send emails (default) - off uses mail()
+    define('IMAP_USE_IMAPMAIL', true);
 
 
     // ************************
