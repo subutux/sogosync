@@ -146,11 +146,21 @@ if (isset($requestheaders["User-Agent"])) {
 // Load our backend driver
 $backend_dir = opendir(BASE_PATH . "/backend");
 while($entry = readdir($backend_dir)) {
-    if(substr($entry,0,1) == "." || substr($entry,-3) != "php")
+    $subdirfile = BASE_PATH . "/backend/" . $entry . "/" . $entry . ".php";
+
+    if(substr($entry,0,1) == "." || (substr($entry,-3) != "php" && !is_file($subdirfile)))
         continue;
 
+    // do not load Zarafa backend if PHP-MAPI is unavailable
     if (!function_exists("mapi_logon") && ($entry == "ics.php"))
         continue;
+
+    // do not load Kolab backend if not a Kolab system
+    if (! file_exists('Horde/Kolab/Kolab_Zpush/lib/kolabActivesyncData.php') && ($entry == "kolab"))
+        continue;
+
+    if (is_file($subdirfile))
+        $entry = $entry . "/" . $entry . ".php";
 
     include_once(BASE_PATH . "/backend/" . $entry);
 }

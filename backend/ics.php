@@ -2504,17 +2504,27 @@ class BackendICS {
         //do not return more results as requested in range
         $querylimit = (($rangeend + 1) < $querycnt) ? ($rangeend + 1) : $querycnt;
         $items['range'] = $rangestart.'-'.($querylimit - 1);
+        $items['searchtotal'] = $querycnt;
 
-        $abentries = mapi_table_queryrows($table, array(PR_ACCOUNT, PR_DISPLAY_NAME, PR_SMTP_ADDRESS, PR_BUSINESS_TELEPHONE_NUMBER), $rangestart, $querylimit);
+        if ($querycnt > 0)
+            $abentries = mapi_table_queryrows($table, array(PR_ACCOUNT, PR_DISPLAY_NAME, PR_SMTP_ADDRESS, PR_BUSINESS_TELEPHONE_NUMBER), $rangestart, $querylimit);
 
         for ($i = 0; $i < $querylimit; $i++) {
-            $items[$i]["username"] = w2u($abentries[$i][PR_ACCOUNT]);
-            $items[$i]["fullname"] = w2u($abentries[$i][PR_DISPLAY_NAME]);
-            if (strlen(trim($items[$i]["fullname"])) == 0) $items[$i]["fullname"] = $items[$i]["username"];
-            $items[$i]["emailaddress"] = w2u($abentries[$i][PR_SMTP_ADDRESS]);
-            $items[$i]["nameid"] = $searchquery;
-            //check if an user has a business phone or it might produce warnings in the log
-            $items[$i]["businessphone"] = isset($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]) ? w2u($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]) : "";
+            $items[$i][SYNC_GAL_ALIAS] = w2u($abentries[$i][PR_ACCOUNT]);
+            $items[$i][SYNC_GAL_DISPLAYNAME] = w2u($abentries[$i][PR_DISPLAY_NAME]);
+
+            if (strlen(trim($items[$i][SYNC_GAL_DISPLAYNAME])) == 0)
+                $items[$i][SYNC_GAL_DISPLAYNAME] = $items[$i][SYNC_GAL_ALIAS];
+
+            //it's not possible not get first and last name of an user
+            //from the gab and user functions, so we just set lastname
+            //to displayname and leave firstname unset
+            $items[$i][SYNC_GAL_LASTNAME] = $items[$i][SYNC_GAL_DISPLAYNAME];
+
+            $items[$i][SYNC_GAL_EMAILADDRESS] = w2u($abentries[$i][PR_SMTP_ADDRESS]);
+            //check if an user has a office number or it might produce warnings in the log
+            if (isset($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]))
+                $items[$i][SYNC_GAL_OFFICE] = w2u($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]);
         }
         return $items;
     }

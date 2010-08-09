@@ -127,4 +127,9 @@
     // **********************
     define('VCARDDIR_DIR', '/home/%u/.kde/share/apps/kabc/stdvcf');
 
+    // Alternative backend to perform SEARCH requests (GAL search)
+    // if an empty value is used, the default search functionality of the main backend is used
+    // use 'SearchLDAP' to search in a LDAP directory (see backend/searchldap/config.php)
+    define('SEARCH_PROVIDER', '');
+
 ?>

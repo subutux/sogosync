@@ -1592,8 +1592,17 @@ function HandleSearch($backend, $devid, $protocolversion) {
         debugLog("Searchtype $searchname is not supported");
         return false;
     }
+
     //get search results from backend
-    $rows = $backend->getSearchResults($searchquery, $searchrange);
+    if (defined('SEARCH_PROVIDER') && @constant('SEARCH_PROVIDER') != "" && class_exists(SEARCH_PROVIDER)) {
+        $searchClass = constant('SEARCH_PROVIDER');
+        $searchbackend = new $searchClass();
+        $searchbackend->initialize($backend);
+        $rows = $searchbackend->getSearchResults($searchquery, $searchrange);
+        $searchbackend->disconnect();
+    }
+    else
+        $rows = $backend->getSearchResults($searchquery, $searchrange);
 
     $encoder->startWBXML();
 
@@ -1613,48 +1622,84 @@ function HandleSearch($backend, $devid, $protocolversion) {
                 if (is_array($rows) && !empty($rows)) {
                     $searchrange = $rows['range'];
                     unset($rows['range']);
+                    $searchtotal = $rows['searchtotal'];
+                    unset($rows['searchtotal']);
                     foreach ($rows as $u) {
                         $encoder->startTag(SYNC_SEARCH_RESULT);
                             $encoder->startTag(SYNC_SEARCH_PROPERTIES);
 
                                 $encoder->startTag(SYNC_GAL_DISPLAYNAME);
-                                $encoder->content($u["fullname"]);
+                                $encoder->content((isset($u[SYNC_GAL_DISPLAYNAME]))?$u[SYNC_GAL_DISPLAYNAME]:"No name");
                                 $encoder->endTag();
 
-                                $encoder->startTag(SYNC_GAL_PHONE);
-                                $encoder->content($u["businessphone"]);
-                                $encoder->endTag();
+                                if (isset($u[SYNC_GAL_PHONE])) {
+                                    $encoder->startTag(SYNC_GAL_PHONE);
+                                    $encoder->content($u[SYNC_GAL_PHONE]);
+                                    $encoder->endTag();
+                                }
 
-                                $encoder->startTag(SYNC_GAL_ALIAS);
-                                $encoder->content($u["username"]);
-                                $encoder->endTag();
+                                if (isset($u[SYNC_GAL_ALIAS])) {
+                                    $encoder->startTag(SYNC_GAL_ALIAS);
+                                    $encoder->content($u[SYNC_GAL_ALIAS]);
+                                    $encoder->endTag();
+                                }
 
-                                //it's not possible not get first and last name of an user
-                                //from the gab and user functions, so we just set fullname
-                                //to lastname and leave firstname empty because nokia needs
-                                //first and lastname in order to display the search result
+                                if (isset($u[SYNC_GAL_OFFICE])) {
+                                    $encoder->startTag(SYNC_GAL_OFFICE);
+                                    $encoder->content($u[SYNC_GAL_OFFICE]);
+                                    $encoder->endTag();
+                                }
+
+                                if (isset($u[SYNC_GAL_TITLE])) {
+                                    $encoder->startTag(SYNC_GAL_TITLE);
+                                    $encoder->content($u[SYNC_GAL_TITLE]);
+                                    $encoder->endTag();
+                                }
+
+                                if (isset($u[SYNC_GAL_COMPANY])) {
+                                    $encoder->startTag(SYNC_GAL_COMPANY);
+                                    $encoder->content($u[SYNC_GAL_COMPANY]);
+                                    $encoder->endTag();
+                                }
+
+                                if (isset($u[SYNC_GAL_HOMEPHONE])) {
+                                    $encoder->startTag(SYNC_GAL_HOMEPHONE);
+                                    $encoder->content($u[SYNC_GAL_HOMEPHONE]);
+                                    $encoder->endTag();
+                                }
+
+                                if (isset($u[SYNC_GAL_MOBILEPHONE])) {
+                                    $encoder->startTag(SYNC_GAL_MOBILEPHONE);
+                                    $encoder->content($u[SYNC_GAL_MOBILEPHONE]);
+                                    $encoder->endTag();
+                                }
+
+                                // Always send the firstname, even empty. Nokia needs this to display the entry
                                 $encoder->startTag(SYNC_GAL_FIRSTNAME);
-                                $encoder->content("");
+                                $encoder->content((isset($u[SYNC_GAL_FIRSTNAME]))?$u[SYNC_GAL_FIRSTNAME]:"");
                                 $encoder->endTag();
 
                                 $encoder->startTag(SYNC_GAL_LASTNAME);
-                                $encoder->content($u["fullname"]);
+                                $encoder->content((isset($u[SYNC_GAL_LASTNAME]))?$u[SYNC_GAL_LASTNAME]:"No name");
                                 $encoder->endTag();
 
                                 $encoder->startTag(SYNC_GAL_EMAILADDRESS);
-                                $encoder->content($u["emailaddress"]);
+                                $encoder->content((isset($u[SYNC_GAL_EMAILADDRESS]))?$u[SYNC_GAL_EMAILADDRESS]:"");
                                 $encoder->endTag();
 
                             $encoder->endTag();//result
                         $encoder->endTag();//properties
                     }
-                    $encoder->startTag(SYNC_SEARCH_RANGE);
-                    $encoder->content($searchrange);
-                    $encoder->endTag();
 
-                    $encoder->startTag(SYNC_SEARCH_TOTAL);
-                    $encoder->content(count($rows));
-                    $encoder->endTag();
+                    if ($searchtotal > 0) {
+                        $encoder->startTag(SYNC_SEARCH_RANGE);
+                        $encoder->content($searchrange);
+                        $encoder->endTag();
+
+                        $encoder->startTag(SYNC_SEARCH_TOTAL);
+                        $encoder->content($searchtotal);
+                        $encoder->endTag();
+                    }
                 }
 
             $encoder->endTag();//store
