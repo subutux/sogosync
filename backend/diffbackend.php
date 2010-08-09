@@ -295,6 +295,9 @@ class ImportContentsChangesDiff extends DiffState {
     }
 
     function ImportMessageMove($id, $newfolder) {
+        // don't move messages from or to a dummy folder (GetHierarchy compatibility)
+        if ($this->_folderid == SYNC_FOLDER_TYPE_DUMMY || $newfolder == SYNC_FOLDER_TYPE_DUMMY)
+            return true;
         return $this->_backend->MoveMessage($this->_folderid, $id, $newfolder);
     }
 };

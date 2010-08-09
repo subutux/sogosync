@@ -256,7 +256,7 @@ class BackendIMAP extends BackendDiff {
             // receive entire mail (header + body)
             $origmail = @imap_fetchheader($this->_mbox, $forward, FT_UID) . @imap_body($this->_mbox, $forward, FT_PEEK | FT_UID);
 
-            if (!defined(IMAP_INLINE_FORWARD) || IMAP_INLINE_FORWARD === false) {
+            if (!defined('IMAP_INLINE_FORWARD') || IMAP_INLINE_FORWARD === false) {
                 if ($body_base64) $body = base64_encode($body);
                 // build a new mime message, forward entire old mail as file
                 list($aheader, $body) = $this->mail_attach("forwarded_message.eml",strlen($origmail),$origmail, $body, $forward_h_ct, $forward_h_cte);
@@ -335,7 +335,7 @@ class BackendIMAP extends BackendDiff {
         //debugLog("IMAP-SendMail: subject: {$message->headers["subject"]}");
         //debugLog("IMAP-SendMail: body: $body");
 
-        if (!defined(IMAP_USE_IMAPMAIL) || IMAP_USE_IMAPMAIL == true) {
+        if (!defined('IMAP_USE_IMAPMAIL') || IMAP_USE_IMAPMAIL == true) {
             $send =  @imap_mail ( $toaddr, $message->headers["subject"], $body, $headers, $ccaddr, $bccaddr);
         }
         else {
@@ -354,7 +354,7 @@ class BackendIMAP extends BackendDiff {
         $headers .= "\nTo: $toaddr";
         $headers .= "\nSubject: " . $message->headers["subject"];
 
-        if (!defined(IMAP_USE_IMAPMAIL) || IMAP_USE_IMAPMAIL == true) {
+        if (!defined('IMAP_USE_IMAPMAIL') || IMAP_USE_IMAPMAIL == true) {
             if (!empty($ccaddr))  $headers .= "\nCc: $ccaddr";
             if (!empty($bccaddr)) $headers .= "\nBcc: $bccaddr";
         }
