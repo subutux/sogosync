@@ -2421,7 +2421,6 @@ class BackendICS {
 
 
     function setDeviceRWStatus($user, $pass, $devid, $status) {
-        global $policykey;
         if($this->_session === false) {
             debugLog("Set rw status: logon failed for user $user");
             return false;
@@ -2438,10 +2437,10 @@ class BackendICS {
                 if ($ak !== false) {
                     //set new status remote wipe status
                     $devicesprops[0x68841003][$ak] = $status;
-                    if ($status == SYNC_PROVISION_RWSTATUS_WIPED) {
+                    if ($status == SYNC_PROVISION_RWSTATUS_WIPED)
                         $devicesprops[0x6887101E][$ak] = time();
-                        debugLog("RemoteWipe ".(($policykey == 0)?'sent':'executed').": Device '". $devid ."' of '". $user ."' requested by '". $devicesprops[0x6886101E][$ak] ."' at ". strftime("%Y-%m-%d %H:%M", $devicesprops[0x6885101E][$ak]));
-                    }
+
+                    debugLog("RemoteWipe ".(($status == SYNC_PROVISION_RWSTATUS_WIPED)?'executed':'sent').": Device '". $devid ."' of '". $user ."' requested by '". $devicesprops[0x6886101E][$ak] ."' at ". strftime("%Y-%m-%d %H:%M", $devicesprops[0x6885101E][$ak]));
                     mapi_setprops($defaultstore, array(0x68841003 => $devicesprops[0x68841003], 0x6887101E =>$devicesprops[0x6887101E]));
                     return true;
                 }
