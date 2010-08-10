@@ -146,8 +146,9 @@ class Streamer {
                             $decoded = $decoder->getElementContent();
 
                             if($decoded === false) {
-                                debug("Unable to get content for " . $entity[EN_TAG]);
-                                return false;
+                                // the tag is declared to have content, but no content is available.
+                                // set an empty content
+                                $decoded = "";
                             }
 
                             if(!$decoder->getElementEndTag()) {
