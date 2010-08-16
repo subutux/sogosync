@@ -155,8 +155,14 @@ class BackendIMAP extends BackendDiff {
                 continue;
 
             if ($k == "content-type") {
+                // if the message is a multipart message, then we should use the sent body
+                if (preg_match("/multipart/i", $v)) {
+                    $use_orgbody = true;
+                    $org_boundary = $message->ctype_parameters["boundary"];
+                }
+
                 // save the original content-type header for the body part when forwarding
-                if ($forward) {
+                if ($forward && !$use_orgbody) {
                     $forward_h_ct = $v;
                     continue;
                 }
@@ -175,12 +181,6 @@ class BackendIMAP extends BackendDiff {
                     $forward_h_cte = $v;
                     continue;
                 }
-            }
-
-            // if the message is a multipart message, then we should use the sent body
-            if (!$forward && $k == "content-type" && preg_match("/multipart/i", $v)) {
-                $use_orgbody = true;
-                $org_boundary = $message->ctype_parameters["boundary"];
             }
 
             // check if "from"-header is set
@@ -229,6 +229,7 @@ class BackendIMAP extends BackendDiff {
         // if this is a multipart message with a boundary, we must use the original body
         if ($use_orgbody) {
             list(,$body) = $mobj->_splitBodyHeader($rfc822);
+            $repl_body = $this->getBody($message);
         }
         else
             $body = $this->getBody($message);
@@ -265,28 +266,49 @@ class BackendIMAP extends BackendDiff {
                 $mobj2 = new Mail_mimeDecode($origmail);
                 $mess2 = $mobj2->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => 'utf-8'));
 
-                $body .= "\r\n\r\n";
-                $body .= "-----Original Message-----\r\n";
-                if(isset($mess2->headers['from']))
-                    $body .= "From: " . $mess2->headers['from'] . "\r\n";
-                if(isset($mess2->headers['to']) && strlen($mess2->headers['to']) > 0)
-                    $body .= "To: " . $mess2->headers['to'] . "\r\n";
-                if(isset($mess2->headers['cc']) && strlen($mess2->headers['cc']) > 0)
-                    $body .= "Cc: " . $mess2->headers['cc'] . "\r\n";
-                if(isset($mess2->headers['date']))
-                    $body .= "Sent: " . $mess2->headers['date'] . "\r\n";
-                if(isset($mess2->headers['subject']))
-                    $body .= "Subject: " . $mess2->headers['subject'] . "\r\n";
-                $body .= "\r\n";
-                $body .= $this->getBody($mess2);
+                if (!$use_orgbody)
+                    $nbody = $body;
+                else
+                    $nbody = $repl_body;
 
-                if ($body_base64) $body = base64_encode($body);
+                $nbody .= "\r\n\r\n";
+                $nbody .= "-----Original Message-----\r\n";
+                if(isset($mess2->headers['from']))
+                    $nbody .= "From: " . $mess2->headers['from'] . "\r\n";
+                if(isset($mess2->headers['to']) && strlen($mess2->headers['to']) > 0)
+                    $nbody .= "To: " . $mess2->headers['to'] . "\r\n";
+                if(isset($mess2->headers['cc']) && strlen($mess2->headers['cc']) > 0)
+                    $nbody .= "Cc: " . $mess2->headers['cc'] . "\r\n";
+                if(isset($mess2->headers['date']))
+                    $nbody .= "Sent: " . $mess2->headers['date'] . "\r\n";
+                if(isset($mess2->headers['subject']))
+                    $nbody .= "Subject: " . $mess2->headers['subject'] . "\r\n";
+                $nbody .= "\r\n";
+                $nbody .= $this->getBody($mess2);
+
+                if ($body_base64) {
+                    $nbody = base64_encode($nbody);
+                    if ($use_orgbody)
+                        $repl_body = base64_encode($repl_body);
+                }
+
+                if ($use_orgbody) {
+                    debugLog("-------------------");
+                    debugLog("old '$repl_body' new:'$nbody' und der body:'$body' ");
+                    $body = str_replace($repl_body, $nbody, $body);
+                }
+                else
+                    $body = $nbody;
+
 
                 if(isset($mess2->parts)) {
                     $attached = false;
 
                     if ($org_boundary) {
                         $att_boundary = $org_boundary;
+
+                        // cut end boundary from body
+                        $body = substr($body, 0, strrpos($body, "--$att_boundary--"));
                     }
                     else {
                         $att_boundary = strtoupper(md5(uniqid(time())));
@@ -305,16 +327,20 @@ class BackendIMAP extends BackendDiff {
                                 $attname = $part->headers['content-description'];
                             else $attname = "unknown attachment";
 
+                            // ignore html content
+                            if ($part->ctype_primary == "text" && $part->ctype_secondary == "html") {
+                                continue;
+                            }
                             //
                             if ($use_orgbody || $attached) {
-                                $body .= $this->enc_attach_file($att_boundary, $attname, strlen($part->body),$part->body);
+                                $body .= $this->enc_attach_file($att_boundary, $attname, strlen($part->body),$part->body, $part->ctype_primary ."/". $part->ctype_secondary);
                             }
                             // first attachment
                             else {
                                 $encmail = $body;
                                 $attached = true;
                                 $body = $this->enc_multipart($att_boundary, $body, $forward_h_ct, $forward_h_cte);
-                                $body .= $this->enc_attach_file($att_boundary, $attname, strlen($part->body),$part->body);
+                                $body .= $this->enc_attach_file($att_boundary, $attname, strlen($part->body),$part->body, $part->ctype_primary ."/". $part->ctype_secondary);
                             }
                         }
                     }
@@ -990,16 +1016,17 @@ class BackendIMAP extends BackendDiff {
     function enc_multipart($boundary, $body, $body_ct, $body_cte) {
         $mail_body = "This is a multi-part message in MIME format\n\n";
         $mail_body .= "--$boundary\n";
-        $mail_body .= "Content-Type:$body_ct\n";
+        $mail_body .= "Content-Type: $body_ct\n";
         $mail_body .= "Content-Transfer-Encoding: $body_cte\n\n";
         $mail_body .= "$body\n\n";
 
         return $mail_body;
     }
 
-    function enc_attach_file($boundary, $filenm, $filesize, $file_cont) {
+    function enc_attach_file($boundary, $filenm, $filesize, $file_cont, $content_type = "") {
+        if (!$content_type) $content_type = "text/plain";
         $mail_body = "--$boundary\n";
-        $mail_body .= "Content-Type: text/plain; name=\"$filenm\"\n";
+        $mail_body .= "Content-Type: $content_type; name=\"$filenm\"\n";
         $mail_body .= "Content-Transfer-Encoding: base64\n";
         $mail_body .= "Content-Disposition: attachment; filename=\"$filenm\"\n";
         $mail_body .= "Content-Description: $filenm\n\n";
