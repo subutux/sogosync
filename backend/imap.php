@@ -355,6 +355,9 @@ class BackendIMAP extends BackendDiff {
 
         }
 
+        // remove carriage-returns from body
+        $body = str_replace("\r\n", "\n", $body);
+
         //advanced debugging
         //debugLog("IMAP-SendMail: parsed message: ". print_r($message,1));
         //debugLog("IMAP-SendMail: headers: $headers");
