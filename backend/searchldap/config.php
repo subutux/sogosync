@@ -53,7 +53,7 @@ define("LDAP_BIND_PASSWORD", "");
 
 // Search base & filter
 // the SEARCHVALUE string is substituded by the value inserted into the search field
-define("LDAP_SEARCH_BASE", "ou=global,o=gal,dc=aa");
+define("LDAP_SEARCH_BASE", "ou=global,dc=test,dc=net");
 define("LDAP_SEARCH_FILTER", "(|(cn=*SEARCHVALUE*)(mail=*SEARCHVALUE*))");
 
 // LDAP field mapping.
