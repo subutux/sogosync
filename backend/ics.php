@@ -171,8 +171,8 @@ class MAPIMapping {
                             "customerid" => PR_CUSTOMER_ID,
                             "governmentid" => PR_GOVERNMENT_ID_NUMBER,
                             "imaddress" => "PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8062",
-                            // imaddress2
-                            // imaddress3
+                            "imaddress2" => "PT_STRING8:{71035549-0739-4DCB-9163-00F0580DBBDF}:IMAddress2",
+                            "imaddress3" => "PT_STRING8:{71035549-0739-4DCB-9163-00F0580DBBDF}:IMAddress3",
                             "managername" => PR_MANAGER_NAME,
                             "companymainphone" => PR_COMPANY_MAIN_PHONE_NUMBER,
                             "accountname" => PR_ACCOUNT,
