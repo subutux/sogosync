@@ -221,7 +221,7 @@ class ImportContentsChangesDiff extends DiffState {
         $this->_flags = $flags;
     }
 
-    function LoadConflicts($state) {
+    function LoadConflicts($mclass, $filtertype, $state) {
         // changes are detected on the fly
         return true;
     }

@@ -530,7 +530,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                 // before importing the first change, load potential conflicts
                 // for the current state
                 if ($nchanges == 0)
-                    $importer->LoadConflicts($collection["syncstate"]);
+                    $importer->LoadConflicts($collection["class"], (isset($collection["filtertype"])) ? $collection["filtertype"] : false, $collection["syncstate"]);
 
                 $nchanges++;
 

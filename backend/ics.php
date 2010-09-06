@@ -540,7 +540,7 @@ class ImportContentsChangesICS extends MAPIMapping {
         $this->_memChanges = new ImportContentsChangesMem();
     }
 
-    function LoadConflicts($state) {
+    function LoadConflicts($mclass, $filtertype, $state) {
         if (!isset($this->_session) || !isset($this->_store) || !isset($this->_folderid)) {
             debugLog("Warning: can not load changes for conflict detections. Session, store or folder information not available");
             return false;
@@ -548,7 +548,7 @@ class ImportContentsChangesICS extends MAPIMapping {
 
         // configure an exporter so we can detect conflicts
         $exporter = new ExportChangesICS($this->_session, $this->_store, $this->_folderid);
-        $exporter->Config(&$this->_memChanges, false, false, $state, 0, 0);
+        $exporter->Config(&$this->_memChanges, $mclass, $filtertype, $state, 0, 0);
         while(is_array($exporter->Synchronize()));
         return true;
     }
