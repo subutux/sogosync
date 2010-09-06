@@ -65,10 +65,23 @@ function debugLog($message) {
 
 function zarafa_error_handler($errno, $errstr, $errfile, $errline, $errcontext) {
     $bt = debug_backtrace();
-    debugLog("------------------------- ERROR BACKTRACE -------------------------");
-    debugLog("trace error: $errfile:$errline $errstr ($errno) - backtrace: ". (count($bt)-1) . " steps");
-    for($i = 1, $bt_length = count($bt); $i < $bt_length; $i++)
-        debugLog("trace: $i:". $bt[$i]['file']. ":" . $bt[$i]['line']. " - " . ((isset($bt[$i]['class']))? $bt[$i]['class'] . $bt[$i]['type']:""). $bt[$i]['function']. "()");
+    switch ($errno) {
+        case 8192:      // E_DEPRECATED since PHP 5.3.0
+            // do not handle this message
+            break;
+
+        case E_NOTICE:
+        case E_WARNING:
+            debugLog("$errfile:$errline $errstr ($errno)");
+            break;
+
+        default:
+            debugLog("------------------------- ERROR BACKTRACE -------------------------");
+            debugLog("trace error: $errfile:$errline $errstr ($errno) - backtrace: ". (count($bt)-1) . " steps");
+            for($i = 1, $bt_length = count($bt); $i < $bt_length; $i++)
+                debugLog("trace: $i:". $bt[$i]['file']. ":" . $bt[$i]['line']. " - " . ((isset($bt[$i]['class']))? $bt[$i]['class'] . $bt[$i]['type']:""). $bt[$i]['function']. "()");
+            break;
+    }
 }
 
 error_reporting(E_ALL);
