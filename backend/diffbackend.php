@@ -221,6 +221,11 @@ class ImportContentsChangesDiff extends DiffState {
         $this->_flags = $flags;
     }
 
+    function LoadConflicts($state) {
+        // changes are detected on the fly
+        return true;
+    }
+
     function ImportMessageChange($id, $message) {
         //do nothing if it is in a dummy folder
         if ($this->_folderid == SYNC_FOLDER_TYPE_DUMMY)

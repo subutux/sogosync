@@ -536,13 +536,21 @@ class ImportContentsChangesICS extends MAPIMapping {
         mapi_importcontentschanges_config($this->importer, $stream, $flags);
         $this->_flags = $flags;
 
+        // conflicting messages can be cached here
+        $this->_memChanges = new ImportContentsChangesMem();
+    }
+
+    function LoadConflicts($state) {
+        if (!isset($this->_session) || !isset($this->_store) || !isset($this->_folderid)) {
+            debugLog("Warning: can not load changes for conflict detections. Session, store or folder information not available");
+            return false;
+        }
+
         // configure an exporter so we can detect conflicts
         $exporter = new ExportChangesICS($this->_session, $this->_store, $this->_folderid);
-        $memImporter = new ImportContentsChangesMem();
-        $exporter->Config(&$memImporter, false, false, $state, 0, 0);
+        $exporter->Config(&$this->_memChanges, false, false, $state, 0, 0);
         while(is_array($exporter->Synchronize()));
-        $this->_memChanges = $memImporter;
-
+        return true;
     }
 
     function ImportMessageChange($id, $message) {
@@ -560,7 +568,7 @@ class ImportContentsChangesICS extends MAPIMapping {
 
             // check for conflicts
             if($this->_memChanges->isChanged($id)) {
-                if ($this->_flags == SYNC_CONFLICT_OVERWRITE_PIM) {
+                if ($this->_flags & SYNC_CONFLICT_OVERWRITE_PIM) {
                     debugLog("Conflict detected. Data from PIM will be dropped! Server overwrites PIM.");
                     return false;
                 }

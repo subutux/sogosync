@@ -527,6 +527,11 @@ function HandleSync($backend, $protocolversion, $devid) {
                     break;
                 }
 
+                // before importing the first change, load potential conflicts
+                // for the current state
+                if ($nchanges == 0)
+                    $importer->LoadConflicts($collection["syncstate"]);
+
                 $nchanges++;
 
                 if($decoder->getElementStartTag(SYNC_SERVERENTRYID)) {
