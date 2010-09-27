@@ -2651,7 +2651,7 @@ class BackendICS {
                     $mapirecip[PR_ADDRTYPE] = "SMTP";
                     $mapirecip[PR_EMAIL_ADDRESS] = $addr->mailbox . "@" . $addr->host;
                     if(isset($addr->personal) && strlen($addr->personal) > 0)
-                        $mapirecip[PR_DISPLAY_NAME] = u2wi($mimeObject->_decodeHeader($addr->personal));
+                        $mapirecip[PR_DISPLAY_NAME] = u2wi($addr->personal);
                     else
                         $mapirecip[PR_DISPLAY_NAME] = $mapirecip[PR_EMAIL_ADDRESS];
                     $mapirecip[PR_RECIPIENT_TYPE] = $type;
