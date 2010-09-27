@@ -2579,7 +2579,7 @@ class BackendICS {
         if (WBXML_DEBUG == true)
             debugLog("SendMail: forward: $forward   reply: $reply   parent: $parent\n" . $rfc822);
 
-        $mimeParams = array('decode_headers' => false,
+        $mimeParams = array('decode_headers' => true,
                             'decode_bodies' => true,
                             'include_bodies' => true,
 					        'charset' => 'utf-8');
@@ -2603,7 +2603,7 @@ class BackendICS {
         $mapimessage = mapi_folder_createmessage($outbox);
 
         mapi_setprops($mapimessage, array(
-            PR_SUBJECT => u2wi($mimeObject->_decodeHeader(isset($message->headers["subject"])?$message->headers["subject"]:"")),
+            PR_SUBJECT => u2wi(isset($message->headers["subject"])?$message->headers["subject"]:""),
             PR_SENTMAIL_ENTRYID => $storeprops[PR_IPM_SENTMAIL_ENTRYID],
             PR_MESSAGE_CLASS => "IPM.Note",
             PR_MESSAGE_DELIVERY_TIME => time()
