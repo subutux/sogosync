@@ -2294,6 +2294,10 @@ class BackendICS {
 
         $status = SYNC_PROVISION_STATUS_SUCCESS;
 
+        //generate some devid if it is not set,
+        //in order to be able to remove it later via mdm
+        if (!isset($devid) || !$devid) $devid = $this->generatePolicyKey();
+
         $user_policykey = $this->getPolicyKey($user, $auth_pw, $devid);
 
         if ($user_policykey != $policykey) {
