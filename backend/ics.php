@@ -652,15 +652,15 @@ class ImportContentsChangesICS extends MAPIMapping {
     }
 
     function GetState() {
-    	if(!isset($this->statestream))
+        if(!isset($this->statestream))
             return false;
 
         if (function_exists("mapi_importcontentschanges_updatestate")) {
-        	debugLog("using mapi_importcontentschanges_updatestate");
-	        if(mapi_importcontentschanges_updatestate($this->importer, $this->statestream) != true) {
-	            debugLog("Unable to update state: " . sprintf("%X", mapi_last_hresult()));
-	            return false;
-	        }
+            debugLog("using mapi_importcontentschanges_updatestate");
+            if(mapi_importcontentschanges_updatestate($this->importer, $this->statestream) != true) {
+                debugLog("Unable to update state: " . sprintf("%X", mapi_last_hresult()));
+                return false;
+            }
         }
 
         mapi_stream_seek($this->statestream, 0, STREAM_SEEK_SET);
@@ -1622,39 +1622,39 @@ class PHPContentsImportProxy extends MAPIMapping {
                 $message->meetingrequest->globalobjid = base64_encode($props[$goidtag]);
 
             // Set Timezone
-			if(isset($props[$timezonetag]))
-			    $tz = $this->_getTZFromMAPIBlob($props[$timezonetag]);
-			else
-			    $tz = $this->_getGMTTZ();
+            if(isset($props[$timezonetag]))
+                $tz = $this->_getTZFromMAPIBlob($props[$timezonetag]);
+            else
+                $tz = $this->_getGMTTZ();
 
-	        $message->meetingrequest->timezone = base64_encode($this->_getSyncBlobFromTZ($tz));
+            $message->meetingrequest->timezone = base64_encode($this->_getSyncBlobFromTZ($tz));
 
             // send basedate if exception
             if(isset($props[$recReplTime]) || (isset($props[$lidIsException]) && $props[$lidIsException] == true)) {
-            	if (isset($props[$recReplTime])){
-            	   $basedate = $props[$recReplTime];
-            	   $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $this->_getGMTTZ());
-            	}
-            	else {
-            	   if (!isset($props[$goidtag]) || !isset($props[$recurStartTime]) || !isset($props[$timezonetag]))
-            	       debugLog("Missing property to set correct basedate for exception");
-            	   else {
-            	       $basedate = extractBaseDate($props[$goidtag], $props[$recurStartTime]);
-            	       $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $tz);
-            	   }
-            	}
+                if (isset($props[$recReplTime])){
+                   $basedate = $props[$recReplTime];
+                   $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $this->_getGMTTZ());
+                }
+                else {
+                   if (!isset($props[$goidtag]) || !isset($props[$recurStartTime]) || !isset($props[$timezonetag]))
+                       debugLog("Missing property to set correct basedate for exception");
+                   else {
+                       $basedate = extractBaseDate($props[$goidtag], $props[$recurStartTime]);
+                       $message->meetingrequest->recurrenceid = $this->_getGMTTimeByTZ($basedate, $tz);
+                   }
+                }
             }
 
             // Organizer is the sender
             $message->meetingrequest->organizer = $message->from;
 
             // Process recurrence
-	        if(isset($props[$isrecurringtag]) && $props[$isrecurringtag]) {
-	            $myrec = new SyncMeetingRequestRecurrence();
-	            // get recurrence -> put $message->meetingrequest as message so the 'alldayevent' is set correctly
-	            $this->_getRecurrence($mapimessage, $props, $message->meetingrequest, $myrec, $tz);
-	            $message->meetingrequest->recurrences = array($myrec);
-	        }
+            if(isset($props[$isrecurringtag]) && $props[$isrecurringtag]) {
+                $myrec = new SyncMeetingRequestRecurrence();
+                // get recurrence -> put $message->meetingrequest as message so the 'alldayevent' is set correctly
+                $this->_getRecurrence($mapimessage, $props, $message->meetingrequest, $myrec, $tz);
+                $message->meetingrequest->recurrences = array($myrec);
+            }
 
             // Force the 'alldayevent' in the object at all times. (non-existent == 0)
             if(!isset($message->meetingrequest->alldayevent) || $message->meetingrequest->alldayevent == "")
@@ -2514,24 +2514,40 @@ class BackendICS {
         $items['searchtotal'] = $querycnt;
 
         if ($querycnt > 0)
-            $abentries = mapi_table_queryrows($table, array(PR_ACCOUNT, PR_DISPLAY_NAME, PR_SMTP_ADDRESS, PR_BUSINESS_TELEPHONE_NUMBER), $rangestart, $querylimit);
+            $abentries = mapi_table_queryrows($table, array(PR_ACCOUNT, PR_DISPLAY_NAME, PR_SMTP_ADDRESS, PR_BUSINESS_TELEPHONE_NUMBER, PR_GIVEN_NAME, PR_SURNAME, PR_MOBILE_TELEPHONE_NUMBER, PR_HOME_TELEPHONE_NUMBER), $rangestart, $querylimit);
 
         for ($i = 0; $i < $querylimit; $i++) {
-            $items[$i][SYNC_GAL_ALIAS] = w2u($abentries[$i][PR_ACCOUNT]);
             $items[$i][SYNC_GAL_DISPLAYNAME] = w2u($abentries[$i][PR_DISPLAY_NAME]);
 
             if (strlen(trim($items[$i][SYNC_GAL_DISPLAYNAME])) == 0)
-                $items[$i][SYNC_GAL_DISPLAYNAME] = $items[$i][SYNC_GAL_ALIAS];
+                $items[$i][SYNC_GAL_DISPLAYNAME] = w2u($abentries[$i][PR_ACCOUNT]);
 
+            $items[$i][SYNC_GAL_ALIAS] = $items[$i][SYNC_GAL_DISPLAYNAME];
             //it's not possible not get first and last name of an user
             //from the gab and user functions, so we just set lastname
             //to displayname and leave firstname unset
-            $items[$i][SYNC_GAL_LASTNAME] = $items[$i][SYNC_GAL_DISPLAYNAME];
+            //this was changed in Zarafa 6.40, so we try to get first and
+            //last name and fall back to the old behaviour if these values are not set
+            if (isset($abentries[$i][PR_GIVEN_NAME]))
+                $items[$i][SYNC_GAL_FIRSTNAME] = w2u($abentries[$i][PR_GIVEN_NAME]);
+            if (isset($abentries[$i][PR_SURNAME]))
+                $items[$i][SYNC_GAL_LASTNAME] = w2u($abentries[$i][PR_SURNAME]);
+
+            if (!isset($items[$i][SYNC_GAL_LASTNAME])) $items[$i][SYNC_GAL_LASTNAME] = $items[$i][SYNC_GAL_DISPLAYNAME];
 
             $items[$i][SYNC_GAL_EMAILADDRESS] = w2u($abentries[$i][PR_SMTP_ADDRESS]);
-            //check if an user has a office number or it might produce warnings in the log
+            //check if an user has an office number or it might produce warnings in the log
             if (isset($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]))
                 $items[$i][SYNC_GAL_OFFICE] = w2u($abentries[$i][PR_BUSINESS_TELEPHONE_NUMBER]);
+            //check if an user has a mobile number or it might produce warnings in the log
+            if (isset($abentries[$i][PR_MOBILE_TELEPHONE_NUMBER]))
+                $items[$i][SYNC_GAL_MOBILEPHONE] = w2u($abentries[$i][PR_MOBILE_TELEPHONE_NUMBER]);
+            //check if an user has a home number or it might produce warnings in the log
+            if (isset($abentries[$i][PR_HOME_TELEPHONE_NUMBER]))
+                $items[$i][SYNC_GAL_HOMEPHONE] = w2u($abentries[$i][PR_HOME_TELEPHONE_NUMBER]);
+
+            if (isset($abentries[$i][PR_ACCOUNT]))
+                $items[$i][SYNC_GAL_COMPANY] = w2u($abentries[$i][PR_ACCOUNT]);
         }
         return $items;
     }
@@ -2582,7 +2598,7 @@ class BackendICS {
         $mimeParams = array('decode_headers' => true,
                             'decode_bodies' => true,
                             'include_bodies' => true,
-					        'charset' => 'utf-8');
+                            'charset' => 'utf-8');
 
         $mimeObject = new Mail_mimeDecode($rfc822);
         $message = $mimeObject->decode($mimeParams);
@@ -3081,9 +3097,9 @@ class BackendICS {
             $filename = $part->d_parameters["filename"];
         // filenames with more than 63 chars as splitted several strings
         else if (isset($part->d_parameters["filename*0"])) {
-        	for ($i=0; $i< count($part->d_parameters); $i++)
-        	   if (isset($part->d_parameters["filename*".$i]))
-        	       $filename .= $part->d_parameters["filename*".$i];
+            for ($i=0; $i< count($part->d_parameters); $i++)
+               if (isset($part->d_parameters["filename*".$i]))
+                   $filename .= $part->d_parameters["filename*".$i];
         }
         else
             $filename = "untitled";
