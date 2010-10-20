@@ -175,6 +175,12 @@ function zpa_get_userdetails($adminStore, $session, $user) {
         $nrdevices = count($devicesprops[0x6881101E]);
         echo "Username:\t\t$user\n";
         for ($i = 0; $i < $nrdevices; $i++) {
+            //generate some device id if it is not set, so that it is possible to remove the device
+            if (!isset($devicesprops[0x6881101E][$i]) || ! $devicesprops[0x6881101E][$i]) {
+                $devicesprops[0x6881101E][$i] = mt_rand(0, 100000);
+                mapi_setprops($userStore, array(0x6881101E=>$devicesprops[0x6881101E]));
+            }
+
             echo "-----------------------------------------------------\n";
             echo "DeviceId:\t\t{$devicesprops[0x6881101E][$i]}\n";
             echo "Device type:\t\t".(isset($devicesprops[0x6882101E][$i]) ? $devicesprops[0x6882101E][$i] : "unknown")."\n";
