@@ -89,23 +89,23 @@ class StateMachine {
         $n = $matches[2];
 
         // Cleanup all older syncstates
-        $dir = opendir(BASE_PATH . STATE_DIR);
+        $dir = opendir( STATE_DIR);
         if(!$dir)
             return false;
 
         while($entry = readdir($dir)) {
             if(preg_match('/^s{0,1}\{([0-9A-Za-z-]+)\}([0-9]+)$/', $entry, $matches)) {
                 if($matches[1] == $guid && $matches[2] < $n) {
-                    unlink(BASE_PATH . STATE_DIR . "/$entry");
+                    unlink( STATE_DIR . "/$entry");
                 }
             }
         }
 
         // Read current sync state
-        $filename = BASE_PATH . STATE_DIR . "/$synckey";
+        $filename = STATE_DIR . "/$synckey";
 
         if(file_exists($filename))
-            return file_get_contents(BASE_PATH . STATE_DIR . "/$synckey");
+            return file_get_contents(STATE_DIR . "/$synckey");
         else return false;
     }
 
@@ -130,7 +130,7 @@ class StateMachine {
             return false;
         }
 
-        return file_put_contents(BASE_PATH . STATE_DIR . "/$synckey", $syncstate);
+        return file_put_contents(STATE_DIR . "/$synckey", $syncstate);
     }
 
     function uuid()

@@ -924,7 +924,7 @@ function HandlePing($backend, $devid) {
     $lifetime = 0;
 
     // Get previous defaults if they exist
-    $file = BASE_PATH . STATE_DIR . "/" . $devid;
+    $file = STATE_DIR . "/" . $devid;
     if (file_exists($file)) {
         $ping = unserialize(file_get_contents($file));
         $collections = $ping["collections"];
@@ -1076,7 +1076,7 @@ function HandlePing($backend, $devid) {
     $encoder->endTag();
 
     // Save the ping request state for this device
-    file_put_contents(BASE_PATH . "/" . STATE_DIR . "/" . $devid, serialize(array("lifetime" => $lifetime, "collections" => $collections)));
+    file_put_contents( STATE_DIR . "/" . $devid, serialize(array("lifetime" => $lifetime, "collections" => $collections)));
 
     return true;
 }
