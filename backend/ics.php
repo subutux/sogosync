@@ -618,20 +618,29 @@ class ImportContentsChangesICS extends MAPIMapping {
     // we would implement this via the 'offical' importmessagemove() function on the ICS importer, but the
     // Zarafa importer does not support this. Therefore we currently implement it via a standard mapi
     // call. This causes a mirror 'add/delete' to be sent to the PDA at the next sync.
+    // Manfred, 2010-10-21. For some mobiles import was causing duplicate messages in the destination folder
+    // (Mantis #202). Therefore we will create a new message in the destination folder, copy properties
+    // of the source message to the new one and then delete the source message.
     function ImportMessageMove($id, $newfolder) {
-        $sourcekey = hex2bin($id);
-        $parentsourcekey = $this->_folderid;
-
+        if (strtolower($newfolder) == strtolower(bin2hex($this->_folderid)) ) {
+            //TODO status value 4
+            debugLog("Source and destination are equal");
+            return false;
+        }
         // Get the entryid of the message we're moving
-        $entryid = mapi_msgstore_entryidfromsourcekey($this->_store, $parentsourcekey, $sourcekey);
-
+        $entryid = mapi_msgstore_entryidfromsourcekey($this->_store, $this->_folderid, hex2bin($id));
         if(!$entryid) {
             debugLog("Unable to resolve source message id");
             return false;
         }
 
+        //open the source message
+        $srcmessage = mapi_msgstore_openentry($this->_store, $entryid);
+        if (!$srcmessage) {
+            debugLog("Unable to open source message:".sprintf("%x", mapi_last_hresult()));
+            return false;
+        }
         $dstentryid = mapi_msgstore_entryidfromsourcekey($this->_store, hex2bin($newfolder));
-
         if(!$dstentryid) {
             debugLog("Unable to resolve destination folder");
             return false;
@@ -643,12 +652,46 @@ class ImportContentsChangesICS extends MAPIMapping {
             return false;
         }
 
-        // Open the source folder (we just open the root because it doesn't matter which folder you open as a source
-        // folder)
-        $root = mapi_msgstore_openentry($this->_store);
+        $newmessage = mapi_folder_createmessage($dstfolder);
+        if (!$newmessage) {
+            debugLog("Unable to create message in destination folder:".sprintf("%x", mapi_last_hresult()));
+            return false;
+        }
+        // Copy message
+        mapi_copyto($srcmessage, array(), array(), $newmessage);
+        if (mapi_last_hresult()){
+            debugLog("copy to failed:".sprintf("%x", mapi_last_hresult()));
+            return false;
+        }
 
-        // Do the actual move
-        return mapi_folder_copymessages($root, array($entryid), $dstfolder, MESSAGE_MOVE);
+        $srcfolderentryid = mapi_msgstore_entryidfromsourcekey($this->_store, $this->_folderid);
+        if(!$srcfolderentryid) {
+            debugLog("Unable to resolve source folder");
+            return false;
+        }
+
+        $srcfolder = mapi_msgstore_openentry($this->_store, $srcfolderentryid);
+        if (!$srcfolder) {
+            debugLog("Unable to open source folder:".sprintf("%x", mapi_last_hresult()));
+            return false;
+        }
+
+        // Save changes
+        mapi_savechanges($newmessage);
+        if (mapi_last_hresult()){
+            debugLog("mapi_savechanges failed:".sprintf("%x", mapi_last_hresult()));
+            return false;
+        }
+
+        // Delete the old message
+        if (!mapi_folder_deletemessages($srcfolder, array($entryid))) {
+            debugLog("Failed to delete source message. Possible duplicates");
+        }
+
+        $sourcekeyprops = mapi_getprops($newmessage, array (PR_SOURCE_KEY));
+        if (isset($sourcekeyprops[PR_SOURCE_KEY]) && $sourcekeyprops[PR_SOURCE_KEY]) return  bin2hex($sourcekeyprops[PR_SOURCE_KEY]);
+
+        return false;
     }
 
     function GetState() {
