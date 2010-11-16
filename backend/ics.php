@@ -235,6 +235,8 @@ class MAPIMapping {
                             "complete" => "PT_BOOLEAN:{00062003-0000-0000-C000-000000000046}:0x811C",
                             "datecompleted" => "PT_SYSTIME:{00062003-0000-0000-C000-000000000046}:0x810F",
                             "duedate" => "PT_SYSTIME:{00062003-0000-0000-C000-000000000046}:0x8105",
+                            "utcduedate" => "PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8517",
+                            "utcstartdate" => "PT_SYSTIME:{00062008-0000-0000-C000-000000000046}:0x8516",
                             "importance" => PR_IMPORTANCE,
                             // recurrence
                             // regenerate
