@@ -112,7 +112,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
 
 // Get the request headers so we can get the AS headers
 $requestheaders = array_change_key_case(apache_request_headers(), CASE_LOWER);
-debugLog(print_r($requestheaders,1));
+
 global $protocolversion, $policykey, $useragent;
 $protocolversion = (isset($requestheaders["ms-asprotocolversion"]))? $requestheaders["ms-asprotocolversion"] : "1.0";
 $policykey = (isset($requestheaders["x-ms-policykey"]))? $requestheaders["x-ms-policykey"] : 0;
