@@ -110,38 +110,15 @@ if($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-// Get the request headers so we can see the versions
-$requestheaders = apache_request_headers();
-if (isset($requestheaders["Ms-Asprotocolversion"])) $requestheaders["MS-ASProtocolVersion"] = $requestheaders["Ms-Asprotocolversion"];
-if(isset($requestheaders["MS-ASProtocolVersion"])) {
-    global $protocolversion;
+// Get the request headers so we can get the AS headers
+$requestheaders = array_change_key_case(apache_request_headers(), CASE_LOWER);
+debugLog(print_r($requestheaders,1));
+global $protocolversion, $policykey, $useragent;
+$protocolversion = (isset($requestheaders["ms-asprotocolversion"]))? $requestheaders["ms-asprotocolversion"] : "1.0";
+$policykey = (isset($requestheaders["x-ms-policykey"]))? $requestheaders["x-ms-policykey"] : 0;
+$useragent = (isset($requestheaders["user-agent"]))? $requestheaders["user-agent"] : "unknown";
 
-    $protocolversion = $requestheaders["MS-ASProtocolVersion"];
-    debugLog("Client supports version " . $protocolversion);
-} else {
-    global $protocolversion;
-
-    $protocolversion = "1.0";
-}
-
-if (isset($requestheaders["X-Ms-Policykey"])) $requestheaders["X-MS-PolicyKey"] = $requestheaders["X-Ms-Policykey"];
-if (isset($requestheaders["X-MS-PolicyKey"])) {
-    global $policykey;
-    $policykey = $requestheaders["X-MS-PolicyKey"];
-
-} else {
-    global $policykey;
-    $policykey = 0;
-}
-
-//get user agent
-if (isset($requestheaders["User-Agent"])) {
-    global $useragent;
-    $useragent = $requestheaders["User-Agent"];
-} else {
-    global $useragent;
-    $useragent = "unknown";
-}
+debugLog("Client supports version " . $protocolversion);
 
 // Load our backend driver
 $backend_dir = opendir(BASE_PATH . "/backend");

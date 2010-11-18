@@ -54,4 +54,19 @@ if (!function_exists("file_put_contents")) {
     }
 }
 
+if (!function_exists("array_change_key_case")) {
+    if (!defined('CASE_LOWER')) define('CASE_LOWER', 0);
+    if (!defined('CASE_UPPER')) define('CASE_UPPER', 1);
+
+    function array_change_key_case($array, $target) {
+        if(!is_array($array)) return FALSE;
+        $output = array();
+        foreach($array as $key => $value){
+            $key2 = (is_string($key)) ? (($target == CASE_UPPER)?strtoupper($key):strtolower($key)):$key;
+            $output[$key2] = $value;
+        }
+        return $output;
+    }
+}
+
 ?>
