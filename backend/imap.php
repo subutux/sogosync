@@ -73,7 +73,7 @@ class BackendIMAP extends BackendDiff {
             $this->_username = $username;
             $this->_domain = $domain;
             // set serverdelimiter
-             $this->_serverdelimiter = $this->getServerDelimiter();
+            $this->_serverdelimiter = $this->getServerDelimiter();
             return true;
         }
         else {
@@ -183,13 +183,18 @@ class BackendIMAP extends BackendDiff {
                 }
             }
 
-            // check if "from"-header is set
-            if ($k == "from" && ! trim($v) && IMAP_DEFAULTFROM) {
-                $changedfrom = true;
-                if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
-                else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
-                else $v = $this->_username . IMAP_DEFAULTFROM;
-                $envelopefrom = "-f$v";
+            // check if "from"-header is set, do nothing if it's set
+            // else set it to IMAP_DEFAULTFROM
+            if ($k == "from") {
+                if (trim($v)) {
+                    $changedfrom = true;
+                } elseif (! trim($v) && IMAP_DEFAULTFROM) {
+                    $changedfrom = true;
+                    if      (IMAP_DEFAULTFROM == 'username') $v = $this->_username;
+                    else if (IMAP_DEFAULTFROM == 'domain')   $v = $this->_domain;
+                    else $v = $this->_username . IMAP_DEFAULTFROM;
+                    $envelopefrom = "-f$v";
+                }
             }
 
             // check if "Return-Path"-header is set
@@ -259,8 +264,13 @@ class BackendIMAP extends BackendDiff {
 
             if (!defined('IMAP_INLINE_FORWARD') || IMAP_INLINE_FORWARD === false) {
                 if ($body_base64) $body = base64_encode($body);
+                //use original boundary if it's set
+                $boundary = (isset($org_boundary) && $org_boundary) ? $org_boundary : false;
                 // build a new mime message, forward entire old mail as file
-                list($aheader, $body) = $this->mail_attach("forwarded_message.eml",strlen($origmail),$origmail, $body, $forward_h_ct, $forward_h_cte);
+                list($aheader, $body) = $this->mail_attach("forwarded_message.eml",strlen($origmail),$origmail, $body, $forward_h_ct, $forward_h_cte,$boundary);
+                // add boundary headers
+                $headers .= "\n" . $aheader;
+
             }
             else {
                 $mobj2 = new Mail_mimeDecode($origmail);
@@ -294,8 +304,10 @@ class BackendIMAP extends BackendDiff {
 
                 if ($use_orgbody) {
                     debugLog("-------------------");
-                    debugLog("old '$repl_body' new:'$nbody' und der body:'$body' ");
-                    $body = str_replace($repl_body, $nbody, $body);
+                    debugLog("old:\n'$repl_body'\nnew:\n'$nbody'\nund der body:\n'$body'");
+                    //$body is quoted-printable encoded while $repl_body and $nbody are plain text,
+                    //so we need to decode $body in order replace to take place
+                    $body = str_replace($repl_body, $nbody, quoted_printable_decode($body));
                 }
                 else
                     $body = $nbody;
@@ -306,7 +318,6 @@ class BackendIMAP extends BackendDiff {
 
                     if ($org_boundary) {
                         $att_boundary = $org_boundary;
-
                         // cut end boundary from body
                         $body = substr($body, 0, strrpos($body, "--$att_boundary--"));
                     }
@@ -496,9 +507,9 @@ class BackendIMAP extends BackendDiff {
         if (is_array($list)) {
             // reverse list to obtain folders in right order
             $list = array_reverse($list);
+
             foreach ($list as $val) {
                 $box = array();
-
                 // cut off serverstring
                 $box["id"] = imap_utf7_decode(substr($val->name, strlen($this->_server)));
 
@@ -1003,8 +1014,12 @@ class BackendIMAP extends BackendDiff {
 
 
     // build a multipart email, embedding body and one file (for attachments)
-    function mail_attach($filenm,$filesize,$file_cont,$body, $body_ct, $body_cte) {
-        $boundary = strtoupper(md5(uniqid(time())));
+    function mail_attach($filenm,$filesize,$file_cont,$body, $body_ct, $body_cte, $boundary = false) {
+        if (!$boundary) $boundary = strtoupper(md5(uniqid(time())));
+
+        //remove the ending boundary because we will add it at the end
+        $body = str_replace("--$boundary--", "", $body);
+
         $mail_header = "Content-Type: multipart/mixed; boundary=$boundary\n";
 
         // build main body with the sumitted type & encoding from the pda
@@ -1012,15 +1027,14 @@ class BackendIMAP extends BackendDiff {
         $mail_body .= $this->enc_attach_file($boundary, $filenm, $filesize, $file_cont);
 
         $mail_body .= "--$boundary--\n\n";
-
         return array($mail_header, $mail_body);
     }
 
     function enc_multipart($boundary, $body, $body_ct, $body_cte) {
         $mail_body = "This is a multi-part message in MIME format\n\n";
-        $mail_body .= "--$boundary\n";
-        $mail_body .= "Content-Type: $body_ct\n";
-        $mail_body .= "Content-Transfer-Encoding: $body_cte\n\n";
+//        $mail_body .= "--$boundary\n";
+//        $mail_body .= "Content-Type: $body_ct\n";
+//        $mail_body .= "Content-Transfer-Encoding: $body_cte\n\n";
         $mail_body .= "$body\n\n";
 
         return $mail_body;
@@ -1033,7 +1047,8 @@ class BackendIMAP extends BackendDiff {
         $mail_body .= "Content-Transfer-Encoding: base64\n";
         $mail_body .= "Content-Disposition: attachment; filename=\"$filenm\"\n";
         $mail_body .= "Content-Description: $filenm\n\n";
-        $mail_body .= base64_encode($file_cont) . "\n\n";
+        //contrib - chunk base64 encoded attachments
+        $mail_body .= chunk_split(base64_encode($file_cont)) . "\n\n";
 
         return $mail_body;
     }
