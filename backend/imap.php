@@ -513,20 +513,14 @@ class BackendIMAP extends BackendDiff {
                 // cut off serverstring
                 $box["id"] = imap_utf7_decode(substr($val->name, strlen($this->_server)));
 
-                // always use "." as folder delimiter
-                $box["id"] = imap_utf7_encode(str_replace($val->delimiter, ".", $box["id"]));
-
-                // explode hierarchies
-                $fhir = explode(".", $box["id"]);
+                $fhir = array_map('imap_utf7_encode',explode($val->delimiter, $box["id"]));
                 if (count($fhir) > 1) {
-                    $box["mod"] = imap_utf7_encode(array_pop($fhir)); // mod is last part of path
-                    $box["parent"] = imap_utf7_encode(implode(".", $fhir)); // parent is all previous parts of path
+                    $this->getModAndParentNames($fhir, $box["mod"], $box["parent"]);
                 }
                 else {
                     $box["mod"] = imap_utf7_encode($box["id"]);
                     $box["parent"] = "0";
                 }
-
                 $folders[]=$box;
             }
         }
@@ -546,7 +540,7 @@ class BackendIMAP extends BackendDiff {
         $folder->serverid = $id;
 
         // explode hierarchy
-          $fhir = explode(".", $id);
+        $fhir = explode($this->_serverdelimiter, $id);
 
         // compare on lowercase strings
         $lid = strtolower($id);
@@ -596,8 +590,8 @@ class BackendIMAP extends BackendDiff {
         // define the rest as other-folders
         else {
                if (count($fhir) > 1) {
-                   $folder->displayname = windows1252_to_utf8(imap_utf7_decode(array_pop($fhir)));
-                   $folder->parentid = implode(".", $fhir);
+                   $this->getModAndParentNames($fhir, $folder->displayname, $folder->parentid);
+                   $folder->displayname = windows1252_to_utf8(imap_utf7_decode($folder->displayname));
                }
                else {
                 $folder->displayname = windows1252_to_utf8(imap_utf7_decode($id));
@@ -646,7 +640,7 @@ class BackendIMAP extends BackendDiff {
         $this->imap_reopenFolder($folderid);
 
         // build name for new mailbox
-        $newname = $this->_server . str_replace(".", $this->_serverdelimiter, $folderid) . $this->_serverdelimiter . $displayname;
+        $newname = $this->_server . $folderid . $this->_serverdelimiter . $displayname;
 
         $csts = false;
         // if $id is set => rename mailbox, otherwise create
@@ -659,7 +653,7 @@ class BackendIMAP extends BackendDiff {
             $csts = @imap_createmailbox($this->_mbox, $newname);
         }
         if ($csts) {
-            return $this->StatFolder($folderid . "." . $displayname);
+            return $this->StatFolder($folderid . $this->_serverdelimiter . $displayname);
         }
         else
             return false;
@@ -891,11 +885,11 @@ class BackendIMAP extends BackendDiff {
             // destination folder. This is a "guessing" mechanism as IMAP does not inform that value.
             // when lots of simultaneous operations happen in the destination folder this could fail.
             // in the worst case the moved message is displayed twice on the mobile.
-            $destStatus = imap_status($this->_mbox, $this->_server . str_replace(".", $this->_serverdelimiter, $newfolderid), SA_ALL);
+            $destStatus = imap_status($this->_mbox, $this->_server . $newfolderid, SA_ALL);
             $newid = $destStatus->uidnext;
 
             // move message
-            $s1 = imap_mail_move($this->_mbox, $id, str_replace(".", $this->_serverdelimiter, $newfolderid), CP_UID);
+            $s1 = imap_mail_move($this->_mbox, $id, $newfolderid, CP_UID);
 
             // delete message in from-folder
             $s2 = imap_expunge($this->_mbox);
@@ -932,7 +926,7 @@ class BackendIMAP extends BackendDiff {
         // courier-imap only cleares the status cache after checking
         @imap_check($this->_mbox);
 
-        $status = imap_status($this->_mbox, $this->_server . str_replace(".", $this->_serverdelimiter, $folderid), SA_ALL);
+        $status = imap_status($this->_mbox, $this->_server . $folderid, SA_ALL);
         if (!$status) {
             debugLog("AlterPingChanges: could not stat folder $folderid : ". imap_last_error());
             return false;
@@ -1006,7 +1000,7 @@ class BackendIMAP extends BackendDiff {
     function imap_reopenFolder($folderid, $force = false) {
         // to see changes, the folder has to be reopened!
            if ($this->_mboxFolder != $folderid || $force) {
-               $s = @imap_reopen($this->_mbox, $this->_server . str_replace(".", $this->_serverdelimiter, $folderid));
+               $s = @imap_reopen($this->_mbox, $this->_server . $folderid);
                if (!$s) debugLog("failed to change folder: ". implode(", ", imap_errors()));
             $this->_mboxFolder = $folderid;
         }
@@ -1073,6 +1067,30 @@ class BackendIMAP extends BackendDiff {
         return $addr_string;
     }
 
-};
+
+    //recursive way to get mod and parent - repeat until only one part is left
+    //or the folder is identified as an IMAP folder
+    function getModAndParentNames($fhir, &$displayname, &$parent) {
+
+        //if mod is already set add the previous part to it as it might be a folder which has
+        //delimiter in its name
+        $displayname = (isset($displayname) && strlen($displayname) > 0) ? $displayname = array_pop($fhir).$this->_serverdelimiter.$displayname : array_pop($fhir);
+        $parent = implode($this->_serverdelimiter, $fhir);
+
+        if (count($fhir) == 1 || $this->checkIfIMAPFolder($parent)) {
+            return;
+        }
+        //recursion magic
+        $this->getModAndParentNames($fhir, $displayname, $parent);
+    }
+
+
+    function checkIfIMAPFolder($folderName) {
+        $parent = imap_list($this->_mbox, $this->_server, $folderName);
+        if ($parent === false) return false;
+        return true;
+    }
+
+}
 
 ?>
