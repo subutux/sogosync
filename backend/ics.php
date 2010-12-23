@@ -2289,6 +2289,7 @@ class BackendICS {
         $this->_importedFolders = array();
 
         debugLog("User $user logged on");
+        $this->_isUnicodeStore();
         return true;
     }
 
@@ -3228,6 +3229,15 @@ class BackendICS {
                         )
                     ) // RES_AND
         );
+    }
+
+
+    function _isUnicodeStore() {
+        $supportmask = mapi_getprops($this->_defaultstore, array(PR_STORE_SUPPORT_MASK));
+        if (isset($supportmask[PR_STORE_SUPPORT_MASK]) && ($supportmask[PR_STORE_SUPPORT_MASK] & STORE_UNICODE_OK)) {
+            debugLog("Store supports properties containing Unicode characters.");
+            define('STORE_SUPPORTS_UNICODE', true);
+        }
     }
 }
 

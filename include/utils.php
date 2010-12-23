@@ -102,6 +102,9 @@ function hex2bin($data) {
 
 function utf8_to_windows1252($string, $option = "")
 {
+    //if the store supports unicode return the string without converting it
+    if (defined('STORE_SUPPORTS_UNICODE') && STORE_SUPPORTS_UNICODE == true) return $string;
+
     if (function_exists("iconv")){
         return @iconv("UTF-8", "Windows-1252" . $option, $string);
     }else{
@@ -111,6 +114,9 @@ function utf8_to_windows1252($string, $option = "")
 
 function windows1252_to_utf8($string, $option = "")
 {
+    //if the store supports unicode return the string without converting it
+    if (defined('STORE_SUPPORTS_UNICODE') && STORE_SUPPORTS_UNICODE == true) return $string;
+
     if (function_exists("iconv")){
         return @iconv("Windows-1252", "UTF-8" . $option, $string);
     }else{
