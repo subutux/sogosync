@@ -2787,6 +2787,8 @@ class BackendICS {
                     }
                     else {
                         // store ics as attachment
+                        //see icalTimezoneFix function in compat.php for more information
+                        $part->body = icalTimezoneFix($part->body);
                         $this->_storeAttachment($mapimessage, $part);
                         debugLog("Sending ICS file as attachment");
                     }
