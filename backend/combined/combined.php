@@ -1,4 +1,4 @@
-<?
+<?php
 /***********************************************
 * File      :   backend/combined/combined.php
 * Project   :   Z-Push
