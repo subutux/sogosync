@@ -1611,11 +1611,10 @@ class PHPContentsImportProxy extends MAPIMapping {
 
         // Override 'body' for truncation
         $body = mapi_openproperty($mapimessage, PR_BODY);
-        $bodysize = strlen($body);
-        if($bodysize > $truncsize) {
-            $body = substr($body, 0, $truncsize);
+        if(strlen($body) > $truncsize) {
+            $body = utf8_truncate($body, $truncsize);
             $message->bodytruncated = 1;
-            $message->bodysize = $bodysize;
+            $message->bodysize = strlen($body);
         } else {
             $message->bodytruncated = 0;
         }
