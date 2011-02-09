@@ -253,7 +253,8 @@ class BackendIMAP extends BackendDiff {
         }
 
         // encode the body to base64 if it was sent originally in base64 by the pda
-        if ($body_base64 && !isset($forward)) $body = base64_encode($body);
+        // contrib - chunk base64 encoded body
+        if ($body_base64 && !isset($forward)) $body = chunk_split(base64_encode($body));
 
 
         // forward
@@ -263,7 +264,8 @@ class BackendIMAP extends BackendDiff {
             $origmail = @imap_fetchheader($this->_mbox, $forward, FT_UID) . @imap_body($this->_mbox, $forward, FT_PEEK | FT_UID);
 
             if (!defined('IMAP_INLINE_FORWARD') || IMAP_INLINE_FORWARD === false) {
-                if ($body_base64) $body = base64_encode($body);
+                // contrib - chunk base64 encoded body
+                if ($body_base64) $body = chunk_split(base64_encode($body));
                 //use original boundary if it's set
                 $boundary = (isset($org_boundary) && $org_boundary) ? $org_boundary : false;
                 // build a new mime message, forward entire old mail as file
@@ -297,9 +299,11 @@ class BackendIMAP extends BackendDiff {
                 $nbody .= $this->getBody($mess2);
 
                 if ($body_base64) {
-                    $nbody = base64_encode($nbody);
+                    // contrib - chunk base64 encoded body
+                    $nbody = chunk_split(base64_encode($nbody));
                     if ($use_orgbody)
-                        $repl_body = base64_encode($repl_body);
+                    // contrib - chunk base64 encoded body
+                        $repl_body = chunk_split(base64_encode($repl_body));
                 }
 
                 if ($use_orgbody) {
