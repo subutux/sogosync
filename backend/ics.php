@@ -1418,9 +1418,10 @@ class PHPContentsImportProxy extends MAPIMapping {
         $isrecurringtag = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0x8223");
         $recurringstate = $this->_getPropIDFromString("PT_BINARY:{00062002-0000-0000-C000-000000000046}:0x8216");
         $timezonetag = $this->_getPropIDFromString("PT_BINARY:{00062002-0000-0000-C000-000000000046}:0x8233");
+        $recurrenceend = $this->_getPropIDFromString("PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x8236");
 
         // Now, get and convert the recurrence and timezone information
-        $recurprops = mapi_getprops($mapimessage, array($isrecurringtag, $recurringstate, $timezonetag));
+        $recurprops = mapi_getprops($mapimessage, array($isrecurringtag, $recurringstate, $timezonetag, $recurrenceend));
 
         if(isset($recurprops[$timezonetag]))
             $tz = $this->_getTZFromMAPIBlob($recurprops[$timezonetag]);
@@ -1516,10 +1517,16 @@ class PHPContentsImportProxy extends MAPIMapping {
         }
         // Termination
         switch($recurrence->recur["term"]) {
-           case 0x21:
-            $syncRecurrence->until = $recurrence->recur["end"]; break;
+            case 0x21:
+                $syncRecurrence->until = $recurrence->recur["end"];
+                // fixes Mantis #350 : recur-end does not consider timezones - use ClipEnd if available
+                if (isset($recurprops[$this->_getPropIDFromString("PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x8236")]))
+                    $syncRecurrence->until = $recurprops[$this->_getPropIDFromString("PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x8236")];
+                // add one day (minus 1 sec) to the end time to make sure the last occurrence is covered
+                $syncRecurrence->until += 86399;
+                break;
             case 0x22:
-            $syncRecurrence->occurrences = $recurrence->recur["numoccur"]; break;
+                $syncRecurrence->occurrences = $recurrence->recur["numoccur"]; break;
             case 0x23:
                 // never ends
                 break;
@@ -1658,8 +1665,9 @@ class PHPContentsImportProxy extends MAPIMapping {
             $appSeqNr = $this->_getPropIDFromString("PT_LONG:{00062002-0000-0000-C000-000000000046}:0x8201");
             $lidIsException = $this->_getPropIDFromString("PT_BOOLEAN:{00062002-0000-0000-C000-000000000046}:0xA");
             $recurStartTime = $this->_getPropIDFromString("PT_LONG:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0xE");
+            $recurrenceend = $this->_getPropIDFromString("PT_SYSTIME:{00062002-0000-0000-C000-000000000046}:0x8236");
 
-            $props = mapi_getprops($mapimessage, array($goidtag, $timezonetag, $recReplTime, $isrecurringtag, $recurringstate, $appSeqNr, $lidIsException, $recurStartTime));
+            $props = mapi_getprops($mapimessage, array($goidtag, $timezonetag, $recReplTime, $isrecurringtag, $recurringstate, $appSeqNr, $lidIsException, $recurStartTime, $recurrenceend));
 
             // Get the GOID
             if(isset($props[$goidtag]))
