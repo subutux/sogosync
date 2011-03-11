@@ -502,7 +502,7 @@ function HandleSync($backend, $protocolversion, $devid) {
 
         // set default conflict behavior from config if the device doesn't send a conflict resolution parameter
         if (!isset($collection["conflict"])) {
-            $collection["conflict"] = SYNC_CONFLICT_DEFAULT;
+            $collection["conflict"] = (defined('SYNC_CONFLICT_DEFAULT'))? SYNC_CONFLICT_DEFAULT : SYNC_CONFLICT_OVERWRITE_PIM ;
         }
 
         //compatibility mode - set maxitems if the client doesn't send it as it breaks some devices
