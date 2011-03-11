@@ -2057,10 +2057,10 @@ class ExportChangesICS  {
 
         switch($mclass) {
             case "Email":
-                $restriction = $this->_getEmailRestriction($this->_getCutOffDate($restrict));
+                $restriction = ($restrict) ? $this->_getEmailRestriction($this->_getCutOffDate($restrict)) : false;
                 break;
             case "Calendar":
-                $restriction = $this->_getCalendarRestriction($this->_getCutOffDate($restrict));
+                $restriction = ($restrict) ? $this->_getCalendarRestriction($this->_getCutOffDate($restrict)) : false;
                 break;
             default:
             case "Contacts":
