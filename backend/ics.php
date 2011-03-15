@@ -2055,12 +2055,13 @@ class ExportChangesICS  {
 
         $this->statestream = $stream;
 
+        // only set a restriction if the device has set a filtertype, except for Zarafa versions before 7 - see Mantis #368
         switch($mclass) {
             case "Email":
-                $restriction = ($restrict) ? $this->_getEmailRestriction($this->_getCutOffDate($restrict)) : false;
+                $restriction = ($restrict || !checkMapiExtVersion('7')) ? $this->_getEmailRestriction($this->_getCutOffDate($restrict)) : false;
                 break;
             case "Calendar":
-                $restriction = ($restrict) ? $this->_getCalendarRestriction($this->_getCutOffDate($restrict)) : false;
+                $restriction = ($restrict || !checkMapiExtVersion('7')) ? $this->_getCalendarRestriction($this->_getCutOffDate($restrict)) : false;
                 break;
             default:
             case "Contacts":
