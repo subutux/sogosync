@@ -572,19 +572,19 @@ class BackendIMAP extends BackendDiff {
             $folder->type = SYNC_FOLDER_TYPE_SENTMAIL;
             $this->_sentID = $id;
         }
-        // courier-imap outputs
-        else if($lid == "inbox.drafts") {
+        // courier-imap and cyrus-imapd outputs
+        else if($lid == "inbox.drafts" || $lid == "inbox/drafts") {
             $folder->parentid = $fhir[0];
             $folder->displayname = "Drafts";
             $folder->type = SYNC_FOLDER_TYPE_DRAFTS;
         }
-        else if($lid == "inbox.trash") {
+        else if($lid == "inbox.trash" || $lid == "inbox/trash") {
             $folder->parentid = $fhir[0];
             $folder->displayname = "Trash";
             $folder->type = SYNC_FOLDER_TYPE_WASTEBASKET;
             $this->_wasteID = $id;
         }
-        else if($lid == "inbox.sent") {
+        else if($lid == "inbox.sent" || $lid == "inbox/sent") {
             $folder->parentid = $fhir[0];
             $folder->displayname = "Sent";
             $folder->type = SYNC_FOLDER_TYPE_SENTMAIL;
