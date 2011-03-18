@@ -81,6 +81,16 @@
     //   SYNC_CONFLICT_OVERWRITE_PIM    - PIM is overwritten, Server wins (default)
     define('SYNC_CONFLICT_DEFAULT', SYNC_CONFLICT_OVERWRITE_PIM);
 
+    // Global limitation of items to be synchronized
+    // The mobile can define a sync back period for calendar and email items
+    // For large stores with many items the time period could be limited to a max value
+    // If the mobile transmits a wider time period, the defined max value is used
+    // Applicable values:
+    //   SYNC_FILTERTYPE_ALL (default, no limitation)
+    //   SYNC_FILTERTYPE_1DAY, SYNC_FILTERTYPE_3DAYS, SYNC_FILTERTYPE_1WEEK, SYNC_FILTERTYPE_2WEEKS,
+    //   SYNC_FILTERTYPE_1MONTH, SYNC_FILTERTYPE_3MONTHS, SYNC_FILTERTYPE_6MONTHS
+    define('SYNC_FILTERTIME_MAX', SYNC_FILTERTYPE_ALL);
+
     // The data providers that we are using (see configuration below)
     $BACKEND_PROVIDER = "BackendICS";
 
