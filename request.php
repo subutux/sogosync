@@ -1488,7 +1488,8 @@ function HandleProvision($backend, $devid, $protocolversion) {
     else {
         if (!$phase2) {
             $policykey = $backend->generatePolicyKey();
-            $backend->setPolicyKey($policykey, $devid);
+            //android sends "validate" as deviceid, it does not need to be added to the device list
+            if (strcasecmp("validate", $devid) != 0) $backend->setPolicyKey($policykey, $devid);
         }
         else {
             // just create a temporary key (i.e. iPhone OS4 Beta does not like policykey 0 in response)

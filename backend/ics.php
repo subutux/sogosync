@@ -2412,7 +2412,9 @@ class BackendICS {
                 $devicesprops[0x68881040][] = time(); //first sync
                 $devicesprops[0x68891040][] = 0; //last sync
             }
-            mapi_setprops($this->_defaultstore, $devicesprops);
+
+            //android sends "validate" as deviceid, it does not need to be added to the device list
+            if (strcasecmp("validate", $devid) != 0) mapi_setprops($this->_defaultstore, $devicesprops);
 
             return $policykey;
         }
