@@ -1784,7 +1784,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             if(isset($row[PR_ATTACH_NUM])) {
                 $mapiattach = mapi_message_openattach($mapimessage, $row[PR_ATTACH_NUM]);
 
-                $attachprops = mapi_getprops($mapiattach, array(PR_ATTACH_LONG_FILENAME));
+                $attachprops = mapi_getprops($mapiattach, array(PR_ATTACH_LONG_FILENAME, PR_ATTACH_FILENAME));
 
                 $attach = new SyncAttachment();
 
@@ -1793,7 +1793,7 @@ class PHPContentsImportProxy extends MAPIMapping {
                     $stat = mapi_stream_stat($stream);
 
                     $attach->attsize = $stat["cb"];
-                    $attach->displayname = w2u($attachprops[PR_ATTACH_LONG_FILENAME]);
+                    $attach->displayname = w2u((isset($attachprops[PR_ATTACH_LONG_FILENAME]))?$attachprops[PR_ATTACH_LONG_FILENAME]:((isset($attachprops[PR_ATTACH_FILENAME]))?$attachprops[PR_ATTACH_FILENAME]:"attachment.bin"));
                     $attach->attname = bin2hex($this->_folderid) . ":" . bin2hex($sourcekey) . ":" . $row[PR_ATTACH_NUM];
 
                     if(!isset($message->attachments))
