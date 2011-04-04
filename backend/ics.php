@@ -507,6 +507,10 @@ class ImportContentsChangesICS extends MAPIMapping {
         $this->_session = $session;
         $this->_store = $store;
         $this->_folderid = $folderid;
+        $this->_conflictsLoaded = false;
+        $this->_conflictsMclass = false;
+        $this->_conflictsFiltertype = false;
+        $this->_conflictsState = false;
 
         $entryid = mapi_msgstore_entryidfromsourcekey($store, $folderid);
         if(!$entryid) {
@@ -544,15 +548,36 @@ class ImportContentsChangesICS extends MAPIMapping {
 
     function LoadConflicts($mclass, $filtertype, $state) {
         if (!isset($this->_session) || !isset($this->_store) || !isset($this->_folderid)) {
-            debugLog("Warning: can not load changes for conflict detections. Session, store or folder information not available");
+            debugLog("Warning: can not load changes for conflict detection. Session, store or folder information not available");
+            return false;
+        }
+        // save data to load changes later if necessary
+        $this->_conflictsLoaded = false;
+        $this->_conflictsMclass = $mclass;
+        $this->_conflictsFiltertype = $filtertype;
+        $this->_conflictsState = $state;
+
+        debugLog("LoadConflicts: will be loaded later, if necessary");
+        return true;
+    }
+
+    // process potential conflicts only when really necessary (ADD/MODIFY)
+    function _lazyLoadConflicts() {
+        if (!isset($this->_session) || !isset($this->_store) || !isset($this->_folderid) ||
+            !$this->_conflictsMclass || !$this->_conflictsFiltertype || !$this->_conflictsState) {
+            debugLog("Warning: can not load changes in lazymode for conflict detection. Missing information");
             return false;
         }
 
-        // configure an exporter so we can detect conflicts
-        $exporter = new ExportChangesICS($this->_session, $this->_store, $this->_folderid);
-        $exporter->Config(&$this->_memChanges, $mclass, $filtertype, $state, 0, 0);
-        while(is_array($exporter->Synchronize()));
-        return true;
+        if (!$this->_conflictsLoaded) {
+            debugLog("LoadConflicts: loading..");
+            // configure an exporter so we can detect conflicts
+            $this->_memChanges = new ImportContentsChangesMem();
+            $exporter = new ExportChangesICS($this->_session, $this->_store, $this->_folderid);
+            $exporter->Config(&$this->_memChanges, $this->_conflictsMclass, $this->_conflictsFiltertype, $this->_conflictsState, 0, 0);
+            while(is_array($exporter->Synchronize()));
+            $this->_conflictsLoaded = true;
+        }
     }
 
     function ImportMessageChange($id, $message) {
@@ -569,6 +594,7 @@ class ImportContentsChangesICS extends MAPIMapping {
             $props[PR_SOURCE_KEY] = $sourcekey;
 
             // check for conflicts
+            $this->_lazyLoadConflicts();
             if($this->_memChanges->isChanged($id)) {
                 if ($this->_flags & SYNC_CONFLICT_OVERWRITE_PIM) {
                     debugLog("Conflict detected. Data from PIM will be dropped! Server overwrites PIM.");
@@ -601,6 +627,7 @@ class ImportContentsChangesICS extends MAPIMapping {
     // Import a deletion. This may conflict if the local object has been modified.
     function ImportMessageDeletion($objid) {
         // check for conflicts
+        $this->_lazyLoadConflicts();
         if($this->_memChanges->isChanged($objid)) {
            debugLog("Conflict detected. Data from Server will be dropped! PIM deleted object.");
         }
