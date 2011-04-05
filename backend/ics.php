@@ -1515,6 +1515,7 @@ class PHPContentsImportProxy extends MAPIMapping {
                     case 1:
                     $syncRecurrence->type = 0;
                     $syncRecurrence->dayofweek = 62; // mon-fri
+                    $syncRecurrence->interval = 1;
                         break;
                 }
                 break;
