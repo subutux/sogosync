@@ -463,7 +463,7 @@ class MAPIMapping {
         // Reverse 'overflow'. Eg week '10' will always be the last week of the month in which the
         // specified weekday exists
         while(1) {
-            $monthnow = gmdate("n", $date) - 1; // gmdate returns 1-12
+            $monthnow = gmdate("n", $date); // gmdate returns 1-12
             if($monthnow > $month)
                 $date = $date - (24 * 7 * 60 * 60);
             else
