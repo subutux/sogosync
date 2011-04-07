@@ -420,7 +420,10 @@ class MAPIMapping {
 
     // Returns TRUE if it is the summer and therefore DST is in effect
     function _isDST($localtime, $tz) {
-        if(!isset($tz) || !is_array($tz))
+        if( !isset($tz) || !is_array($tz) ||
+            !isset($tz["dstbias"]) || $tz["dstbias"] == 0 ||
+            !isset($tz["dststartmonth"]) || $tz["dststartmonth"] == 0 ||
+            !isset($tz["dstendmonth"]) || $tz["dstendmonth"] == 0)
             return false;
 
         $year = gmdate("Y", $localtime);
@@ -445,8 +448,10 @@ class MAPIMapping {
     }
 
     // Returns the local timestamp for the $week'th $wday of $month in $year at $hour:$minute:$second
-    function _getTimestampOfWeek($year, $month, $week, $wday, $hour, $minute, $second)
-    {
+    function _getTimestampOfWeek($year, $month, $week, $wday, $hour, $minute, $second) {
+        if ($month == 0)
+            return;
+
         $date = gmmktime($hour, $minute, $second, $month, 1, $year);
 
         // Find first day in month which matches day of the week
