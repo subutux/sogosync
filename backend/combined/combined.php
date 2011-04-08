@@ -356,7 +356,7 @@ class BackendCombined {
             return false;
         $importer = $backend->GetContentsImporter($this->GetBackendFolder($folderid));
         if($importer){
-            return new ImportContentsChangesCombinedWrap($this->GetBackendFolder($folderid), &$this, &$importer);
+            return new ImportContentsChangesCombinedWrap($folderid, &$this, &$importer);
         }
         return false;
     }

@@ -440,6 +440,16 @@ class BackendIMAP extends BackendDiff {
      * are always handled as real deletes and will be sent to your importer as a DELETE
      */
     function GetWasteBasket() {
+        if ($this->_wasteID == false) {
+            //try to get the waste basket without doing complete hierarchy sync
+            $wastebaskt = @imap_getmailboxes($this->_mbox, $this->_server, "Trash");
+            if (isset($wastebaskt[0])) {
+                $this->_wasteID = imap_utf7_decode(substr($wastebaskt[0]->name, strlen($this->_server)));
+                return $this->_wasteID;
+            }
+            //try get waste id from hierarchy if it wasn't possible with above for some reason
+            $this->GetHierarchy();
+        }
         return $this->_wasteID;
     }
 
