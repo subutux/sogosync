@@ -451,6 +451,7 @@ class BackendCombined {
 
     //send mail with the first backend returning true
     function SendMail($rfc822, $forward = false, $reply = false, $parent = false) {
+        if (isset($parent)) $parent = $this->GetBackendFolder($parent);
         foreach ($this->_backends as $i => $b){
             if($this->_backends[$i]->SendMail($rfc822, $forward, $reply, $parent) == true){
                 return true;
