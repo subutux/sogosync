@@ -991,14 +991,30 @@ class ImportContentsChangesICS extends MAPIMapping {
         // Do attendees
         if(isset($appointment->attendees) && is_array($appointment->attendees)) {
             $recips = array();
-
+            //open addresss book for user resolve
+            $addrbook = mapi_openaddressbook($this->_session);
             foreach($appointment->attendees as $attendee) {
                 $recip = array();
-                $recip[PR_DISPLAY_NAME] = u2w($attendee->name);
                 $recip[PR_EMAIL_ADDRESS] = u2w($attendee->email);
-                $recip[PR_ADDRTYPE] = "SMTP";
-                $recip[PR_RECIPIENT_TYPE] = MAPI_TO;
-                $recip[PR_ENTRYID] = mapi_createoneoff($recip[PR_DISPLAY_NAME], $recip[PR_ADDRTYPE], $recip[PR_EMAIL_ADDRESS]);
+
+                // lookup information in GAB if possible so we have up-to-date name for given address
+                $userinfo = array( array( PR_DISPLAY_NAME => $recip[PR_EMAIL_ADDRESS] ) );
+                $userinfo = mapi_ab_resolvename($addrbook, $userinfo, EMS_AB_ADDRESS_LOOKUP);
+                if(mapi_last_hresult() == NOERROR) {
+                    $recip[PR_DISPLAY_NAME] = $userinfo[0][PR_DISPLAY_NAME];
+                    $recip[PR_EMAIL_ADDRESS] = $userinfo[0][PR_EMAIL_ADDRESS];
+                    $recip[PR_SEARCH_KEY] = $userinfo[0][PR_SEARCH_KEY];
+                    $recip[PR_ADDRTYPE] = $userinfo[0][PR_ADDRTYPE];
+                    $recip[PR_ENTRYID] = $userinfo[0][PR_ENTRYID];
+                    $recip[PR_RECIPIENT_TYPE] = MAPI_TO;
+                }
+                else {
+                    $recip[PR_DISPLAY_NAME] = u2w($attendee->name);
+                    $recip[PR_SEARCH_KEY] = $recip[PR_EMAIL_ADDRESS];
+                    $recip[PR_ADDRTYPE] = "SMTP";
+                    $recip[PR_RECIPIENT_TYPE] = MAPI_TO;
+                    $recip[PR_ENTRYID] = mapi_createoneoff($recip[PR_DISPLAY_NAME], $recip[PR_ADDRTYPE], $recip[PR_EMAIL_ADDRESS]);
+                }
 
                 array_push($recips, $recip);
             }
@@ -2775,7 +2791,6 @@ class BackendICS {
         }
 
         mapi_message_modifyrecipients($mapimessage, 0, $recips);
-
         // Loop through message subparts.
         $body = "";
         $body_html = "";
@@ -2830,6 +2845,7 @@ class BackendICS {
                         mapi_setprops($mapimessage, $mapiprops);
                     }
                     else {
+
                         // store ics as attachment
                         //see icalTimezoneFix function in compat.php for more information
                         $part->body = icalTimezoneFix($part->body);
