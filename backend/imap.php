@@ -386,6 +386,10 @@ class BackendIMAP extends BackendDiff {
                                 "\nContent-Type: {$mess2->headers['content-type']}\n\n".
                                 @imap_body($this->_mbox, $forward, FT_PEEK | FT_UID)."\n\n";
                     }
+                    else {
+                        if (!empty($forward_h_ct)) $headers .= "\nContent-Type: $forward_h_ct";
+                        if (!empty($forward_h_cte)) $headers .= "\nContent-Transfer-Encoding: $forward_h_cte";
+                    }
                     $body .= "--$att_boundary--\n\n";
                 }
 
