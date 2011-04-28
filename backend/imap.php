@@ -289,7 +289,7 @@ class BackendIMAP extends BackendDiff {
                     }
                 }
                 unset($m2headerstructure);
-                $mess2 = $mobj2->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => 'utf-8'));
+                $mess2 = $mobj2->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => $m2charset));
 
                 if (!$use_orgbody)
                     $nbody = $body;
