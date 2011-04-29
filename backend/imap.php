@@ -374,10 +374,7 @@ class BackendIMAP extends BackendDiff {
                                 "\nContent-Type: {$mess2->headers['content-type']}\n\n".
                                 @imap_body($this->_mbox, $forward, FT_PEEK | FT_UID)."\n\n";
                     }
-                    else {
-                        if (!empty($forward_h_ct)) $headers .= "\nContent-Type: $forward_h_ct";
-                        if (!empty($forward_h_cte)) $headers .= "\nContent-Transfer-Encoding: $forward_h_cte";
-                    }
+
                     $body .= "--$att_boundary--\n\n";
                 }
 
@@ -392,6 +389,10 @@ class BackendIMAP extends BackendDiff {
         // remove carriage-returns from body
         $body = str_replace("\r\n", "\n", $body);
 
+        if (!$multipartmixed) {
+            if (!empty($forward_h_ct)) $headers .= "\nContent-Type: $forward_h_ct";
+            if (!empty($forward_h_cte)) $headers .= "\nContent-Transfer-Encoding: $forward_h_cte";
+        }
         //advanced debugging
         //debugLog("IMAP-SendMail: parsed message: ". print_r($message,1));
         //debugLog("IMAP-SendMail: headers: $headers");
