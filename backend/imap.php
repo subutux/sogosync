@@ -277,19 +277,7 @@ class BackendIMAP extends BackendDiff {
             }
             else {
                 $mobj2 = new Mail_mimeDecode($origmail);
-                $m2headerstructure = imap_fetchstructure($this->_mbox, $forward, FT_UID);
-                $m2charset = "utf-8";
-                //get the original charset in order to preserver special characters (e.g. umlauts)
-                if (isset($m2headerstructure->parameters) && is_array($m2headerstructure->parameters)) {
-                    foreach ($m2headerstructure->parameters as $param) {
-                        if (isset($param->attribute) && $param->attribute == "charset" && isset($param->value)) {
-                            $m2charset = $param->value;
-                            break;
-                        }
-                    }
-                }
-                unset($m2headerstructure);
-                $mess2 = $mobj2->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => $m2charset));
+                $mess2 = $mobj2->decode(array('decode_headers' => true, 'decode_bodies' => true, 'include_bodies' => true, 'charset' => 'utf-8'));
 
                 if (!$use_orgbody)
                     $nbody = $body;
