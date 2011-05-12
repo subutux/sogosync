@@ -1885,6 +1885,10 @@ class PHPContentsImportProxy extends MAPIMapping {
             }
         }
 
+        // without importance some mobiles assume "0" (low) - Mantis #439
+        if (!isset($message->importance))
+            $message->importance = 1;
+
         return $message;
     }
 
