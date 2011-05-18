@@ -506,8 +506,8 @@ class BackendIMAP extends BackendDiff {
                 $vars = get_object_vars($overview);
                 if (array_key_exists( "date", $vars)) {
                     // message is out of range for cutoffdate, ignore it
-                    if(strtotime($overview->date) < $cutoffdate) continue;
-                    $date = $overview->date;
+                    $date = $this->cleanupDate($overview->date);
+                    if ($date < $cutoffdate) continue;
                 }
 
                 // cut of deleted messages
@@ -794,7 +794,7 @@ class BackendIMAP extends BackendDiff {
 
             $output->bodysize = strlen($body);
             $output->body = $body;
-            $output->datereceived = isset($message->headers["date"]) ? strtotime(str_replace(array('(', ')'), '', $message->headers["date"])) : null;
+            $output->datereceived = isset($message->headers["date"]) ? $this->cleanupDate($message->headers["date"]) : null;
             $output->displayto = isset($message->headers["to"]) ? $message->headers["to"] : null;
             $output->importance = isset($message->headers["x-priority"]) ? preg_replace("/\D+/", "", $message->headers["x-priority"]) : null;
             $output->messageclass = "IPM.Note";
@@ -1123,6 +1123,18 @@ class BackendIMAP extends BackendDiff {
         $parent = imap_list($this->_mbox, $this->_server, $folderName);
         if ($parent === false) return false;
         return true;
+    }
+
+    //if received date has parenthesis (comments) strtotime will return false
+    //the function removes them from the date string
+    function cleanupDate($receiveddate) {
+        $receiveddate = strtotime(preg_replace("/\(.*\)/", "", $receiveddate));
+        if ($receiveddate == false || $receiveddate == -1) {
+            debugLog("Received date is false. Message might be broken.");
+            return null;
+        }
+
+        return $receiveddate;
     }
 
 }
