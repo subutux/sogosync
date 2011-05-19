@@ -506,8 +506,8 @@ class BackendIMAP extends BackendDiff {
                 $vars = get_object_vars($overview);
                 if (array_key_exists( "date", $vars)) {
                     // message is out of range for cutoffdate, ignore it
-                    $date = $this->cleanupDate($overview->date);
-                    if ($date < $cutoffdate) continue;
+                    if ($this->cleanupDate($overview->date) < $cutoffdate) continue;
+                    $date = $overview->date;
                 }
 
                 // cut of deleted messages
