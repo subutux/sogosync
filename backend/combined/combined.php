@@ -78,11 +78,11 @@ class ExportHierarchyChangesCombined{
             }
 
             if(!isset($this->_importwraps[$i])){
-                $this->_importwraps[$i] = new ImportHierarchyChangesCombinedWrap($i, &$this->_backend ,&$importer);
+                $this->_importwraps[$i] = new ImportHierarchyChangesCombinedWrap($i, $this->_backend ,$importer);
             }
 
             $this->_exporters[$i] = $this->_backend->_backends[$i]->GetExporter();
-            $this->_exporters[$i]->Config(&$this->_importwraps[$i], $folderid, $restrict, $state, $flags, $truncation);
+            $this->_exporters[$i]->Config($this->_importwraps[$i], $folderid, $restrict, $state, $flags, $truncation);
         }
         debugLog('ExportHierarchyChangesCombined::Config complete');
     }
@@ -356,7 +356,7 @@ class BackendCombined {
             return false;
         $importer = $backend->GetContentsImporter($this->GetBackendFolder($folderid));
         if($importer){
-            return new ImportContentsChangesCombinedWrap($folderid, &$this, &$importer);
+            return new ImportContentsChangesCombinedWrap($folderid, $this, $importer);
         }
         return false;
     }
@@ -406,7 +406,7 @@ class BackendCombined {
                 return false;
             return $backend->GetExporter($this->GetBackendFolder($folderid));
         }
-        return new ExportHierarchyChangesCombined(&$this);
+        return new ExportHierarchyChangesCombined($this);
     }
 
     //if the wastebasket is set to one backend, return the wastebasket of that backend
