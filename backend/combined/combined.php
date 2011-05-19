@@ -2,9 +2,9 @@
 /***********************************************
 * File      :   backend/combined/combined.php
 * Project   :   Z-Push
-* Descr     :   A SearchBackend implementation to
-*               query an ldap server for user
-*               information.
+* Descr     :   Combines several backends. Each type of message
+*               (Emails, Contacts, Calendar, Tasks) can be handled by
+*               a separate backend.
 *
 * Created   :   29.11.2010
 *
