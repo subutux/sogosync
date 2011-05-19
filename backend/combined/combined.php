@@ -279,6 +279,7 @@ class ImportContentsChangesCombinedWrap{
 class BackendCombined {
     var $_config;
     var $_backends;
+    var $_activeBackend;
 
     function BackendCombined(){
         global $BackendCombined_config;
@@ -409,23 +410,12 @@ class BackendCombined {
         return new ExportHierarchyChangesCombined($this);
     }
 
-    //if the wastebasket is set to one backend, return the wastebasket of that backend
-    //else return the first waste basket we can find
+    //get the wastebasket of the active backend
     function GetWasteBasket(){
         debugLog('Combined::GetWasteBasket()');
-        if(isset($this->_config['folderbackend'][SYNC_FOLDER_TYPE_WASTEBASKET])){
-            $wb = $this->_backends[$this->_config['folderbackend'][SYNC_FOLDER_TYPE_WASTEBASKET]]->GetWasteBasket();
-            if($wb){
-                return $this->_config['folderbackend'][SYNC_FOLDER_TYPE_WASTEBASKET].$this->_config['delimiter'].$wb;
-            }
-            return false;
-        }
-        foreach($this->_backends as $i => $b){
-            $w = $this->_backends[$i]->GetWasteBasket();
-            if($w){
-                return $i.$this->_config['delimiter'].$w;
-            }
-        }
+        if (isset($this->_activeBackend))
+            return $this->_activeBackend->GetWasteBasket();
+
         return false;
     }
 
@@ -474,6 +464,7 @@ class BackendCombined {
         $id = substr($folderid, 0, $pos);
         if(!isset($this->_backends[$id]))
             return false;
+        $this->_activeBackend = $this->_backends[$id];
         return $this->_backends[$id];
     }
 
