@@ -806,10 +806,19 @@ class BackendIMAP extends BackendDiff {
             $output->reply_to = isset($message->headers["reply-to"]) ? $message->headers["reply-to"] : null;
 
             // Attachments are only searched in the top-level part
-            $n = 0;
             if(isset($message->parts)) {
-                foreach($message->parts as $part) {
-                    if(isset($part->disposition) && ($part->disposition == "attachment" || $part->disposition == "inline")) {
+                $mparts = $message->parts;
+                for ($i=0; $i<count($mparts); $i++) {
+                    $part = $mparts[$i];
+                    //recursively add parts
+                    if($part->ctype_primary == "multipart" && ($part->ctype_secondary == "mixed" || $part->ctype_secondary == "alternative"  || $part->ctype_secondary == "related")) {
+                        foreach($part->parts as $spart)
+                            $mparts[] = $spart;
+                        continue;
+                    }
+                    //add part as attachment if it's disposition indicates so or if it is not a text part
+                    if ((isset($part->disposition) && ($part->disposition == "attachment" || $part->disposition == "inline")) ||
+                        (isset($part->ctype_primary) && $part->ctype_primary != "text")) {
                         $attachment = new SyncAttachment();
 
                         if (isset($part->body))
@@ -824,12 +833,12 @@ class BackendIMAP extends BackendDiff {
                         else $attname = "unknown attachment";
 
                         $attachment->displayname = $attname;
-                        $attachment->attname = $folderid . ":" . $id . ":" . $n;
+                        $attachment->attname = $folderid . ":" . $id . ":" . $i;
                         $attachment->attmethod = 1;
                         $attachment->attoid = isset($part->headers['content-id']) ? $part->headers['content-id'] : "";
                         array_push($output->attachments, $attachment);
                     }
-                    $n++;
+
                 }
             }
             // unset mimedecoder & mail
