@@ -392,6 +392,10 @@ class BackendIMAP extends BackendDiff {
         if (!$multipartmixed) {
             if (!empty($forward_h_ct)) $headers .= "\nContent-Type: $forward_h_ct";
             if (!empty($forward_h_cte)) $headers .= "\nContent-Transfer-Encoding: $forward_h_cte";
+            //if body was quoted-printable, convert it again
+            if (isset($message->headers["content-transfer-encoding"]) && strtolower($message->headers["content-transfer-encoding"]) == "quoted-printable") {
+                $body = quoted_printable_encode($body);
+            }
         }
         //advanced debugging
         //debugLog("IMAP-SendMail: parsed message: ". print_r($message,1));
