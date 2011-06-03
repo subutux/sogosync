@@ -79,7 +79,7 @@ if (!function_exists("quoted_printable_encode")) {
   * @see http://www.php.net/manual/en/function.quoted-printable-decode.php#89417
   */
     function quoted_printable_encode($string) {
-        return preg_replace('/[^\r\n]{73}[^=\r\n]{2}/', "$0=\r\n", str_replace(array('%20', '%0D%0A', '%'), array(' ', "\r\n", '='), rawurlencode($string)));
+        return preg_replace('/[^\r\n]{73}[^=\r\n]{2}/', "$0=\n", str_replace(array('%20', '%0D%0A', '%'), array(' ', "\r\n", '='), rawurlencode($string)));
     }
 }
 
