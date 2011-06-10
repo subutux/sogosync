@@ -786,6 +786,8 @@ class BackendIMAP extends BackendDiff {
             $output = new SyncMail();
 
             $body = $this->getBody($message);
+            $output->bodysize = strlen($body);
+
             // truncate body, if requested
             if(strlen($body) > $truncsize) {
                 $body = utf8_truncate($body, $truncsize);
@@ -796,7 +798,6 @@ class BackendIMAP extends BackendDiff {
             }
             $body = str_replace("\n","\r\n", str_replace("\r","",$body));
 
-            $output->bodysize = strlen($body);
             $output->body = $body;
             $output->datereceived = isset($message->headers["date"]) ? $this->cleanupDate($message->headers["date"]) : null;
             $output->displayto = isset($message->headers["to"]) ? $message->headers["to"] : null;
