@@ -2872,8 +2872,12 @@ class BackendICS {
                 else
                     $this->_storeAttachment($mapimessage, $part);
             }
-        } else {
-            $body = u2wi($message->body);
+        }
+        else if($message->ctype_primary == "text" && $message->ctype_secondary == "html") {
+            $body_html .= u2wi($message->body);
+        }
+        else {
+             $body = u2wi($message->body);
         }
 
         // some devices only transmit a html body
