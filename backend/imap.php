@@ -549,14 +549,14 @@ class BackendIMAP extends BackendDiff {
             foreach ($list as $val) {
                 $box = array();
                 // cut off serverstring
-                $box["id"] = imap_utf7_decode(substr($val->name, strlen($this->_server)));
+                $box["id"] = substr($val->name, strlen($this->_server));
 
-                $fhir = array_map('imap_utf7_encode',explode($val->delimiter, $box["id"]));
+                $fhir = explode($val->delimiter, $box["id"]);
                 if (count($fhir) > 1) {
                     $this->getModAndParentNames($fhir, $box["mod"], $box["parent"]);
                 }
                 else {
-                    $box["mod"] = imap_utf7_encode($box["id"]);
+                    $box["mod"] = $box["id"];
                     $box["parent"] = "0";
                 }
                 $folders[]=$box;
