@@ -100,10 +100,13 @@ function hex2bin($data) {
     return pack("H*", $data);
 }
 
-function utf8_to_windows1252($string, $option = "")
+//if the ICS backend is loaded in CombinedBackend and Zarafa > 7
+//STORE_SUPPORTS_UNICODE is true and the convertion will not be done
+//for other backends.
+function utf8_to_windows1252($string, $option = "", $force_convert = false)
 {
     //if the store supports unicode return the string without converting it
-    if (defined('STORE_SUPPORTS_UNICODE') && STORE_SUPPORTS_UNICODE == true) return $string;
+    if (!$force_convert && defined('STORE_SUPPORTS_UNICODE') && STORE_SUPPORTS_UNICODE == true) return $string;
 
     if (function_exists("iconv")){
         return @iconv("UTF-8", "Windows-1252" . $option, $string);
@@ -112,10 +115,10 @@ function utf8_to_windows1252($string, $option = "")
     }
 }
 
-function windows1252_to_utf8($string, $option = "")
+function windows1252_to_utf8($string, $option = "", $force_convert = false)
 {
     //if the store supports unicode return the string without converting it
-    if (defined('STORE_SUPPORTS_UNICODE') && STORE_SUPPORTS_UNICODE == true) return $string;
+    if (!$force_convert && defined('STORE_SUPPORTS_UNICODE') && STORE_SUPPORTS_UNICODE == true) return $string;
 
     if (function_exists("iconv")){
         return @iconv("Windows-1252", "UTF-8" . $option, $string);
