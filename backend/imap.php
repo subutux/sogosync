@@ -627,14 +627,14 @@ class BackendIMAP extends BackendDiff {
 
         // define the rest as other-folders
         else {
-               if (count($fhir) > 1) {
-                   $this->getModAndParentNames($fhir, $folder->displayname, $folder->parentid);
-                   $folder->displayname = windows1252_to_utf8(imap_utf7_decode($folder->displayname));
-               }
-               else {
-                $folder->displayname = windows1252_to_utf8(imap_utf7_decode($id));
+            if (count($fhir) > 1) {
+                $this->getModAndParentNames($fhir, $folder->displayname, $folder->parentid);
+                $folder->displayname = zp_utf7_to_utf8(zp_utf7_iconv_decode($folder->displayname));
+            }
+            else {
+                $folder->displayname = zp_utf7_to_utf8(zp_utf7_iconv_decode($folder->displayname));
                 $folder->parentid = "0";
-               }
+            }
             $folder->type = SYNC_FOLDER_TYPE_OTHER;
         }
 
