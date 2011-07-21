@@ -355,9 +355,52 @@ function zp_utf7_iconv_decode($string) {
 }
 
 
+/**
+Our own utf7_encode function because the string has to be converted from
+standard UTF7 into modified UTF7 (aka UTF7-IMAP).
+
+@param string $str IMAP folder name
+@return string
+*/
+function zp_utf7_iconv_encode($string) {
+    //do not alter string if there aren't any '&' or '+' chars because
+    //it won't have any utf7-encoded chars and nothing has to be escaped.
+    if (strpos($string, '&') === false && strpos($string, '+') === false ) return $string;
+
+    //Get the string length and go back through it making the replacements
+    //necessary
+    $len = strlen($string) - 1;
+    while ($len > 0) {
+        //look for '&-' sequence and replace it with '&'
+        if ($len > 0 && $string{($len-1)} == '+' && $string{$len} == '-') {
+            $string = substr_replace($string, '+', $len - 1, 2);
+            $len--; //decrease $len as this char has alreasy been processed
+        }
+        //search for '&' which weren't found in if clause above and
+        //replace them with '+' as they mark an utf7-encoded char
+        if ($len > 0 && $string{($len-1)} == '+') {
+            $string = substr_replace($string, '&', $len - 1, 1);
+            $len--; //decrease $len as this char has alreasy been processed
+        }
+        //finally "escape" all remaining '+' chars
+        if ($len > 0 && $string{($len-1)} == '&') {
+            $string = substr_replace($string, '&-', $len - 1, 1);
+        }
+        $len--;
+    }
+    return $string;
+}
+
 function zp_utf7_to_utf8($string) {
     if (function_exists("iconv")){
         return @iconv("UTF7", "UTF-8", $string);
+    }
+    return $string;
+}
+
+function zp_utf8_to_utf7($string) {
+    if (function_exists("iconv")){
+        return @iconv("UTF-8", "UTF7", $string);
     }
     return $string;
 }
