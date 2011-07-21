@@ -632,7 +632,7 @@ class BackendIMAP extends BackendDiff {
                 $folder->displayname = zp_utf7_to_utf8(zp_utf7_iconv_decode($folder->displayname));
             }
             else {
-                $folder->displayname = zp_utf7_to_utf8(zp_utf7_iconv_decode($folder->displayname));
+                $folder->displayname = zp_utf7_to_utf8(zp_utf7_iconv_decode($id));
                 $folder->parentid = "0";
             }
             $folder->type = SYNC_FOLDER_TYPE_OTHER;
