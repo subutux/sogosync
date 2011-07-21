@@ -678,6 +678,7 @@ class BackendIMAP extends BackendDiff {
         $this->imap_reopenFolder($folderid);
 
         // build name for new mailbox
+        $displayname = zp_utf7_iconv_encode(zp_utf8_to_utf7($displayname));
         $newname = $this->_server . $folderid . $this->_serverdelimiter . $displayname;
 
         $csts = false;
