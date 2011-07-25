@@ -361,7 +361,7 @@ class BackendIMAP extends BackendDiff {
                             }
                         }
                     }
-                    if ($multipartmixed) {
+                    if ($multipartmixed && strpos(strtolower($mess2->headers['content-type']), "alternative") !== false) {
                         //this happens if a multipart/alternative message is forwarded
                         //then it's a multipart/mixed message which consists of:
                         //1. text/plain part which was written on the mobile
@@ -1075,9 +1075,9 @@ class BackendIMAP extends BackendDiff {
 
     function enc_multipart($boundary, $body, $body_ct, $body_cte) {
         $mail_body = "This is a multi-part message in MIME format\n\n";
-//        $mail_body .= "--$boundary\n";
-//        $mail_body .= "Content-Type: $body_ct\n";
-//        $mail_body .= "Content-Transfer-Encoding: $body_cte\n\n";
+        $mail_body .= "--$boundary\n";
+        $mail_body .= "Content-Type: $body_ct\n";
+        $mail_body .= "Content-Transfer-Encoding: $body_cte\n\n";
         $mail_body .= "$body\n\n";
 
         return $mail_body;
