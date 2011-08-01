@@ -656,9 +656,9 @@ function HandleSync($backend, $protocolversion, $devid) {
         $encoder->startTag(SYNC_FOLDERS);
         {
             foreach($collections as $collection) {
-            	// initialize exporter to get changecount
-            	$changecount = 0;
-            	if(isset($collection["getchanges"])) {
+                // initialize exporter to get changecount
+                $changecount = 0;
+                if(isset($collection["getchanges"]) || $collection["synckey"] == "0") {
                     // Use the state from the importer, as changes may have already happened
                     $exporter = $backend->GetExporter($collection["collectionid"]);
 
@@ -773,7 +773,7 @@ function HandleSync($backend, $protocolversion, $devid) {
                     if (isset($exporter) && $exporter)
                         $state = $exporter->GetState();
 
-                    // nothing exported, but possible imported
+                    // nothing exported, but possibly imported
                     else if (isset($importer) && $importer)
                         $state = $importer->GetState();
 
