@@ -569,7 +569,7 @@ class ImportContentsChangesICS extends MAPIMapping {
     // process potential conflicts only when really necessary (ADD/MODIFY)
     function _lazyLoadConflicts() {
         if (!isset($this->_session) || !isset($this->_store) || !isset($this->_folderid) ||
-            !$this->_conflictsMclass || !$this->_conflictsFiltertype || !$this->_conflictsState) {
+            $this->_conflictsMclass === false || $this->_conflictsState === false) {
             debugLog("Warning: can not load changes in lazymode for conflict detection. Missing information");
             return false;
         }
