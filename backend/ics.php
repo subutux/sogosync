@@ -292,6 +292,12 @@ class MAPIMapping {
                 }
 
                 mapi_setprops($mapimessage, array($mapiprop => $value));
+
+                // fixes Mantis #468
+                if (is_array($value) && empty($value)) {
+                    debugLog(sprintf("mapi_deleteprops() for '%s' as it is an empty array", $asprop));
+                    mapi_deleteprops($mapimessage, array($mapiprop));
+                }
             }
         }
 
