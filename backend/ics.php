@@ -1519,7 +1519,7 @@ class PHPContentsImportProxy extends MAPIMapping {
             // don't send one of those fields, the phone will give an error ... so
             // we don't send it in that case.
             // also ignore the "attendee" if the email is equal to the organizers' email
-            if(isset($attendee->name) && isset($attendee->email) && (!isset($message->organizeremail) || (isset($message->organizeremail) && $attendee->email != $message->organizeremail)))
+            if(isset($attendee->name) && isset($attendee->email) && $attendee->email != "" && (!isset($message->organizeremail) || (isset($message->organizeremail) && $attendee->email != $message->organizeremail)))
                 array_push($message->attendees, $attendee);
         }
         // Force the 'alldayevent' in the object at all times. (non-existent == 0)
