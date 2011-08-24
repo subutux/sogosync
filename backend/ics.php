@@ -2646,7 +2646,7 @@ class BackendICS {
             if (strlen(trim($items[$i][SYNC_GAL_DISPLAYNAME])) == 0)
                 $items[$i][SYNC_GAL_DISPLAYNAME] = w2u($abentries[$i][PR_ACCOUNT]);
 
-            $items[$i][SYNC_GAL_ALIAS] = $items[$i][PR_ACCOUNT];
+            $items[$i][SYNC_GAL_ALIAS] = w2u($abentries[$i][PR_ACCOUNT]);
             //it's not possible not get first and last name of an user
             //from the gab and user functions, so we just set lastname
             //to displayname and leave firstname unset
