@@ -516,9 +516,9 @@ class MAPIMapping {
     function _extractEmailAddress($email) {
         if (!isset($this->_zRFC822)) $this->_zRFC822 = new Mail_RFC822();
         $parsedAddress = $this->_zRFC822->parseAddressList($email);
-        if (!isset($parsedAddress['mailbox']) || !isset($parsedAddress['host'])) return false;
+        if (!isset($parsedAddress[0]->mailbox) || !isset($parsedAddress[0]->host)) return false;
 
-        return $parsedAddress['mailbox'].'@'.$parsedAddress['mailbox'];
+        return $parsedAddress[0]->mailbox.'@'.$parsedAddress[0]->host;
     }
 }
 
@@ -1062,7 +1062,7 @@ class ImportContentsChangesICS extends MAPIMapping {
         $props = array();
         $nremails = array();
         $abprovidertype = 0;
-        if (isset($contact->email1address) && ($contact->email1address = $this->_extractEmailAddress($contact->email1address)) !== false) {
+        if (isset($contact->email1address) && (($contact->email1address = $this->_extractEmailAddress($contact->email1address)) !== false)) {
             $nremails[] = 0;
             $abprovidertype |= 1;
             $props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x8085")] = mapi_createoneoff($cname, "SMTP", $contact->email1address); //emailentryid
@@ -1071,7 +1071,7 @@ class ImportContentsChangesICS extends MAPIMapping {
             $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8084")] = $contact->email1address; //original emailaddress
         }
 
-        if (isset($contact->email2address) && ($contact->email2address = $this->_extractEmailAddress($contact->email2address)) !== false) {
+        if (isset($contact->email2address) && (($contact->email2address = $this->_extractEmailAddress($contact->email2address)) !== false)) {
             $nremails[] = 1;
             $abprovidertype |= 2;
             $props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x8095")] = mapi_createoneoff($cname, "SMTP", $contact->email2address); //emailentryid
@@ -1080,7 +1080,7 @@ class ImportContentsChangesICS extends MAPIMapping {
             $props[$this->_getPropIDFromString("PT_STRING8:{00062004-0000-0000-C000-000000000046}:0x8094")] = $contact->email2address; //original emailaddress
         }
 
-        if (isset($contact->email3address) && ($contact->email3address = $this->_extractEmailAddress($contact->email3address)) !== false) {
+        if (isset($contact->email3address) && (($contact->email3address = $this->_extractEmailAddress($contact->email3address)) !== false)) {
             $nremails[] = 2;
             $abprovidertype |= 4;
             $props[$this->_getPropIDFromString("PT_BINARY:{00062004-0000-0000-C000-000000000046}:0x80A5")] = mapi_createoneoff($cname, "SMTP", $contact->email3address); //emailentryid
