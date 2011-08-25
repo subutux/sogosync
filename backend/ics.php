@@ -3148,20 +3148,22 @@ class BackendICS {
             $goidprop = GetPropIDFromString($this->_defaultstore, "PT_BINARY:{6ED8DA90-450B-101B-98DA-00AA003F1305}:0x3");
 
             $messageprops = mapi_getprops($mapimessage, Array($goidprop, PR_OWNER_APPT_ID));
-                $goid = $messageprops[$goidprop];
-                if(isset($messageprops[PR_OWNER_APPT_ID]))
-                    $apptid = $messageprops[PR_OWNER_APPT_ID];
-                else
-                    $apptid = false;
+            $goid = $messageprops[$goidprop];
+            if(isset($messageprops[PR_OWNER_APPT_ID]))
+                $apptid = $messageprops[PR_OWNER_APPT_ID];
+            else
+                $apptid = false;
 
-                $items = $meetingrequest->findCalendarItems($goid, $apptid);
 
-                if (is_array($items)) {
-                   $newitem = mapi_msgstore_openentry($this->_defaultstore, $items[0]);
-                   $newprops = mapi_getprops($newitem, array(PR_SOURCE_KEY));
-                   $calendarid = bin2hex($newprops[PR_SOURCE_KEY]);
-                   debugLog("found other calendar entryid");
-                }
+            //findCalendarItems signature was changed in 6.40.8, Mantis #485
+            $items = (checkMapiExtVersion("6.40.8")) ? $meetingrequest->findCalendarItems($goid) : $meetingrequest->findCalendarItems($goid, $apptid);
+
+            if (is_array($items)) {
+               $newitem = mapi_msgstore_openentry($this->_defaultstore, $items[0]);
+               $newprops = mapi_getprops($newitem, array(PR_SOURCE_KEY));
+               $calendarid = bin2hex($newprops[PR_SOURCE_KEY]);
+               debugLog("found other calendar entryid");
+            }
         }
 
 
