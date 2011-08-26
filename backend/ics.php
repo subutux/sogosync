@@ -654,12 +654,22 @@ class ImportContentsChangesICS extends MAPIMapping {
         if($this->_memChanges->isChanged($objid)) {
            debugLog("Conflict detected. Data from Server will be dropped! PIM deleted object.");
         }
+        elseif($this->_memChanges->isDeleted($objid)) {
+            debugLog("Conflict detected. Data is already deleted. Request will be ignored.");
+            return true;
+        }
         // do a 'soft' delete so people can un-delete if necessary
         mapi_importcontentschanges_importmessagedeletion($this->importer, 1, array(hex2bin($objid)));
     }
 
     // Import a change in 'read' flags .. This can never conflict
     function ImportMessageReadFlag($id, $flags) {
+        $this->_lazyLoadConflicts();
+        if($this->_memChanges->isDeleted($id)) {
+            debugLog("Conflict detected. Data is already deleted. Request will be ignored.");
+            return true;
+        }
+
         $readstate = array ( "sourcekey" => hex2bin($id), "flags" => $flags);
         $ret = mapi_importcontentschanges_importperuserreadstatechange($this->importer, array ($readstate) );
         if($ret == false)
