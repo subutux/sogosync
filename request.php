@@ -953,16 +953,22 @@ function HandlePing($backend, $devid) {
             while($decoder->getElementStartTag(SYNC_PING_FOLDER)) {
                 $collection = array();
 
-                if($decoder->getElementStartTag(SYNC_PING_SERVERENTRYID)) {
-                    $collection["serverid"] = $decoder->getElementContent();
-                    $decoder->getElementEndTag();
-                }
-                if($decoder->getElementStartTag(SYNC_PING_FOLDERTYPE)) {
-                    $collection["class"] = $decoder->getElementContent();
-                    $decoder->getElementEndTag();
-                }
+                while(1) {
+                    if($decoder->getElementStartTag(SYNC_PING_SERVERENTRYID)) {
+                        $collection["serverid"] = $decoder->getElementContent();
+                        $decoder->getElementEndTag();
+                    }
+                    if($decoder->getElementStartTag(SYNC_PING_FOLDERTYPE)) {
+                        $collection["class"] = $decoder->getElementContent();
+                        $decoder->getElementEndTag();
+                    }
 
-                $decoder->getElementEndTag();
+                    $e = $decoder->peek();
+                    if($e[EN_TYPE] == EN_TYPE_ENDTAG) {
+                        $decoder->getElementEndTag();
+                        break;
+                    }
+                }
 
                 // initialize empty state
                 $collection["state"] = "";
