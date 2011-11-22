@@ -91,6 +91,11 @@
     //   SYNC_FILTERTYPE_1MONTH, SYNC_FILTERTYPE_3MONTHS, SYNC_FILTERTYPE_6MONTHS
     define('SYNC_FILTERTIME_MAX', SYNC_FILTERTYPE_ALL);
 
+    // Interval in seconds before checking if there are changes on the server when in Ping.
+    // It means the highest time span before a change is pushed to a mobile. Set it to
+    // a higher value if you have a high load on the server.
+    define('PING_INTERVAL', 10);
+
     // The data providers that we are using (see configuration below)
     $BACKEND_PROVIDER = "BackendICS";
 
