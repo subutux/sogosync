@@ -224,7 +224,7 @@ class ImportHierarchyChangesCombinedWrap {
 
     function ImportFolderDeletion($id) {
         debugLog('ImportHierarchyChangesCombinedWrap::ImportFolderDeletion('.$id.')');
-        return $this->_ihc->ImportFolderDeletion($this->_backendid.$this->_delimiter.$id);
+        return $this->_ihc->ImportFolderDeletion($this->_backendid.$this->_backend->_config['delimiter'].$id);
     }
 }
 
