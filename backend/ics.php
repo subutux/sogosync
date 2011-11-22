@@ -1241,6 +1241,10 @@ class ImportContentsChangesICS extends MAPIMapping {
     function _setTask($mapimessage, $task) {
         mapi_setprops($mapimessage, array(PR_MESSAGE_CLASS => "IPM.Task"));
 
+        if (isset($task->duedate)) {
+            $task->duedate = $this->_getDayStartOfTimestamp($task->duedate);
+        }
+
         $this->_setPropsInMAPI($mapimessage, $task, $this->_taskmapping);
 
         if(isset($task->complete)) {
