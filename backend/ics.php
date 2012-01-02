@@ -597,7 +597,7 @@ class ImportContentsChangesICS extends MAPIMapping {
             // configure an exporter so we can detect conflicts
             $this->_memChanges = new ImportContentsChangesMem();
             $exporter = new ExportChangesICS($this->_session, $this->_store, $this->_folderid);
-            $exporter->Config(&$this->_memChanges, $this->_conflictsMclass, $this->_conflictsFiltertype, $this->_conflictsState, 0, 0);
+            $exporter->Config($this->_memChanges, $this->_conflictsMclass, $this->_conflictsFiltertype, $this->_conflictsState, 0, 0);
             while(is_array($exporter->Synchronize()));
             $this->_conflictsLoaded = true;
         }
