@@ -664,12 +664,15 @@ class ImportContentsChangesICS extends MAPIMapping {
 
     // Import a change in 'read' flags .. This can never conflict
     function ImportMessageReadFlag($id, $flags) {
+        /*
+         * Checking for conflicts is correct at this point, but is a very expensive operation.
+         * If the message was deleted, only an error will be shown.
         $this->_lazyLoadConflicts();
         if($this->_memChanges->isDeleted($id)) {
             debugLog("Conflict detected. Data is already deleted. Request will be ignored.");
             return true;
         }
-
+        */
         $readstate = array ( "sourcekey" => hex2bin($id), "flags" => $flags);
         $ret = mapi_importcontentschanges_importperuserreadstatechange($this->importer, array ($readstate) );
         if($ret == false)
