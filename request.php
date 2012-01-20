@@ -968,6 +968,11 @@ function HandlePing($backend, $devid) {
                         $decoder->getElementEndTag();
                         break;
                     }
+                    // Failsave - a devoce or attacker could send an unspecified tag which would cause an endless loop.
+                    else if (isset($e[EN_TAG]) && $e[EN_TAG] != SYNC_PING_SERVERENTRYID && $e[EN_TAG] != SYNC_PING_FOLDERTYPE) {
+                        debugLog("Found unspecified tag in ping folder definition:". print_r($e,1));
+                        break;
+                    }
                 }
 
                 // initialize empty state
