@@ -1321,11 +1321,11 @@ class ImportHierarchyChangesICS  {
             $parentfolder = mapi_msgstore_openentry($this->store, $parentfentryid);
             $parentpros = mapi_getprops($parentfolder, array(PR_DISPLAY_NAME));
             $newfolder = mapi_folder_createfolder($parentfolder, $displayname, "");
+            mapi_setprops($newfolder, array(PR_CONTAINER_CLASS => $this->GetContainerClassFromFolderType($type)));
             $props =  mapi_getprops($newfolder, array(PR_SOURCE_KEY));
             $id = bin2hex($props[PR_SOURCE_KEY]);
         }
 
-        // 'type' is ignored because you can only create email (standard) folders
         mapi_importhierarchychanges_importfolderchange($this->importer, array ( PR_SOURCE_KEY => hex2bin($id), PR_PARENT_SOURCE_KEY => hex2bin($parent), PR_DISPLAY_NAME => $displayname) );
         debugLog("Imported changes for folder:$id");
         return $id;
@@ -1340,6 +1340,55 @@ class ImportHierarchyChangesICS  {
         $data = mapi_stream_read($this->statestream, 4096);
 
         return $data;
+    }
+
+    /**
+     * Returns the MAPI PR_CONTAINER_CLASS string for an ActiveSync Foldertype
+     *
+     * @param int       $foldertype
+     *
+     * @access public
+     * @return string
+     */
+    function GetContainerClassFromFolderType($foldertype) {
+        switch ($foldertype) {
+            case SYNC_FOLDER_TYPE_TASK:
+            case SYNC_FOLDER_TYPE_USER_TASK:
+                return "IPF.Task";
+                break;
+
+            case SYNC_FOLDER_TYPE_APPOINTMENT:
+            case SYNC_FOLDER_TYPE_USER_APPOINTMENT:
+                return "IPF.Appointment";
+                break;
+
+            case SYNC_FOLDER_TYPE_CONTACT:
+            case SYNC_FOLDER_TYPE_USER_CONTACT:
+                return "IPF.Contact";
+                break;
+
+            case SYNC_FOLDER_TYPE_NOTE:
+            case SYNC_FOLDER_TYPE_USER_NOTE:
+                return "IPF.StickyNote";
+                break;
+
+            case SYNC_FOLDER_TYPE_JOURNAL:
+            case SYNC_FOLDER_TYPE_USER_JOURNAL:
+                return "IPF.Journal";
+                break;
+
+            case SYNC_FOLDER_TYPE_INBOX:
+            case SYNC_FOLDER_TYPE_DRAFTS:
+            case SYNC_FOLDER_TYPE_WASTEBASKET:
+            case SYNC_FOLDER_TYPE_SENTMAIL:
+            case SYNC_FOLDER_TYPE_OUTBOX:
+            case SYNC_FOLDER_TYPE_USER_MAIL:
+            case SYNC_FOLDER_TYPE_OTHER:
+            case SYNC_FOLDER_TYPE_UNKNOWN:
+            default:
+                return "IPF.Note";
+                break;
+        }
     }
 };
 
@@ -1526,6 +1575,7 @@ class PHPContentsImportProxy extends MAPIMapping {
         $message->timezone = base64_encode($this->_getSyncBlobFromTZ($tz));
 
         if(isset($recurprops[$isrecurringtag]) && $recurprops[$isrecurringtag]) {
+
             // Process recurrence
             $message->recurrence = new SyncRecurrence();
             $this->_getRecurrence($mapimessage, $recurprops, $message, $message->recurrence, $tz);
