@@ -4,8 +4,8 @@ sogosync is z-push with caldav and cardav backend.
 
 Features
 --------
-* Add support to do an active sync of multiple addressbook using a carddav server
-* Add support to do an active sync of multiple calendar using a caldav server
+* Add support to ActiveSync of multiple addressbook using a carddav server
+* Add support to ActiveSync of multiple calendar using a caldav server
 
 See also:
 --------
@@ -33,11 +33,38 @@ https://github.com/dekkers/s-push
 
 Installation
 ------------
-
 $ cd /var/www
 $ git clone git://github.com/xbgmsharp/sogosync.git
 $ cd sogosync
 
 Read z-push install instruction into INSTALL file.
 
+Configuration
+-------------
+Edit config.php
+ * Set TimeZone
+ * Replace
+	$BACKEND_PROVIDER = "BackendCaldav";
+	by
+	$BACKEND_PROVIDER = "BackendCombined";
+ * Configure the BackendIMAP settings section
 
+Edit backend/combined/config.php
+ * Configure the BackendCalDAV settings section
+ * Configure the BackendCardDAV settings section
+
+Test
+----
+Test from Firefox, you should get:
+"""
+Login to https://sogo.mydomain.com/Microsoft-Server-ActiveSync
+You need to see:
+Z-Push - Open Source ActiveSync
+Version SVN checkout
+GET not supported
+"""
+
+Update
+------
+$ cd /var/www/sogosync
+$ git push
