@@ -1,0 +1,43 @@
+Description
+-----------
+sogosync is z-push with caldav and cardav backend.
+
+Features
+--------
+* Add support to do an active sync of multiple addressbook using a carddav server
+* Add support to do an active sync of multiple calendar using a caldav server
+
+See also:
+--------
+Open Groupware
+- http://www.sogo.nu/ 
+ActiveSync implementation
+- http://z-push.sourceforge.net/soswp
+Cardav and Caldav RFC
+- http://tools.ietf.org/html/rfc2425
+- http://tools.ietf.org/html/rfc2426
+ActiveSync Contact and Calendar Protocol Specification
+- http://msdn.microsoft.com/en-us/library/cc425499%28EXCHG.80%29.aspx
+	- http://msdn.microsoft.com/en-us/library/dd299451(v=exchg.80).aspx
+	- http://msdn.microsoft.com/en-us/library/dd299440(v=exchg.80).aspx
+
+Library used
+------------
+CardDAV-Client
+- https://github.com/graviox/CardDAV-PHP/
+vCard parser
+- https://github.com/nuovo/vCard-parser/
+
+Thanks to dekkers for the original caldav support
+https://github.com/dekkers/s-push
+
+Installation
+------------
+
+$ cd /var/www
+$ git clone git://github.com/xbgmsharp/sogosync.git
+$ cd sogosync
+
+Read z-push install instruction into INSTALL file.
+
+
